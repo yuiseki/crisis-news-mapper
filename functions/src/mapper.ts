@@ -113,7 +113,7 @@ for (const locationKey of Object.keys(locationList)){
     })
     console.log("Loaded files: "+location.index.filename)
   })
-  fs.createReadStream('/home/ubuntu/news-mapper-web/functions/data/'+location.index.filename).pipe(parser);
+  fs.createReadStream('./data/'+location.index.filename).pipe(parser);
 }
 
 
