@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/newsByGeoHash",
+        "function": "newsByGeoHash"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

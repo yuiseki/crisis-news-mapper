@@ -3,7 +3,7 @@
 const admin = require('firebase-admin')
 const request = require('request')
 const cheerio = require('cheerio')
-const geohash = require('ngeohash')
+const ngeohash = require('ngeohash')
 import * as md5 from 'md5'
 import { Mapper } from './mapper'
 
@@ -97,8 +97,12 @@ export class News {
     console.log("pref: "+mapper.pref)
     console.log("city: "+mapper.city)
     let news_geohash = null
+    let lat = null
+    let long = null
     if (mapper.location!==undefined && mapper.location!==null){
-      news_geohash = geohash.encode(mapper.location.lat, mapper.location.long)
+      lat = mapper.location.lat
+      long = mapper.location.long
+      news_geohash = ngeohash.encode(mapper.location.lat, mapper.location.long)
     }else{
       news_geohash = ''
     }
@@ -121,6 +125,8 @@ export class News {
       place_station: mapper.station,
       place_airport: mapper.airport,
       geohash: news_geohash,
+      lat: lat,
+      long: long
     })
     console.log("----> updateNews finish")
   }

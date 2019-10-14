@@ -4,15 +4,37 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 admin.initializeApp()
 
-exports.newsByCountry = functions.https.onRequest(async (req, res) => {
-  let country
-  if (req.query.country===undefined){
-    country = '日本'
+const ngeohash = require('ngeohash')
+
+exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
+  let geohash
+  if (req.query.geohash===undefined){
+    geohash = 'xn77'
   }else{
-    country = req.query.country
+    geohash = req.query.geohash
   }
+  let rad
+  if (req.query.rad===undefined){
+    rad = 10
+  }else{
+    rad = req.query.rad
+  }
+
+  const decode = ngeohash.decode(geohash);
+  // TODO fix this
+  const lat = 0.0074 // degrees latitude per meter
+  const lon = 0.0074 // degrees longitude per meter
+  const lowerLat = decode.latitude  - (lat * rad * 1000)
+  const lowerLon = decode.longitude - (lon * rad * 1000)
+  const upperLat = decode.latitude  + (lat * rad * 1000)
+  const upperLon = decode.longitude + (lon * rad * 1000)
+  const lower = ngeohash.encode(lowerLat, lowerLon);
+  const upper = ngeohash.encode(upperLat, upperLon);
+
   const query = await admin.firestore().collection("news")
-    .where("place_country",  "==", country)
+    .where("geohash", ">=", lower)
+    .where("geohash", "<=", upper)
+    .limit(100)
     .get()
   if(query.empty){
     res.status(200).send(JSON.stringify({}))
@@ -24,15 +46,15 @@ exports.newsByCountry = functions.https.onRequest(async (req, res) => {
   }
 })
 
-exports.newsByPref = functions.https.onRequest(async (req, res) => {
-  let pref
-  if (req.query.pref===undefined){
-    pref = '東京都'
+exports.newsByCountry = functions.https.onRequest(async (req, res) => {
+  let country
+  if (req.query.country===undefined){
+    country = '日本'
   }else{
-    pref = req.query.pref
+    country = req.query.country
   }
   const query = await admin.firestore().collection("news")
-    .where("place_pref",  "==", pref)
+    .where("place_country",  "==", country)
     .get()
   if(query.empty){
     res.status(200).send(JSON.stringify({}))

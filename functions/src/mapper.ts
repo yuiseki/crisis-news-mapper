@@ -97,12 +97,8 @@ for (const locationKey of Object.keys(locationList)){
           // nameに(が含まれない
           && name.indexOf("(") === -1
           // latが空ではない
-          && element[location.index.lat_idx] !== null
-          && element[location.index.lat_idx] !== undefined
           && element[location.index.lat_idx] !== ''
           // longが空ではない
-          && element[location.index.long_idx] !== null
-          && element[location.index.long_idx] !== undefined
           && element[location.index.long_idx] !== ''
         ){
         location.data[name] = {
