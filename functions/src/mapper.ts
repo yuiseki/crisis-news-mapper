@@ -134,6 +134,7 @@ export class Mapper {
   airports:string[]
   airport:string
   location:any
+  static locationList = locationList
 
   constructor(text:string){
     this.text = text

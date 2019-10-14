@@ -10,6 +10,8 @@ firebase-debug.log*
 .firebase/
 
 functions/.env
+functions/src/key.json
+functions/lib
 functions/secrets
 
 # Firebase config

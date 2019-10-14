@@ -164,7 +164,7 @@ export class Twitter {
           place_river: null,
           place_station: null,
           place_airport: null,
-          location: null
+          geohash: null
         })
       }
     }

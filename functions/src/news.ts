@@ -3,9 +3,9 @@
 const admin = require('firebase-admin')
 const request = require('request')
 const cheerio = require('cheerio')
-const geohash = require('ngeohash');
-import * as md5 from 'md5';
-import { Mapper } from './mapper';
+const geohash = require('ngeohash')
+import * as md5 from 'md5'
+import { Mapper } from './mapper'
 
 export class News {
 
@@ -96,12 +96,11 @@ export class News {
     console.log("country: "+mapper.country)
     console.log("pref: "+mapper.pref)
     console.log("city: "+mapper.city)
-    let location = null
+    let news_geohash = null
     if (mapper.location!==undefined && mapper.location!==null){
-      location = {
-        geohash: geohash.encode(mapper.location.lat, mapper.location.long),
-        geopoint: new admin.firestore.GeoPoint(mapper.location.lat, mapper.location.long)
-      }
+      news_geohash = geohash.encode(mapper.location.lat, mapper.location.long)
+    }else{
+      news_geohash = ''
     }
     
     await admin.firestore().collection('news').doc(enurl).update({
@@ -121,7 +120,7 @@ export class News {
       place_river: mapper.river,
       place_station: mapper.station,
       place_airport: mapper.airport,
-      location: location
+      geohash: news_geohash,
     })
     console.log("----> updateNews finish")
   }
@@ -130,9 +129,8 @@ export class News {
     return new Promise(async (resolve, reject)=>{
       console.log("----> updateAllNews start")
       const query = await admin.firestore().collection("news")
-        .where("title", '==', null)
+        .where("geohash", '==', null)
         .where("redirect", '<', 1)
-        .where("location", '==', null)
         .limit(1).get()
       if (query.empty) {
         reject('No matching documents!')
