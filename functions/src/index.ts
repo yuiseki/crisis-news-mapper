@@ -2,7 +2,7 @@
 const functions = require('firebase-functions')
 
 const admin = require('firebase-admin')
-const serviceAccount = require("/home/ubuntu/news-mapper-web/functions/secrets/key.json");
+const serviceAccount = require("./secrets/key.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://news-mapper-49a5c.firebaseio.com"
