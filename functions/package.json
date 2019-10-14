@@ -1,0 +1,49 @@
+{
+  "name": "functions",
+  "scripts": {
+    "lint": "tslint --project tsconfig.json",
+    "build": "tsc",
+    "serve": "npm run build && firebase serve --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "test": "mocha --reporter spec",
+    "mocha": "mocha --require espower-typescript/guess test/**/*.ts"
+  },
+  "engines": {
+    "node": "10"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@firebase/firestore-types": "^1.6.1",
+    "@mapbox/togeojson": "^0.16.0",
+    "@types/md5": "^2.1.33",
+    "cheerio": "^1.0.0-rc.3",
+    "config": "^3.2.3",
+    "csv": "^5.1.3",
+    "dotenv": "^8.1.0",
+    "firebase-admin": "^8.0.0",
+    "firebase-functions": "^3.1.0",
+    "geofirex": "0.0.6",
+    "kuromoji": "^0.1.2",
+    "libxmljs": "^0.19.7",
+    "md5": "^2.2.1",
+    "ngeohash": "^0.6.3",
+    "request": "^2.88.0",
+    "rxjs": "^6.5.3",
+    "twitter": "^1.7.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.7.12",
+    "espower-typescript": "^9.0.2",
+    "firebase-functions-test": "^0.1.6",
+    "mocha": "^6.2.1",
+    "power-assert": "^1.6.1",
+    "tslint": "^5.12.0",
+    "twitter-d": "^0.4.0",
+    "typescript": "^3.6.4"
+  },
+  "private": true
+}
