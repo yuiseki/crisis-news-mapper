@@ -46,6 +46,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.3.0/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster.freezable@1.0.0/dist/leaflet.markercluster.freezable.js"></script>
     <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
   </head>
   <body>
@@ -63,12 +64,12 @@
       maxZoom: 19
     }).addTo(map);
     // 初期座標とズームを指定
-    map.setView([35.3622222, 138.7313889], 7);
+    map.setView([35.3622222, 138.7313889], 8);
     // 都道府県の描画
     $.getJSON("/japan.geojson", function(data) {
       var geojson = L.geoJson(data, {
           onEachFeature: function (feature, layer) {
-            layer.bindPopup(feature.properties.name);
+            layer.bindTooltip(feature.properties.nam_ja)
           }
       });
       geojson.addTo(map);
@@ -77,7 +78,7 @@
     $.getJSON("/tokyo.geojson", function(data) {
       var geojson = L.geoJson(data, {
           onEachFeature: function (feature, layer) {
-            layer.bindPopup(feature.properties.name);
+            layer.bindTooltip(feature.properties.ward_ja);
           }
       });
       geojson.addTo(map);
@@ -85,6 +86,7 @@
 
     // ニュースの追加
     var markers = L.markerClusterGroup();
+    markers.freezeAtZoom(9);
     $.getJSON("/newsByGeoHash?km=1000", function(data) {
       data.forEach(function(element){
         if (element.og_title && element.og_desc){

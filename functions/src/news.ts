@@ -83,9 +83,8 @@ export class News {
 
 
 
-  public updateNews = async(data) => {
+  public static updateNews = async(data) => {
     const url = data.url
-    console.log("----> updateNews: "+url)
     const enurl = md5(url)
 
     let title
@@ -154,10 +153,9 @@ export class News {
       long:          long,
       category:      mapper.category,
     }).catch((error)=> { console.log(error)})
-    console.log("----> updateNews finish")
   }
 
-  public updateAllNewsBySnapshot = (docs)=>{
+  public static updateAllNewsBySnapshot = (docs)=>{
     return new Promise(async (resolve, reject)=>{
       const newSnapshot = await admin.firestore().collection("news")
         .orderBy('url')
@@ -168,14 +166,14 @@ export class News {
         reject('No matching documents!')
       }else{
         const data = newSnapshot.docs[0].data()
-        await this.updateNews(data)
+        await News.updateNews(data)
         // 再帰
-        await this.updateAllNewsBySnapshot(newSnapshot.docs[0])
+        await News.updateAllNewsBySnapshot(newSnapshot.docs[0])
       }
     })
   }
 
-  public updateAllNews = async() => {
+  public static updateAllNews = async() => {
     return new Promise(async (resolve, reject)=>{
       console.log("----> updateAllNews start: ")
       const snapshot = await admin.firestore().collection("news")
@@ -186,8 +184,8 @@ export class News {
         reject('No matching documents!')
       }else{
         const data = snapshot.docs[0].data()
-        await this.updateNews(data)
-        await this.updateAllNewsBySnapshot(snapshot.docs[0])
+        await News.updateNews(data)
+        await News.updateAllNewsBySnapshot(snapshot.docs[0])
       }
     })
   }

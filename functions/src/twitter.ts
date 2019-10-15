@@ -18,6 +18,7 @@ const client = new TwitterClient({
 })
 
 import * as md5 from 'md5';
+import { News } from './news'
 
 export class Twitter {
   public crawlTwitter = async (context)=>{
@@ -137,7 +138,6 @@ export class Twitter {
     // save by url
     for (const idx in urls){
       const url = urls[idx]
-      console.log("----> save: "+url)
       const enurl = md5(url)
       const newsDocRef = await admin.firestore().collection('news').doc(enurl).get()
       if (newsDocRef.exists){
@@ -166,6 +166,14 @@ export class Twitter {
           place_airport: null,
           geohash: null
         })
+      }
+      if(url!==undefined && url!==null){
+        let dataRef = await admin.firestore().collection('news').doc(enurl).get()
+        if(dataRef.exists){
+          await News.updateNews(dataRef.data())
+        }else{
+          await News.updateNews({url:url})
+        }
       }
     }
   }
