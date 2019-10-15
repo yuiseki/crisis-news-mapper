@@ -107,7 +107,7 @@ for (const locationKey of Object.keys(locationList)){
         }
       }
     })
-    console.log("Loaded files: "+location.index.filename)
+    console.log("Loaded file: "+location.index.filename)
   })
   fs.createReadStream('./data/'+location.index.filename).pipe(parser);
 }
@@ -130,11 +130,49 @@ export class Mapper {
   airports:string[]
   airport:string
   location:any
+  category:string
+  
   static locationList = locationList
+  static crisisKeywords = [
+    "地震",
+    "台風",
+    "豪雨",
+    "竜巻",
+    "突風",
+    "災害",
+    "被災",
+    "避難",
+    "倒壊",
+    // ライフイン
+    "停電",
+    "断水",
+    "給水",
+    // 水関係
+    "浸水",
+    "氾濫",
+    "決壊",
+    // 山関係
+    "土砂崩れ",
+    "土砂流入",
+    "土砂災害",
+  ]
+  static sportsKeywords = [
+    "オリンピック",
+    "ワールドカップ",
+    "サッカー",
+    "ラグビー",
+    "テニス",
+    "バスケ",
+    "ゴルフ",
+    "野球",
+    "セ・リーグ",
+    "パ・リーグ",
+  ]
 
   constructor(text:string){
     this.text = text
     this.location = null
+    this.detectCategory()
     this.extractCountry()
     this.extractPref()
     this.extractCity()
@@ -142,6 +180,20 @@ export class Mapper {
     this.extractMountain()
     this.extractStation()
     this.extractAirport()
+  }
+
+  public detectCategory(){
+    this.category = null
+    for (const keyword of Mapper.crisisKeywords){
+      if(this.text.match(keyword)){
+        this.category = "crisis"
+      }
+    }
+    for (const keyword of Mapper.sportsKeywords){
+      if(this.text.match(keyword)){
+        this.category = "sports"
+      }
+    }
   }
 
   public extractCountry(){

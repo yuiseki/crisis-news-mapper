@@ -28,7 +28,7 @@ firebase projects:list
 ## GOOGLE_APPLICATION_CREDENTIALS環境変数をセットする
   - `news-mapper/key.json` というファイルが必要
   - Windows 10 の場合
-    - `$env:GOOGLE_APPLICATION_CREDENTIALS="[PATH]"`
+    - `$env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\yuise\news-mapper\key.json"`
   - Linux の場合
     - `export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"`
 

@@ -22,7 +22,7 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
   }
   let km
   if (req.query.km===undefined){
-    km = 10
+    km = 100
   }else{
     km = req.query.km
   }
@@ -41,6 +41,7 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
   // firestoreクエリを組み立てる
   const query = await admin.firestore()
     .collection("news")
+    .where("category", "==", "crisis")
     .where("geohash", ">=", lowerHash)
     .where("geohash", "<=", upperHash)
     .limit(1000)
@@ -67,6 +68,7 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
 import { News } from './news'
 const news = new News()
 exports.updateAllNews = functions.pubsub.schedule('every 60 minutes').onRun(news.updateAllNews)
+
 
 import { Twitter } from './twitter'
 const twitter = new Twitter()
