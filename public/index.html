@@ -68,17 +68,24 @@
     // 都道府県の描画
     $.getJSON("/japan.geojson", function(data) {
       var geojson = L.geoJson(data, {
+          style: {
+            weight: 5
+          },
           onEachFeature: function (feature, layer) {
             layer.bindTooltip(feature.properties.nam_ja)
           }
       });
       geojson.addTo(map);
     });
-    // 東京都の描画
-    $.getJSON("/tokyo.geojson", function(data) {
+    // 市区町村の描画
+    $.getJSON("/japan_cities.geojson", function(data) {
       var geojson = L.geoJson(data, {
+          style: {
+            weight: 1,
+            opacity: 0.3
+          },
           onEachFeature: function (feature, layer) {
-            layer.bindTooltip(feature.properties.ward_ja);
+            layer.bindTooltip(feature.properties.cityname_k);
           }
       });
       geojson.addTo(map);

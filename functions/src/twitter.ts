@@ -40,18 +40,37 @@ export class Twitter {
     await this.searchTweet('47news')
     await this.searchTweet('jiji.com')
     await this.searchTweet('www.afpbb.com')
-    // 海外
-    await this.searchTweet('www.bbc.com/japanese')
     // 行政インフラ
-    await this.searchTweet('river.go.jp')
+    // 内閣府
+    await this.searchTweet('cao.go.jp')
+    // 内閣府 防災情報
+    await this.searchTweet('bousai.go.jp')
+    // 首相官邸
+    await this.searchTweet('kantei.go.jp')
+    // 防衛省 自衛隊
+    await this.searchTweet('mod.go.jp')
+    // 気象庁
     await this.searchTweet('jma.go.jp')
-    await this.searchTweet('teideninfo.tepco.co.jp')
+    // 国土交通省
+    await this.searchTweet('mlit.go.jp')
+    // 国土交通省 川の防災情報
+    await this.searchTweet('river.go.jp')
+    // 総務省消防庁
+    await this.searchTweet('fdma.go.jp')
+    // 厚生労働省
+    await this.searchTweet('mhlw.go.jp')
+    // 経済産業省
+    await this.searchTweet('meti.go.jp')
+    // 東京電力
+    await this.searchTweet('tepco.co.jp')
     // Web
     await this.searchTweet('news.yahoo.co.jp')
     await this.searchTweet('headlines.yahoo.co.jp')
     // UTF-8じゃない
     //await this.searchTweet('news.livedoor.com')
     await this.searchTweet('times.abema.tv')
+    // 海外
+    await this.searchTweet('www.bbc.com/japanese')
     // キーワード
     await this.searchTweet('地震')
     await this.searchTweet('台風')
@@ -81,7 +100,7 @@ export class Twitter {
   public searchTweetPromise = async (query) => {
     return new Promise((resolve, reject)=>{
       console.log("----> searchTweetPromise start : "+query)
-      const params = {q: query, result_type:'populer', count: 100}
+      const params = {q: query, result_type:'popular', count: 100}
       client.get('search/tweets', params, (error, results, response) => {
         if (error){
           console.log("error: "+error)
@@ -128,10 +147,11 @@ export class Twitter {
       photos: photos,
       videos: video,
       gifs: gif,
-      tweeted_at: tweet.created_at,
+      tweeted_at: new Date(Date.parse(tweet.created_at)),
       rt_count: tweet.retweet_count,
       fav_count: tweet.favorite_count,
-      score: tweet.retweet_count + tweet.favorite_count
+      score: tweet.retweet_count + tweet.favorite_count,
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
     }
     // save by tweet id
     await admin.firestore().collection('tweets').doc(tweet.id_str).set(tweetDoc)
@@ -144,12 +164,14 @@ export class Twitter {
         await admin.firestore().collection('news').doc(enurl).update({
           // MEMO: admin.firestore()だとダメ！！！
           tweets: admin.firestore.FieldValue.arrayUnion(tweet.id_str),
+          tweeted_at: new Date(Date.parse(tweet.created_at)),
         })
       }else{
         await admin.firestore().collection('news').doc(enurl).set({
           url: url,
           redirect: 0,
           tweets: [tweet.id_str],
+          tweeted_at: new Date(Date.parse(tweet.created_at)),
           title: null,
           og_title: null,
           og_desc: null,
