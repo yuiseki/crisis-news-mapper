@@ -46,9 +46,17 @@
     L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
       attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
     }).addTo(map);
-    map.setView([35.3622222, 138.7313889], 5);
+    map.setView([35.3622222, 138.7313889], 6);
 
-    $.getJSON("/newsByGeoHash", function(data) {
+    $.getJSON("/japan.geojson", function(data) {
+      var geojson = L.geoJson(data, {
+          onEachFeature: function (feature, layer) {
+            layer.bindPopup(feature.properties.name);
+          }
+      });
+      geojson.addTo(map);
+    });
+    $.getJSON("/tokyo.geojson", function(data) {
       var geojson = L.geoJson(data, {
           onEachFeature: function (feature, layer) {
             layer.bindPopup(feature.properties.name);
