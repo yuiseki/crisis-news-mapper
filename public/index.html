@@ -38,16 +38,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.3.0/dist/leaflet.markercluster.js"></script>
   </head>
   <body>
   <div id="map"></div>
   <script>
+    // Leafletの初期化
     var map = L.map('map');
     L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
       attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
     }).addTo(map);
-    map.setView([35.3622222, 138.7313889], 6);
-
+    map.setView([35.3622222, 138.7313889], 7);
+    // 都道府県の描画
     $.getJSON("/japan.geojson", function(data) {
       var geojson = L.geoJson(data, {
           onEachFeature: function (feature, layer) {
@@ -56,6 +60,7 @@
       });
       geojson.addTo(map);
     });
+    // 東京都の描画
     $.getJSON("/tokyo.geojson", function(data) {
       var geojson = L.geoJson(data, {
           onEachFeature: function (feature, layer) {
@@ -64,6 +69,27 @@
       });
       geojson.addTo(map);
     });
+
+    // ニュースの追加
+    var markers = L.markerClusterGroup();
+    $.getJSON("/newsByGeoHash?km=1000", function(data) {
+      data.forEach(function(element){
+        if (element.og_title && element.og_desc){
+          var marker = L.marker([element.lat, element.long]);
+          var content = "<h3>"+element.og_title+"</h3><p>"+element.og_desc+"</p>";
+          if (element.og_url){
+            content = content + "<a href='"+element.og_url+"'>Link</a><br />";
+          }
+          if (element.og_image){
+            content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
+          }
+          marker.bindPopup(content);
+          markers.addLayer(marker);
+        }
+      });
+      map.addLayer(markers);
+    });
+
   </script>
 
   </body>

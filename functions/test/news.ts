@@ -4,11 +4,7 @@ import { News } from '../src/news'
 
 describe('Newsクラスのテスト', () => {
   const firebase = require('firebase-admin')
-  const serviceAccount = require("/home/ubuntu/news-mapper-web/functions/secrets/key.json");
-  firebase.initializeApp({
-    credential: firebase.credential.cert(serviceAccount),
-    databaseURL: "https://news-mapper-49a5c.firebaseio.com"
-  });
+  firebase.initializeApp()
 
   it('News.get()メソッドでhtmlを取得できる', async () => {
     const html:string = await News.asyncFetch('https://www.google.co.jp/')

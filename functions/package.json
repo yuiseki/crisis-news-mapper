@@ -8,8 +8,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "mocha --reporter spec",
-    "mocha": "mocha --require espower-typescript/guess test/**/*.ts"
+    "test": "mocha --require espower-typescript/guess test/**/*.ts"
   },
   "engines": {
     "node": "10"
@@ -25,13 +24,11 @@
     "dotenv": "^8.1.0",
     "firebase-admin": "^8.0.0",
     "firebase-functions": "^3.1.0",
-    "geofirex": "0.0.6",
     "kuromoji": "^0.1.2",
     "libxmljs": "^0.19.7",
     "md5": "^2.2.1",
     "ngeohash": "^0.6.3",
     "request": "^2.88.0",
-    "rxjs": "^6.5.3",
     "twitter": "^1.7.1"
   },
   "devDependencies": {

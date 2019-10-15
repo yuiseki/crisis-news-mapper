@@ -6,66 +6,64 @@ admin.initializeApp()
 
 const ngeohash = require('ngeohash')
 
+/**
+ * http://localhost:5000/newsByGeoHash?h=xn774cnd&km=100
+ * のようなパスを処理する関数
+ * @query String h データを取得する中心とするgeohash
+ * @query Integer km データを取得する半径
+ */
 exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
-  let geohash
-  if (req.query.geohash===undefined){
-    geohash = 'xn77'
+  let h
+  if (req.query.h===undefined){
+    // 新宿駅
+    h = 'xn774cnd'
   }else{
-    geohash = req.query.geohash
+    h = req.query.h
   }
-  let rad
-  if (req.query.rad===undefined){
-    rad = 10
+  let km
+  if (req.query.km===undefined){
+    km = 10
   }else{
-    rad = req.query.rad
+    km = req.query.km
   }
 
-  const decode = ngeohash.decode(geohash);
-  // TODO fix this
-  const lat = 0.0074 // degrees latitude per meter
-  const lon = 0.0074 // degrees longitude per meter
-  const lowerLat = decode.latitude  - (lat * rad * 1000)
-  const lowerLon = decode.longitude - (lon * rad * 1000)
-  const upperLat = decode.latitude  + (lat * rad * 1000)
-  const upperLon = decode.longitude + (lon * rad * 1000)
-  const lower = ngeohash.encode(lowerLat, lowerLon);
-  const upper = ngeohash.encode(upperLat, upperLon);
-
-  const query = await admin.firestore().collection("news")
-    .where("geohash", ">=", lower)
-    .where("geohash", "<=", upper)
-    .limit(100)
+  const decode = ngeohash.decode(h)
+  // 緯度の1mぶんにあたる値
+  const lat = 0.000008983148616
+  // 経度の1mぶんにあたる値
+  const lon = 0.000010966382364
+  const lowerLat = decode.latitude  - (lat * km * 1000)
+  const lowerLon = decode.longitude - (lon * km * 1000)
+  const upperLat = decode.latitude  + (lat * km * 1000)
+  const upperLon = decode.longitude + (lon * km * 1000)
+  const lowerHash = ngeohash.encode(lowerLat, lowerLon)
+  const upperHash = ngeohash.encode(upperLat, upperLon)
+  // firestoreクエリを組み立てる
+  const query = await admin.firestore()
+    .collection("news")
+    .where("geohash", ">=", lowerHash)
+    .where("geohash", "<=", upperHash)
+    .limit(1000)
     .get()
   if(query.empty){
-    res.status(200).send(JSON.stringify({}))
+    // 0件
+    res.status(200).send(JSON.stringify([]))
   }else{
+    // query.docs.data()を呼ばないとデータ本体が取得できない
     const results = query.docs.map(doc => {
-      return doc.data()
+      const data = doc.data()
+      if (data.lat===undefined || data.long===undefined){
+        const location = ngeohash.decode(data.geohash);
+        data.lat = location.latitude
+        data.long = location.longitude
+      }
+      return data
     })
     res.status(200).send(JSON.stringify(results))
   }
 })
 
-exports.newsByCountry = functions.https.onRequest(async (req, res) => {
-  let country
-  if (req.query.country===undefined){
-    country = '日本'
-  }else{
-    country = req.query.country
-  }
-  const query = await admin.firestore().collection("news")
-    .where("place_country",  "==", country)
-    .get()
-  if(query.empty){
-    res.status(200).send(JSON.stringify({}))
-  }else{
-    const results = query.docs.map(doc => {
-      return doc.data()
-    })
-    res.status(200).send(JSON.stringify(results))
-  }
-})
-
+/*
 import { News } from './news'
 const news = new News()
 exports.updateAllNews = functions.pubsub.schedule('every 60 minutes').onRun(news.updateAllNews)
@@ -73,3 +71,4 @@ exports.updateAllNews = functions.pubsub.schedule('every 60 minutes').onRun(news
 import { Twitter } from './twitter'
 const twitter = new Twitter()
 exports.crawlTwitter = functions.pubsub.schedule('every 10 minutes').onRun(twitter.crawlTwitter)
+*/
