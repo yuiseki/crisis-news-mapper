@@ -44,6 +44,14 @@ export class Twitter {
     await this.searchTweet('47news')
     await this.searchTweet('jiji.com')
     await this.searchTweet('www.afpbb.com')
+    // Web ニュース
+    await this.searchTweet('news.yahoo.co.jp')
+    await this.searchTweet('headlines.yahoo.co.jp')
+    await this.searchTweet('times.abema.tv')
+    // UTF-8じゃない
+    //await this.searchTweet('news.livedoor.com')
+    // 海外 ニュース
+    await this.searchTweet('www.bbc.com/japanese')
     // 行政インフラ
     // 内閣府
     await this.searchTweet('cao.go.jp')
@@ -59,7 +67,7 @@ export class Twitter {
     await this.searchTweet('mlit.go.jp')
     // 国土交通省 川の防災情報
     await this.searchTweet('river.go.jp')
-    // 総務省消防庁
+    // 総務省 消防庁
     await this.searchTweet('fdma.go.jp')
     // 厚生労働省
     await this.searchTweet('mhlw.go.jp')
@@ -67,14 +75,6 @@ export class Twitter {
     await this.searchTweet('meti.go.jp')
     // 東京電力
     await this.searchTweet('tepco.co.jp')
-    // Web
-    await this.searchTweet('news.yahoo.co.jp')
-    await this.searchTweet('headlines.yahoo.co.jp')
-    // UTF-8じゃない
-    //await this.searchTweet('news.livedoor.com')
-    await this.searchTweet('times.abema.tv')
-    // 海外
-    await this.searchTweet('www.bbc.com/japanese')
     // キーワード
     await this.searchTweet('地震')
     await this.searchTweet('台風')
@@ -91,7 +91,7 @@ export class Twitter {
 
   /**
    * Twitterを検索してその結果をfirestoreに保存する非同期メソッド
-   * @param {string} query 検索クエリ
+   * @param {string} query 検索クエリ文字列
    */
   public searchTweet = async (query) => {
     console.log("----> search start : "+query)
@@ -106,13 +106,12 @@ export class Twitter {
 
   /**
    * Twitterの検索APIを呼び検索結果を返す非同期メソッド
-   * @param {string} query 検索クエリ
+   * @param {string} query 検索クエリ文字列
    * @return {tweets[]} 検索結果
    */
   public searchTweetAsync = async (query) => {
     return new Promise((resolve, reject)=>{
       console.log("----> searchTweetPromise start : "+query)
-      //const params = {q: query, result_type:'popular', count: 100}
       const params = {q: query, result_type:'recent', count: 100}
       client.get('search/tweets', params, (error, results, response) => {
         if (error){
@@ -157,21 +156,21 @@ export class Twitter {
     // firestoreに保存するdocument objectを組み立てる
     const tweetDoc = {
       tweet_id_str: tweet.id_str,
-      user_id_str: tweet.user.id_str,
+      user_id_str:  tweet.user.id_str,
       is_protected: tweet.user.protected,
-      screen_name: tweet.user.screen_name,
+      screen_name:  tweet.user.screen_name,
       display_name: tweet.user.name,
-      icon_url: tweet.user.profile_image_url_https,
-      text: tweet.text,
-      urls: urls,
-      photos: photos,
-      videos: video,
-      gifs: gif,
-      tweeted_at: new Date(Date.parse(tweet.created_at)),
-      rt_count: tweet.retweet_count,
-      fav_count: tweet.favorite_count,
-      score: tweet.retweet_count + tweet.favorite_count,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      icon_url:     tweet.user.profile_image_url_https,
+      text:         tweet.text,
+      urls:         urls,
+      photos:       photos,
+      videos:       video,
+      gifs:         gif,
+      tweeted_at:   new Date(Date.parse(tweet.created_at)),
+      rt_count:     tweet.retweet_count,
+      fav_count:    tweet.favorite_count,
+      score:        tweet.retweet_count + tweet.favorite_count,
+      updated_at:   admin.firestore.FieldValue.serverTimestamp(),
     }
     // tweet idをキーにして保存する
     await admin.firestore().collection('tweets').doc(tweet.id_str).set(tweetDoc)
@@ -191,28 +190,29 @@ export class Twitter {
         })
       }else{
         // 存在していない場合
+        // 全部空の状態で追加する
         await admin.firestore().collection('news').doc(enurl).set({
-          redirect: 0,
-          url: url,
-          enurl: enurl,
-          tweets: [tweet.id_str],
-          tweeted_at: new Date(Date.parse(tweet.created_at)),
-          title: null,
-          og_title: null,
-          og_desc: null,
-          og_image: null,
-          og_url : null,
-          lat: null,
-          long: null,
-          geohash: null,
-          category: null,
-          place_country: null,
-          place_pref: null,
-          place_city: null,
+          redirect:       0,
+          url:            url,
+          enurl:          enurl,
+          tweets:         [tweet.id_str],
+          tweeted_at:     new Date(Date.parse(tweet.created_at)),
+          title:          null,
+          og_title:       null,
+          og_desc:        null,
+          og_image:       null,
+          og_url:         null,
+          lat:            null,
+          long:           null,
+          geohash:        null,
+          category:       null,
+          place_country:  null,
+          place_pref:     null,
+          place_city:     null,
           place_mountain: null,
-          place_river: null,
-          place_station: null,
-          place_airport: null,
+          place_river:    null,
+          place_station:  null,
+          place_airport:  null,
         })
       }
       if(url!==undefined && url!==null){

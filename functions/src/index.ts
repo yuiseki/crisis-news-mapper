@@ -16,7 +16,7 @@ const ngeohash = require('ngeohash')
 exports.newsOfJapan = functions.https.onRequest(async (req, res) => {
   let category
   if (req.query.category===undefined){
-    // 新宿駅
+    // 災害
     category = 'crisis'
   }else{
     category = req.query.category

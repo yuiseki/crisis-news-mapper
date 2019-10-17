@@ -266,6 +266,9 @@ export class Detector {
     })
   }
 
+  /**
+   * すべての検出メソッドを順番に実行する
+   */
   public detecting = () => {
     this.detectCategory()
     this.detectCountry()

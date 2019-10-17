@@ -2,7 +2,7 @@ import { describe, it } from 'mocha'
 import assert = require('assert'); 
 import { Detector } from '../src/detector'
 
-describe('Mapperクラスのテスト', () => {
+describe('Detectorクラスのテスト', () => {
 
   it('Detector.locationListが正常に展開される', async ()=>{
     const detector = new Detector("")
@@ -13,7 +13,7 @@ describe('Mapperクラスのテスト', () => {
     assert(Object.keys(Detector.locationList.city.data).includes("台東区")===true)
   })
 
-  it('new Mapper()できる', async ()=>{
+  it('new Detector()できる', async ()=>{
     const detector = new Detector("東京特許許可局")
     await detector.ready
     assert(detector!==null)
@@ -22,17 +22,17 @@ describe('Mapperクラスのテスト', () => {
   it('街の名前だけで国と県も特定できる1', async ()=>{
     const detector = new Detector("台東区")
     await detector.ready
-    assert(detector.city==="台東区")
-    assert(detector.pref==="東京都")
     assert(detector.country==="日本")
+    assert(detector.pref==="東京都")
+    assert(detector.city==="台東区")
   })
 
   it('街の名前だけで国と県も特定できる2', async ()=>{
     const detector = new Detector("町田市")
     await detector.ready
-    assert(detector.city==="町田市")
-    assert(detector.pref==="東京都")
     assert(detector.country==="日本")
+    assert(detector.pref==="東京都")
+    assert(detector.city==="町田市")
   })
 
   it('適当な文字列からカテゴリと地名を検出できる1', async ()=>{
@@ -41,6 +41,7 @@ describe('Mapperクラスのテスト', () => {
     assert(detector.category==='crisis')
     assert(detector.country==='日本')
     assert(detector.pref==='東京都')
+    assert(detector.city===null)
   })
 
   it('適当な文字列からカテゴリと地名を抽出できる2', async ()=>{
@@ -49,6 +50,7 @@ describe('Mapperクラスのテスト', () => {
     assert(detector.category==='drug')
     assert(detector.country==='日本')
     assert(detector.pref==='沖縄県')
+    assert(detector.city==='うるま市')
   })
 
   it('適当な文字列からカテゴリと地名を抽出できる3', async ()=>{
@@ -57,6 +59,7 @@ describe('Mapperクラスのテスト', () => {
     assert(detector.category==='children')
     assert(detector.country==='日本')
     assert(detector.pref==='福岡県')
+    assert(detector.city==='福岡市')
   })
 
   it('適当な文字列からカテゴリと地名を抽出できる4', async ()=>{
@@ -65,6 +68,7 @@ describe('Mapperクラスのテスト', () => {
     assert(detector.category==='sports')
     assert(detector.country==='日本')
     assert(detector.pref===null)
+    assert(detector.city===null)
   })
 
 })
