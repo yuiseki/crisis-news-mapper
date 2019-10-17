@@ -29,6 +29,12 @@
         right: 0;
         top: 0;
       }
+      #map iframe#twitter-widget-0 {
+        z-index: 1000;
+        position: absolute !important;
+        left: 50px !important;
+        top: 30px !important;
+      }
       #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
       #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
       #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
@@ -52,6 +58,7 @@
   <body>
   <div id="map">
     <a id="ribbon" href="https://github.com/yuiseki/crisis-news-mapper"><img width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_orange_ff7600.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" data-recalc-dims="1"></a>
+    <a class="twitter-share-button" data-size="large" href="https://twitter.com/intent/tweet">Tweet</a>
   </div>
   <script>
     // Leafletの初期化
@@ -128,6 +135,22 @@
       map.addLayer(markers);
     });
 
+    window.twttr = (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0],
+      t = window.twttr || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://platform.twitter.com/widgets.js";
+      fjs.parentNode.insertBefore(js, fjs);
+
+      t._e = [];
+      t.ready = function(f) {
+        t._e.push(f);
+      };
+
+      return t;
+    }(document, "script", "twitter-wjs"));
   </script>
 
   </body>

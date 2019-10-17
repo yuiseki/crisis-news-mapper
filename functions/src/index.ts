@@ -76,7 +76,6 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
   const upperLon = decode.longitude + (lon * km * 1000)
   const lowerHash = ngeohash.encode(lowerLat, lowerLon)
   const upperHash = ngeohash.encode(upperLat, upperLon)
-  // firestoreクエリを組み立てる
   const query = await admin.firestore()
     .collection("news")
     .where("category", "==", "crisis")
@@ -85,10 +84,8 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
     .limit(500)
     .get()
   if(query.empty){
-    // 0件
     res.status(200).send(JSON.stringify([]))
   }else{
-    // query.docs.data()を呼ばないとデータ本体が取得できない
     const results = query.docs.map(doc => {
       const data = doc.data()
       return data
