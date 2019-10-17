@@ -93,7 +93,18 @@
     // ニュースの追加
     var markers = L.markerClusterGroup();
     markers.freezeAtZoom(10);
-    $.getJSON("/crisisOfJapan", function(data) {
+    var category = ""
+    switch (location.hash){
+      case "#drug":
+        category = "?category=drug";
+        break;
+      case "#children":
+        category = "?category=children";
+        break;
+      default:
+        category = ""
+    }
+    $.getJSON("/newsOfJapan"+category, function(data) {
       data.forEach(function(element){
         if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
         if (element.og_title && element.og_desc){

@@ -7,17 +7,25 @@ admin.initializeApp()
 const ngeohash = require('ngeohash')
 
 /**
- * http://localhost:5000/crisisOfJapan
+ * http://localhost:5000/newsOfJapan
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
+ * @param {string} req.query.category 絞り込むカテゴリ
  */
-exports.crisisOfJapan = functions.https.onRequest(async (req, res) => {
+exports.newsOfJapan = functions.https.onRequest(async (req, res) => {
+  let category
+  if (req.query.category===undefined){
+    // 新宿駅
+    category = 'crisis'
+  }else{
+    category = req.query.category
+  }
   // firestoreクエリを組み立てる
   const query = await admin.firestore()
     .collection("news")
     .where("place_country", "==", "日本")
-    .where("category", "==", "crisis")
+    .where("category", "==", category)
     .orderBy("tweeted_at", "desc")
     .limit(1000)
     .get()

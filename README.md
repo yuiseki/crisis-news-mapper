@@ -40,7 +40,7 @@ npm install
 npm run build
 ```
 
-## 起動
+## 開発環境で起動
 ```
 cd ..
 firebase serve

@@ -8,8 +8,8 @@
     ],
     "rewrites": [
       {
-        "source": "/crisisOfJapan",
-        "function": "crisisOfJapan"
+        "source": "/newsOfJapan",
+        "function": "newsOfJapan"
       },
       {
         "source": "/newsByGeoHash",

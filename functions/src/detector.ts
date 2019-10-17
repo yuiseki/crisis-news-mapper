@@ -30,6 +30,36 @@ const categoryList = {
     "土砂流入",
     "土砂災害",
   ],
+  children: [
+    "虐待",
+    "性的虐待",
+    "性虐待",
+    "性暴力",
+    "児童買春",
+    "児童ポルノ",
+    "児童福祉法",
+    "児童福祉司",
+    "児童相談所",
+    "保護責任者",
+  ],
+  drug: [
+    "麻薬",
+    "薬物",
+    "乱用",
+    "大麻",
+    "コカイン",
+    "覚醒剤",
+    "覚せい剤",
+    "危険ドラッグ",
+  ],
+  politics: [
+    "職権乱用",
+    "権力乱用",
+    "地位乱用",
+    "資産乱用",
+    "捜査の乱用",
+    "優越的地位の乱用",
+  ],
   sports: [
     "オリンピック",
     "ワールドカップ",
@@ -252,14 +282,13 @@ export class Detector {
    */
   public detectCategory(){
     this.category = null
-    for (const keyword of Detector.categoryList.crisis){
-      if(this.text.match(keyword)){
-        this.category = "crisis"
-      }
-    }
-    for (const keyword of Detector.categoryList.sports){
-      if(this.text.match(keyword)){
-        this.category = "sports"
+    // category = crisis, drug, sports, ...
+    for (const category of Object.keys(Detector.categoryList)){
+      for (const keyword of Detector.categoryList[category]){
+        const regexp = new RegExp(keyword, "g")
+        if(this.text.match(regexp)){
+          this.category = category
+        }
       }
     }
   }
