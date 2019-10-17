@@ -258,6 +258,8 @@ export class Detector {
     this.text = text
     this.location = null
     this.ready = new Promise(async resolve => {
+      // クラスメソッド Detector.locationList が存在しない最初の時だけ
+      // loadLocationListを呼ぶ
       if (Detector.locationList===null) {
         Detector.locationList = await Detector.loadLocationList()
       }
