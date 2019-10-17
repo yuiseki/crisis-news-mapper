@@ -1,4 +1,6 @@
 
+# How to contribute
+
 ## nodejs 10.16.3 をセットアップする
 
 Firebaseでサポートされているのは
@@ -15,6 +17,7 @@ apt remove nodejs
 
 ### Windows10 の場合
 ```
+choco uninstall nodejs nodejs.install
 choco install nodejs-lts
 ```
 
@@ -22,7 +25,6 @@ choco install nodejs-lts
 ```
 npm install -g firebase-tools
 firebase login
-firebase projects:list
 ```
 
 ## GOOGLE_APPLICATION_CREDENTIALS環境変数をセットする
