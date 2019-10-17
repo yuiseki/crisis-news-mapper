@@ -4,6 +4,7 @@
         "hypernym",
         "hyperpref",
         "libxmljs",
+        "predeploy",
         "promisify",
         "yuiseki"
     ]
