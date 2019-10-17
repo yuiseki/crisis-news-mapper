@@ -76,16 +76,23 @@ export class Twitter {
     // 東京電力
     await this.searchTweet('tepco.co.jp')
     // キーワード
+    await this.searchTweet('災害')
+    await this.searchTweet('被災')
     await this.searchTweet('地震')
     await this.searchTweet('台風')
+    // 水
+    await this.searchTweet('洪水')
     await this.searchTweet('浸水')
+    await this.searchTweet('冠水')
     await this.searchTweet('氾濫')
     await this.searchTweet('決壊')
-    await this.searchTweet('土砂崩れ')
+    // 山
+    await this.searchTweet('崖崩れ')
+    await this.searchTweet('土砂')
+    // ライフライン
     await this.searchTweet('停電')
     await this.searchTweet('断水')
-    await this.searchTweet('給水所')
-    await this.searchTweet('避難所')
+    await this.searchTweet('給水')
     await this.searchTweet('通信障害')
   }
 

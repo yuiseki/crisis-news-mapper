@@ -101,4 +101,4 @@ exports.updateAllNews = functions.pubsub.schedule('every 12 hours').onRun(News.u
 
 import { Twitter } from './twitter'
 const twitter = new Twitter()
-exports.crawlTwitter = functions.pubsub.schedule('every 30 minutes').onRun(twitter.crawlTwitter)
+exports.crawlTwitter = functions.pubsub.schedule('every 15 minutes').onRun(twitter.crawlTwitter)

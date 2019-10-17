@@ -6,26 +6,29 @@ const csvParseSync = require('csv-parse/lib/sync')
 
 const categoryList = {
   crisis: [
+    "災害",
+    "被災",
+    "避難",
     "地震",
     "台風",
     "豪雨",
     "竜巻",
     "突風",
-    "災害",
-    "被災",
-    "避難",
     "倒壊",
     "崩落",
     // ライフイン
     "停電",
     "断水",
     "給水",
+    "通信障害",
     // 水関係
+    "洪水",
     "浸水",
     "冠水",
     "氾濫",
     "決壊",
     // 山関係
+    "崖崩れ",
     "土砂崩れ",
     "土砂流入",
     "土砂災害",
@@ -155,6 +158,9 @@ const locationList = {
     },
 }
 
+/**
+ * 文字列を与えるとカテゴリや位置情報を検出するクラス
+ */
 export class Detector {
   ready:Promise<any>
   text:string
