@@ -7,10 +7,40 @@ admin.initializeApp()
 const ngeohash = require('ngeohash')
 
 /**
+ * http://localhost:5000/crisisOfJapan
+ * のようなパスを処理する関数
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
+exports.crisisOfJapan = functions.https.onRequest(async (req, res) => {
+  // firestoreクエリを組み立てる
+  const query = await admin.firestore()
+    .collection("news")
+    .where("place_country", "==", "日本")
+    .where("category", "==", "crisis")
+    .orderBy("tweeted_at", "desc")
+    .limit(1000)
+    .get()
+  if(query.empty){
+    // 0件
+    res.status(200).send(JSON.stringify([]))
+  }else{
+    // query.docs.data()を呼ばないとデータ本体が取得できない
+    const results = query.docs.map(doc => {
+      const data = doc.data()
+      return data
+    })
+    res.status(200).send(JSON.stringify(results))
+  }
+})
+
+/**
  * http://localhost:5000/newsByGeoHash?h=xn774cnd&km=100
  * のようなパスを処理する関数
- * @query String h データを取得する中心とするgeohash
- * @query Integer km データを取得する半径
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ * @param {string} req.query.h データを取得する中心とするgeohash
+ * @param {number} req.query.km データを取得する半径
  */
 exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
   let h
@@ -44,7 +74,7 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
     .where("category", "==", "crisis")
     .where("geohash", ">=", lowerHash)
     .where("geohash", "<=", upperHash)
-    .limit(1000)
+    .limit(500)
     .get()
   if(query.empty){
     // 0件
@@ -53,22 +83,16 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
     // query.docs.data()を呼ばないとデータ本体が取得できない
     const results = query.docs.map(doc => {
       const data = doc.data()
-      if (data.lat===undefined || data.long===undefined){
-        const location = ngeohash.decode(data.geohash);
-        data.lat = location.latitude
-        data.long = location.longitude
-      }
       return data
     })
     res.status(200).send(JSON.stringify(results))
   }
 })
 
-/*
+
 import { News } from './news'
-const news = new News()
-exports.updateAllNews = functions.pubsub.schedule('every 60 minutes').onRun(news.updateAllNews)
-*/
+exports.updateAllNews = functions.pubsub.schedule('every 12 hours').onRun(News.updateAllNews)
+
 
 import { Twitter } from './twitter'
 const twitter = new Twitter()

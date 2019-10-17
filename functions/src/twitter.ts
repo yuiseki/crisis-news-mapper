@@ -21,6 +21,10 @@ import * as md5 from 'md5';
 import { News } from './news'
 
 export class Twitter {
+
+  /**
+   * twitterの検索をまとめて実行する非同期メソッド
+   */
   public crawlTwitter = async (context)=>{
     console.log("----> crawlTwitter start")
     // 新聞
@@ -85,22 +89,31 @@ export class Twitter {
     await this.searchTweet('通信障害')
   }
 
+  /**
+   * Twitterを検索してその結果をfirestoreに保存する非同期メソッド
+   * @param {string} query 検索クエリ
+   */
   public searchTweet = async (query) => {
     console.log("----> search start : "+query)
     // awaitで検索結果を待つ
-    const results:any = await this.searchTweetPromise(query)
+    const results:any = await this.searchTweetAsync(query)
     // 検索結果を保存する
-    for (const idx in results) {
-      const tweet = results[idx];
+    for (const tweet of results) {
       // awaitで保存を待つ
-      await this.saveTweet(tweet)
+      await this.saveTweetAsync(tweet)
     }
   }
 
-  public searchTweetPromise = async (query) => {
+  /**
+   * Twitterの検索APIを呼び検索結果を返す非同期メソッド
+   * @param {string} query 検索クエリ
+   * @return {tweets[]} 検索結果
+   */
+  public searchTweetAsync = async (query) => {
     return new Promise((resolve, reject)=>{
       console.log("----> searchTweetPromise start : "+query)
-      const params = {q: query, result_type:'popular', count: 100}
+      //const params = {q: query, result_type:'popular', count: 100}
+      const params = {q: query, result_type:'recent', count: 100}
       client.get('search/tweets', params, (error, results, response) => {
         if (error){
           console.log("error: "+error)
@@ -113,12 +126,18 @@ export class Twitter {
     })
   }
 
-  public saveTweet = async (tweet) => {
+  /**
+   * firestoreのtweetコレクションにtweetを保存する非同期メソッド
+   * @param {tweet} tweet
+   */
+  public saveTweetAsync = async (tweet) => {
+    // ツイートに含まれるURLを得る
     const urls = []
     for (const idx in tweet.entities.urls){
       const url = tweet.entities.urls[idx].expanded_url
       urls.push(url)
     }
+    // ツイートに含まれる写真、動画、gifを得る
     const photos = []
     let video = null
     let gif = null
@@ -135,6 +154,7 @@ export class Twitter {
           break
       }
     }
+    // firestoreに保存するdocument objectを組み立てる
     const tweetDoc = {
       tweet_id_str: tweet.id_str,
       user_id_str: tweet.user.id_str,
@@ -153,23 +173,28 @@ export class Twitter {
       score: tweet.retweet_count + tweet.favorite_count,
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     }
-    // save by tweet id
+    // tweet idをキーにして保存する
     await admin.firestore().collection('tweets').doc(tweet.id_str).set(tweetDoc)
-    // save by url
-    for (const idx in urls){
-      const url = urls[idx]
+    // newsコレクションも更新する
+    for (const url of urls){
+      // urlのmd5 hashをキーにしてnewsドキュメントが存在するかチェックする
       const enurl = md5(url)
       const newsDocRef = await admin.firestore().collection('news').doc(enurl).get()
       if (newsDocRef.exists){
+        // すでに存在している場合
         await admin.firestore().collection('news').doc(enurl).update({
           // MEMO: admin.firestore()だとダメ！！！
+          // 言及ツイートに追加
           tweets: admin.firestore.FieldValue.arrayUnion(tweet.id_str),
+          // 最終言及日時を更新
           tweeted_at: new Date(Date.parse(tweet.created_at)),
         })
       }else{
+        // 存在していない場合
         await admin.firestore().collection('news').doc(enurl).set({
-          url: url,
           redirect: 0,
+          url: url,
+          enurl: enurl,
           tweets: [tweet.id_str],
           tweeted_at: new Date(Date.parse(tweet.created_at)),
           title: null,
@@ -177,24 +202,24 @@ export class Twitter {
           og_desc: null,
           og_image: null,
           og_url : null,
+          lat: null,
+          long: null,
+          geohash: null,
+          category: null,
           place_country: null,
-          place_area: null,
-          place_state: null,
           place_pref: null,
           place_city: null,
           place_mountain: null,
           place_river: null,
           place_station: null,
           place_airport: null,
-          geohash: null
         })
       }
       if(url!==undefined && url!==null){
-        let dataRef = await admin.firestore().collection('news').doc(enurl).get()
+        // ニュース本文の分析を実行する
+        const dataRef = await admin.firestore().collection('news').doc(enurl).get()
         if(dataRef.exists){
           await News.updateNews(dataRef.data())
-        }else{
-          await News.updateNews({url:url})
         }
       }
     }

@@ -32,9 +32,8 @@ describe('Newsクラスのテスト', () => {
     assert(web.title==='台風19号　東京都心でも猛烈な風　歴代2位(日直予報士 2019年10月12日) - 日本気象協会 tenki.jp')
   }).timeout(6000);
 
-  it('news.updateNews()メソッドが動く', async () => {
-    const news = new News()
-    await news.updateNews('https://tenki.jp/forecaster/deskpart/2019/10/12/6281.html')
+  it('News.updateNews()メソッドが動く', async () => {
+    await News.updateNews({url:'https://tenki.jp/forecaster/deskpart/2019/10/12/6281.html'})
   }).timeout(8000)
 
 })

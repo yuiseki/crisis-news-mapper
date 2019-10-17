@@ -58,43 +58,42 @@
     var map = L.map('map');
 
     // 地図タイルを追加
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
+    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
+      maxZoom: 18
     }).addTo(map);
     // 初期座標とズームを指定
     map.setView([35.3622222, 138.7313889], 8);
-    // 都道府県の描画
+    // 都道府県の境界線の描画
     $.getJSON("/japan.geojson", function(data) {
       var geojson = L.geoJson(data, {
           style: {
             weight: 5
           },
           onEachFeature: function (feature, layer) {
-            layer.bindTooltip(feature.properties.nam_ja)
+            
           }
       });
       geojson.addTo(map);
-    });
-    // 市区町村の描画
-    $.getJSON("/japan_cities.geojson", function(data) {
-      var geojson = L.geoJson(data, {
-          style: {
-            weight: 1,
-            opacity: 0.3
-          },
-          onEachFeature: function (feature, layer) {
-            layer.bindTooltip(feature.properties.cityname_k);
-          }
+      // 市区町村の境界線の描画
+      $.getJSON("/japan_cities.geojson", function(data) {
+        var geojson = L.geoJson(data, {
+            style: {
+              weight: 1,
+              opacity: 0.3
+            },
+            onEachFeature: function (feature, layer) {
+              layer.bindTooltip(feature.properties.cityname_k);
+            }
+        });
+        geojson.addTo(map);
       });
-      geojson.addTo(map);
     });
+    
 
     // ニュースの追加
     var markers = L.markerClusterGroup();
-    markers.freezeAtZoom(9);
-    $.getJSON("/newsByGeoHash?km=1000", function(data) {
+    markers.freezeAtZoom(10);
+    $.getJSON("/crisisOfJapan", function(data) {
       data.forEach(function(element){
         if (element.og_title && element.og_desc){
           var marker = L.marker([element.lat, element.long]);

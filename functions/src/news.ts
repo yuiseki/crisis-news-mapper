@@ -5,17 +5,17 @@ const request = require('request')
 const cheerio = require('cheerio')
 const ngeohash = require('ngeohash')
 import * as md5 from 'md5'
-import { Mapper } from './mapper'
+import { Detector } from './detector'
 
 export class News {
 
   /**
-   * 非同期でrequestを実行するメソッド
-   * @param string target url
-   * @return string HTTP response body
+   * requestを実行して結果を返す非同期メソッド
+   * @param {string} url target url
+   * @return {string} HTTP response body
    */
   public static asyncFetch = async(url:string):Promise<string> => {
-    return new Promise((resolve, reject) => {
+    return new Promise( resolve => {
       console.log("----> asyncFetch start: "+url)
       request(url, async (error, response, body) => {
           if (error) {
@@ -43,116 +43,124 @@ export class News {
   }
 
   /**
-   * 非同期でHTMLのparseをするメソッド
+   * HTMLの本文を解析する非同期メソッド
+   * @param {string} html html content body string
+   * @return {any} 解析結果
    */
   public static asyncParse = async(html:string):Promise<any> => {
-    return new Promise((resolve, reject)=>{
+    return new Promise( resolve => {
       console.log("----> asyncParse start")
+      let result:any = {}
       const document = cheerio.load(html)
-      const title = cheerio.text(document('title'))
-      console.log("----> asyncParse title : "+title)
-      let og_title = document("meta[property='og:title']").attr('content')
-      if (og_title === undefined){
-        og_title = null
+      result.title = cheerio.text(document('title'))
+      if (result.title===undefined){
+        result.title = null
       }
-      console.log("----> asyncParse og_title : "+og_title)
-      let og_desc  = document("meta[property='og:description']").attr('content')
-      if (og_desc === undefined){
-        og_desc = null
+      result.og_title = document("meta[property='og:title']").attr('content')
+      if (result.og_title===undefined){
+        result.og_title = null
       }
-      console.log("----> asyncParse og_desc : "+og_desc)
-      let og_image = document("meta[property='og:image']").attr('content')
-      if (og_image === undefined){
-        og_image = null
+      result.og_desc  = document("meta[property='og:description']").attr('content')
+      if (result.og_desc===undefined){
+        result.og_desc = null
       }
-      let og_url   = document("meta[property='og:url']").attr('content')
-      if (og_url === undefined){
-        og_url = null
+      result.og_image = document("meta[property='og:image']").attr('content')
+      if (result.og_image===undefined){
+        result.og_image = null
       }
-      const result = {
-        title: title,
-        og_title: og_title,
-        og_desc: og_desc,
-        og_image: og_image,
-        og_url : og_url,
+      result.og_url   = document("meta[property='og:url']").attr('content')
+      if (result.og_url===undefined){
+        result.og_url = null
       }
-      console.log("----> parse finish")
+      console.log("----> asyncParse og_title: "+result.og_title)
+      console.log("----> asyncParse og_desc: "+result.og_desc)
+      console.log("----> asyncParse finish")
       resolve(result)
     })
   }
 
+  /**
+   * firestoreのnewsコレクションのデータを更新する非同期メソッド
+   * @param {any} data collection document
+   */
+  public static updateNews = async(data:any) => {
+    let update:any = {}
+    update.url = data.url
+    update.enurl = md5(update.url)
+    console.log("updateNews: "+update.url)
+    console.log("updateNews: "+update.enurl)
 
-
-  public static updateNews = async(data) => {
-    const url = data.url
-    const enurl = md5(url)
-
-    let title
-    let og_title
-    let og_desc
-    let og_image
-    let og_url
-    let text
     if (data.og_title===null || data.og_title===undefined){
-      const html:any = await News.asyncFetch(url)
+      const html:any = await News.asyncFetch(update.url)
       if (html===null){
-        await admin.firestore().collection('news').doc(enurl).update({
-          url: url,
+        await admin.firestore().collection('news').doc(update.enurl).update({
+          url: update.url,
           redirect: 1
         })
         return
       }
-      const web:any = await News.asyncParse(html)
-      title = web.title
-      og_title = web.title
-      og_desc = web.og_desc
-      og_image = web.og_image
-      og_url = web.og_url
-      text = web.title+web.og_title+web.og_desc
+      let web = await News.asyncParse(html)
+      update = Object.assign(update, web)
     }else{
-      title = data.title
-      og_title = data.title
-      og_desc = data.og_desc
-      og_image = data.og_image
-      og_url = data.og_url
-      text = data.title+data.og_title+data.og_desc
+      update = Object.assign(update, data)
     }
-    
-    const mapper = new Mapper(text)
 
-    let news_geohash = null
-    let lat = null
-    let long = null
-    if (mapper.location!==undefined && mapper.location!==null){
-      lat = mapper.location.lat
-      long = mapper.location.long
-      news_geohash = ngeohash.encode(mapper.location.lat, mapper.location.long)
-    }else{
-      news_geohash = ''
+    if (data.tweets!==undefined && data.tweets.length > 0){
+      let tweet_id = data.tweets.sort((a,b)=>{ return (a < b ? 1 : -1); })[0]
+      let tweetRef = await admin.firestore().collection('tweets').doc(tweet_id).get()
+      let tweet = tweetRef.data()
+      if(tweet.tweeted_at instanceof Date){
+        update.tweeted_at = tweet.tweeted_at
+      }else if (tweet.tweeted_at instanceof String){
+        let tweeted_at = new Date(Date.parse(tweet.tweeted_at))
+        update.tweeted_at = tweeted_at
+      }
+    }
+    if (update.tweeted_at===undefined){
+      update.tweeted_at = null
+    }
+
+    // Detector
+    let text = update.title+update.og_title+update.og_desc
+    const detector = new Detector(text)
+    await detector.ready
+    update.geohash = ''
+    if (detector.location!==undefined && detector.location!==null){
+      update.lat = detector.location.lat
+      update.long = detector.location.long
+      update.geohash = ngeohash.encode(detector.location.lat, detector.location.long)
+    }
+    if (update.lat===undefined || update.long===undefined){
+      update.lat = null
+      update.long = null
     }
     
-    await admin.firestore().collection('news').doc(enurl).update({
-      url:           url,
-      redirect:      0,
-      title:         title,
-      og_title:      og_title,
-      og_desc:       og_desc,
-      og_image:      og_image,
-      og_url:        og_url,
-      place_country: mapper.country,
-      place_area:    null,
-      place_state:   null,
-      place_pref:    mapper.pref,
-      place_city:    mapper.city,
-      place_mountain: mapper.mountain,
-      place_river:   mapper.river,
-      place_station: mapper.station,
-      place_airport: mapper.airport,
-      geohash:       news_geohash,
-      lat:           lat,
-      long:          long,
-      category:      mapper.category,
-    }).catch((error)=> { console.log(error)})
+    await admin.firestore().collection('news').doc(update.enurl).update({
+      redirect:       0,
+      url:            update.url,
+      enurl:          update.enurl,
+      tweeted_at:     update.tweeted_at,
+      title:          update.title,
+      og_title:       update.og_title,
+      og_desc:        update.og_desc,
+      og_image:       update.og_image,
+      og_url:         update.og_url,
+      geohash:        update.geohash,
+      lat:            update.lat,
+      long:           update.long,
+      category:       detector.category,
+      place_country:  detector.country,
+      place_pref:     detector.pref,
+      place_city:     detector.city,
+      place_mountain: detector.mountain,
+      place_river:    detector.river,
+      place_station:  detector.station,
+      place_airport:  detector.airport,
+    }).catch((error)=> {
+      console.log("----------")
+      console.log(error)
+      console.log("----------")
+    })
   }
 
   public static updateAllNewsBySnapshot = (docs)=>{

@@ -30,7 +30,7 @@ firebase projects:list
   - Windows 10 の場合
     - `$env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\yuise\news-mapper\key.json"`
   - Linux の場合
-    - `export GOOGLE_APPLICATION_CREDENTIALS="[PATH]"`
+    - `export GOOGLE_APPLICATION_CREDENTIALS="/home/yuiseki/news-mapper/key.json"`
 
 
 ## 依存関係をインストールしてビルド
@@ -48,3 +48,9 @@ firebase serve
 
 ## ブラウザで確認
   - http://localhost:5000/
+
+## テストの実行
+```
+cd functions
+npm test
+```
