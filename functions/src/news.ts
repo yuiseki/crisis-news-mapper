@@ -139,6 +139,7 @@ export class News {
       redirect:       0,
       url:            update.url,
       enurl:          update.enurl,
+      updated_at:     new Date(),
       tweeted_at:     update.tweeted_at,
       title:          update.title,
       og_title:       update.og_title,

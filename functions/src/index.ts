@@ -94,11 +94,14 @@ exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
   }
 })
 
+const runtimeOpt = {
+  timeoutSeconds: 540
+}
 
 import { News } from './news'
-exports.updateAllNews = functions.pubsub.schedule('every 12 hours').onRun(News.updateAllNews)
+exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 12 hours').onRun(News.updateAllNews)
 
 
 import { Twitter } from './twitter'
 const twitter = new Twitter()
-exports.crawlTwitter = functions.pubsub.schedule('every 15 minutes').onRun(twitter.crawlTwitter)
+exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlTwitter)

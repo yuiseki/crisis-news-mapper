@@ -22,88 +22,99 @@ import { News } from './news'
 
 export class Twitter {
 
+  public static queryList = [
+    // 新聞 5
+    'yomiuri.co.jp',
+    'mainichi.jp',
+    'asahi.com',
+    'sankei.com',
+    'nikkei.com',
+    // TV 5
+    'nhk.or.jp',
+    'news24.jp',
+    'news.tbs.co.jp',
+    'fnn.jp',
+    'news.tv-asahi.co.jp',
+    // 通信社 4
+    'this.kiji.is',
+    '47news',
+    'jiji.com',
+    'www.afpbb.com',
+    // Web ニュース 3
+    'news.yahoo.co.jp',
+    'headlines.yahoo.co.jp',
+    'times.abema.tv',
+    // UTF-8じゃない
+    //'news.livedoor.com',
+    // 海外 ニュース 1
+    'www.bbc.com/japanese',
+    // 行政インフラ 11
+    // 内閣府
+    'cao.go.jp',
+    // 内閣府 防災情報
+    'bousai.go.jp',
+    // 首相官邸
+    'kantei.go.jp',
+    // 防衛省 自衛隊
+    'mod.go.jp',
+    // 気象庁
+    'jma.go.jp',
+    // 国土交通省
+    'mlit.go.jp',
+    // 国土交通省 川の防災情報
+    'river.go.jp',
+    // 総務省 消防庁
+    'fdma.go.jp',
+    // 厚生労働省
+    'mhlw.go.jp',
+    // 経済産業省
+    'meti.go.jp',
+    // 東京電力
+    'tepco.co.jp',
+    // キーワード 4
+    '災害',
+    '被災',
+    '地震',
+    '台風',
+    // 水 5
+    '洪水',
+    '浸水',
+    '冠水',
+    '氾濫',
+    '決壊',
+    // 山 2
+    '崖崩れ',
+    '土砂',
+    // ライフライン 4
+    '停電',
+    '断水',
+    '給水',
+    '通信障害',
+  ]
+
   /**
-   * twitterの検索をまとめて実行する非同期メソッド
+   * twitterの検索を実行する非同期メソッド
+   * functionsは最大540秒でタイムアウトしてしまう
+   * 毎分実行し、毎分ちがうqueryで検索する
    */
   public crawlTwitter = async (context)=>{
     console.log("----> crawlTwitter start")
-    // 新聞
-    await this.searchTweet('yomiuri.co.jp')
-    await this.searchTweet('mainichi.jp')
-    await this.searchTweet('asahi.com')
-    await this.searchTweet('sankei.com')
-    await this.searchTweet('nikkei.com')
-    // TV
-    await this.searchTweet('nhk.or.jp')
-    await this.searchTweet('news24.jp')
-    await this.searchTweet('news.tbs.co.jp')
-    await this.searchTweet('fnn.jp')
-    await this.searchTweet('news.tv-asahi.co.jp')
-    // 通信社
-    await this.searchTweet('this.kiji.is')
-    await this.searchTweet('47news')
-    await this.searchTweet('jiji.com')
-    await this.searchTweet('www.afpbb.com')
-    // Web ニュース
-    await this.searchTweet('news.yahoo.co.jp')
-    await this.searchTweet('headlines.yahoo.co.jp')
-    await this.searchTweet('times.abema.tv')
-    // UTF-8じゃない
-    //await this.searchTweet('news.livedoor.com')
-    // 海外 ニュース
-    await this.searchTweet('www.bbc.com/japanese')
-    // 行政インフラ
-    // 内閣府
-    await this.searchTweet('cao.go.jp')
-    // 内閣府 防災情報
-    await this.searchTweet('bousai.go.jp')
-    // 首相官邸
-    await this.searchTweet('kantei.go.jp')
-    // 防衛省 自衛隊
-    await this.searchTweet('mod.go.jp')
-    // 気象庁
-    await this.searchTweet('jma.go.jp')
-    // 国土交通省
-    await this.searchTweet('mlit.go.jp')
-    // 国土交通省 川の防災情報
-    await this.searchTweet('river.go.jp')
-    // 総務省 消防庁
-    await this.searchTweet('fdma.go.jp')
-    // 厚生労働省
-    await this.searchTweet('mhlw.go.jp')
-    // 経済産業省
-    await this.searchTweet('meti.go.jp')
-    // 東京電力
-    await this.searchTweet('tepco.co.jp')
-    // キーワード
-    await this.searchTweet('災害')
-    await this.searchTweet('被災')
-    await this.searchTweet('地震')
-    await this.searchTweet('台風')
-    // 水
-    await this.searchTweet('洪水')
-    await this.searchTweet('浸水')
-    await this.searchTweet('冠水')
-    await this.searchTweet('氾濫')
-    await this.searchTweet('決壊')
-    // 山
-    await this.searchTweet('崖崩れ')
-    await this.searchTweet('土砂')
-    // ライフライン
-    await this.searchTweet('停電')
-    await this.searchTweet('断水')
-    await this.searchTweet('給水')
-    await this.searchTweet('通信障害')
+    const now = new Date()
+    let query
+    if (Twitter.queryList.length > now.getMinutes()+1){
+      query = Twitter.queryList[now.getMinutes()]
+    }
+    await this.searchTweetsAndSave(query)
   }
 
   /**
    * Twitterを検索してその結果をfirestoreに保存する非同期メソッド
    * @param {string} query 検索クエリ文字列
    */
-  public searchTweet = async (query) => {
+  public searchTweetsAndSave = async (query) => {
     console.log("----> search start : "+query)
     // awaitで検索結果を待つ
-    const results:any = await this.searchTweetAsync(query)
+    const results:any = await this.searchTweetsAsync(query)
     // 検索結果を保存する
     for (const tweet of results) {
       // awaitで保存を待つ
@@ -116,7 +127,7 @@ export class Twitter {
    * @param {string} query 検索クエリ文字列
    * @return {tweets[]} 検索結果
    */
-  public searchTweetAsync = async (query) => {
+  public searchTweetsAsync = async (query) => {
     return new Promise((resolve, reject)=>{
       console.log("----> searchTweetPromise start : "+query)
       const params = {q: query, result_type:'recent', count: 100}
