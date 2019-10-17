@@ -95,6 +95,7 @@
     markers.freezeAtZoom(10);
     $.getJSON("/crisisOfJapan", function(data) {
       data.forEach(function(element){
+        if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
         if (element.og_title && element.og_desc){
           var marker = L.marker([element.lat, element.long]);
           var content = "<h3>"+element.og_title+"</h3><p>";
