@@ -1,5 +1,6 @@
 
 const admin = require('firebase-admin')
+const cheerio = require('cheerio')
 import { News } from './news'
 import { Detector } from './detector'
 
@@ -7,16 +8,16 @@ export class Dispatch{
 
   public static crawlDispatch = async (context) => {
     console.log("----> crawlDispatch start")
-    await Dispatch.fetchAndSaveAsync()
+    await Dispatch.fetchAndSaveFireDeptDispatchAsync()
     console.log("----> crawlDispatch finish")
   }
 
   /**
-   * json fetchして全部saveする非同期メソッド
+   * 消防出動情報のjsonを取得して保存する非同期メソッド
    */
-  public static fetchAndSaveAsync = async () => {
-    const json = await Dispatch.fetchJsonAsync()
-    const dispatches = await Dispatch.convertJsonAsync(json)
+  public static fetchAndSaveFireDeptDispatchAsync = async () => {
+    const json = await Dispatch.fetchFireDeptDispatchJsonAsync()
+    const dispatches = await Dispatch.convertFireDeptDispatchJsonAsync(json)
     for (const dispatch of dispatches){
       const dispatchRef = await admin.firestore().collection('dispatch').doc(dispatch.id).get()
       if(!dispatchRef.exists){
@@ -28,21 +29,20 @@ export class Dispatch{
   }
 
   /**
-   * JSONを取得してパースする非同期メソッド
+   * 消防出動情報jsonを取得してパースする非同期メソッド
    * @returns {any} parsed json object
    */
-  public static fetchJsonAsync = async () => {
+  public static fetchFireDeptDispatchJsonAsync = async () => {
     const jsonString = await News.fetchAsync('https://www.mk-mode.com/rails/disaster.json')
     return JSON.parse(jsonString)
   }
 
   /**
-   * jsonをfirestoreに保存できるように変形する非同期メソッド
-   * Detectorで場所の特定も行う
+   * 消防出動情報jsonをfirestoreに保存できるように変形する非同期メソッド
+   * Detectorでカテゴリと場所の特定も行う
    * @returns {any} dispatches
    */
-  public static convertJsonAsync = async (json:any) => {
-    console.log("-----> convertJsonAsync start")
+  public static convertFireDeptDispatchJsonAsync = async (json:any) => {
     const dispatches = []
     for (const dispatch of json){
       delete dispatch.tweet_id
@@ -50,8 +50,10 @@ export class Dispatch{
       if(dispatch.created_at!==null){
         dispatch.created_at = new Date(Date.parse(dispatch.created_at.replace('.000', '')))
       }
-      const detector = new Detector(dispatch.detail)
+      const detector = new Detector(dispatch.division+dispatch.detail)
       await detector.ready
+      dispatch.unit = "firedept"
+      dispatch.category = detector.category
       dispatch.place_country = detector.country
       dispatch.place_pref = detector.pref
       dispatch.place_city = detector.city
@@ -60,7 +62,6 @@ export class Dispatch{
       dispatch.geohash = detector.geohash
       dispatches.push(dispatch)
     }
-    console.log("-----> convertJsonAsync finish")
     return dispatches
   }
 

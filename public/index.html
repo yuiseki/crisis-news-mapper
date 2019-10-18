@@ -175,7 +175,7 @@
         category = ""
     }
     var news = L.markerClusterGroup();
-    news.freezeAtZoom(10);
+    news.freezeAtZoom(11);
     fetch("/newsOfJapan"+category)
       .then(resp=>{
         return resp.text()
@@ -184,23 +184,22 @@
         data = JSON.parse(text)
         data.forEach(function(element){
           if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
-          if (element.og_title && element.og_desc){
-            var marker = L.marker([element.lat, element.long]);
-            var content = "<h3>"+element.og_title+"</h3><p>";
-            if (element.og_url){
-              content = content + "<a href='"+element.og_url+"'>";
-            }
-            content = content + element.og_desc
-            if (element.og_url){
-              content = content + "</a>"
-            }
-            content = content + "</p>"
-            if (element.og_image){
-              content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
-            }
-            marker.bindPopup(content);
-            news.addLayer(marker);
+          if (element.og_title===undefined || element.og_title===null || element.og_desc===undefined || element.og_desc===null){return;}
+          var content = "<h3>"+element.og_title+"</h3><p>";
+          if (element.og_url){
+            content = content + "<a href='"+element.og_url+"'>";
           }
+          content = content + element.og_desc
+          if (element.og_url){
+            content = content + "</a>"
+          }
+          content = content + "</p>"
+          if (element.og_image){
+            content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
+          }
+          var marker = L.marker([element.lat, element.long]);
+          marker.bindPopup(content);
+          news.addLayer(marker);
         });
         map.addLayer(news);
       })
@@ -211,7 +210,6 @@
       iconAnchor:   [7, 7],
       popupAnchor:  [0, -7]
     });
-    var dispatches = [];
     fetch("/dispatchOfJapan")
       .then(resp=>{
         return resp.text()
