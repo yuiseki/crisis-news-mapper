@@ -71,7 +71,8 @@ export class Twitter {
     'meti.go.jp',
     // 東京電力
     'tepco.co.jp',
-    // キーワード 4
+    // キーワード 5
+    '自衛隊',
     '災害',
     '被災',
     '地震',
