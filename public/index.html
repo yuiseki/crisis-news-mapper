@@ -71,35 +71,43 @@
     // 初期座標とズームを指定
     map.setView([35.3622222, 138.7313889], 8);
     // 都道府県の境界線の描画
-    $.getJSON("/japan.geojson", function(data) {
-      var geojson = L.geoJson(data, {
-          style: {
-            weight: 5
-          },
-          onEachFeature: function (feature, layer) {
-            
-          }
-      });
-      geojson.addTo(map);
-      // 市区町村の境界線の描画
-      $.getJSON("/japan_cities.geojson", function(data) {
-        var geojson = L.geoJson(data, {
+    fetch("/japan.geojson")
+      .then(resp=>{
+        return resp.text()
+      })
+      .then(text=>{
+        data = JSON.parse(text)
+        var japanGeoJson = L.geoJson(data, {
             style: {
-              weight: 1,
-              opacity: 0.3
+              weight: 5
             },
             onEachFeature: function (feature, layer) {
-              layer.bindTooltip(feature.properties.cityname_k);
             }
         });
-        geojson.addTo(map);
-      });
-    });
-    
+        japanGeoJson.addTo(map);
+      })
+      .then(()=>{
+        // 市区町村の境界線の描画
+        fetch("/japan_cities.geojson")
+          .then(resp=>{
+            return resp.text()
+          })
+          .then(text=>{
+            data = JSON.parse(text)
+            var citiesGeoJson = L.geoJson(data, {
+                style: {
+                  weight: 1,
+                  opacity: 0.3
+                },
+                onEachFeature: function (feature, layer) {
+                  layer.bindTooltip(feature.properties.cityname_k);
+                }
+            });
+            citiesGeoJson.addTo(map);
+          })
+      })
 
     // ニュースの追加
-    var markers = L.markerClusterGroup();
-    markers.freezeAtZoom(10);
     var category = ""
     switch (location.hash){
       case "#drug":
@@ -111,30 +119,59 @@
       default:
         category = ""
     }
-    $.getJSON("/newsOfJapan"+category, function(data) {
-      data.forEach(function(element){
-        if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
-        if (element.og_title && element.og_desc){
-          var marker = L.marker([element.lat, element.long]);
-          var content = "<h3>"+element.og_title+"</h3><p>";
-          if (element.og_url){
-            content = content + "<a href='"+element.og_url+"'>";
+    var news = L.markerClusterGroup();
+    news.freezeAtZoom(10);
+    fetch("/newsOfJapan"+category)
+      .then(resp=>{
+        return resp.text()
+      })
+      .then(text=>{
+        data = JSON.parse(text)
+        data.forEach(function(element){
+          if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
+          if (element.og_title && element.og_desc){
+            var marker = L.marker([element.lat, element.long]);
+            var content = "<h3>"+element.og_title+"</h3><p>";
+            if (element.og_url){
+              content = content + "<a href='"+element.og_url+"'>";
+            }
+            content = content + element.og_desc
+            if (element.og_url){
+              content = content + "</a>"
+            }
+            content = content + "</p>"
+            if (element.og_image){
+              content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
+            }
+            marker.bindPopup(content);
+            news.addLayer(marker);
           }
-          content = content + element.og_desc
-          if (element.og_url){
-            content = content + "</a>"
-          }
-          content = content + "</p>"
-          if (element.og_image){
-            content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
-          }
-          marker.bindPopup(content);
-          markers.addLayer(marker);
-        }
-      });
-      map.addLayer(markers);
-    });
+        });
+        map.addLayer(news);
+      })
 
+    var firetruckIcon = L.icon({
+      iconUrl: 'firetruck.png',
+      iconSize:     [15, 15],
+      iconAnchor:   [7, 7],
+      popupAnchor:  [0, -7]
+    });
+    var dispatches = [];
+    fetch("/dispatchOfJapan")
+      .then(resp=>{
+        return resp.text()
+      })
+      .then(text=>{
+        data = JSON.parse(text)
+        data.forEach(function(element){
+          if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
+          var marker = L.marker([element.lat, element.long], {icon: firetruckIcon});
+          marker.bindPopup("<b>"+element.division+"</b>:"+element.detail);
+          map.addLayer(marker);
+        });
+      })
+
+    // ツイートボタン
     window.twttr = (function(d, s, id) {
       var js, fjs = d.getElementsByTagName(s)[0],
       t = window.twttr || {};

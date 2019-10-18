@@ -38,7 +38,7 @@ describe('Newsクラスのテスト', () => {
     assert(news!==null)
     assert(news.url==='https://www.google.co.jp/')
     assert(news.enurl!==null)
-  }).timeout(3000)
+  }).timeout(5000)
 
   it('firestoreに存在しないURLの場合: new News()したらfetchAsyncとparseAsyncを呼ぶ', async () => {
     const news = new News('https://www.google.co.jp/')
@@ -47,7 +47,7 @@ describe('Newsクラスのテスト', () => {
     assert(news.html!==null)
     assert(news.web!==null)
     assert(news.web.title==='Google')
-  }).timeout(3000)
+  }).timeout(5000)
 
   it('firestoreに存在するURLの場合: new News()したらfirestoreのデータを取得する', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
@@ -56,7 +56,7 @@ describe('Newsクラスのテスト', () => {
     assert(news.html===null)
     assert(news.web!==null)
     assert(news.web.title==='【速報】利根川が満潮で増水　床上浸水などの被害も - FNN.jpプライムオンライン')
-  }).timeout(3000)
+  }).timeout(5000)
 
   it('最新ツイート日時が取得できる', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')

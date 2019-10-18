@@ -97,7 +97,7 @@ export class Twitter {
    * functionsは最大540秒でタイムアウトしてしまう
    * 毎分実行し、毎分ちがうqueryで検索する
    */
-  public crawlTwitter = async (context)=>{
+  public crawlTwitter = async (context) => {
     console.log("----> crawlTwitter start")
     const now = new Date()
     let query
@@ -105,6 +105,7 @@ export class Twitter {
       query = Twitter.queryList[now.getMinutes()]
     }
     await this.searchTweetsAndSave(query)
+    console.log("----> crawlTwitter finish")
   }
 
   /**

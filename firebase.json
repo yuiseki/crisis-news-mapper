@@ -12,6 +12,10 @@
         "function": "newsOfJapan"
       },
       {
+        "source": "/dispatchOfJapan",
+        "function": "dispatchOfJapan"
+      },
+      {
         "source": "/newsByGeoHash",
         "function": "newsByGeoHash"
       },
