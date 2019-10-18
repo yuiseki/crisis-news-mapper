@@ -28,8 +28,7 @@ export class Dispatch{
   }
 
   /**
-   * jsonをfirestoreに保存できるように変形する非同期メソッド
-   * Detectorで場所の特定も行う
+   * JSONを取得してパースする非同期メソッド
    * @returns {any} parsed json object
    */
   public static fetchJsonAsync = async () => {
@@ -37,6 +36,11 @@ export class Dispatch{
     return JSON.parse(jsonString)
   }
 
+  /**
+   * jsonをfirestoreに保存できるように変形する非同期メソッド
+   * Detectorで場所の特定も行う
+   * @returns {any} dispatches
+   */
   public static convertJsonAsync = async (json:any) => {
     console.log("-----> convertJsonAsync start")
     const dispatches = []
