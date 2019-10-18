@@ -1,6 +1,6 @@
 
 const admin = require('firebase-admin')
-const cheerio = require('cheerio')
+//const cheerio = require('cheerio')
 import { News } from './news'
 import { Detector } from './detector'
 
