@@ -201,8 +201,8 @@ export class News {
     return param
   }
 
-  public updateByLastTweet = async(tweet) => {
-    const enurl = md5(tweet.url)
+  public updateByLastTweet = async(tweet, url) => {
+    const enurl = md5(url)
     await admin.firestore().collection('news').doc(enurl).update({
       // MEMO: admin.firestore()だとダメ！！！
       // 言及ツイートに追加

@@ -7,13 +7,13 @@ admin.initializeApp()
 const ngeohash = require('ngeohash')
 
 /**
- * http://localhost:5000/newsOfJapan
+ * http://localhost:5000/news
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
  * @param {string} req.query.category 絞り込むカテゴリ
  */
-exports.newsOfJapan = functions.https.onRequest(async (req, res) => {
+exports.news = functions.https.onRequest(async (req, res) => {
   let category
   if (req.query.category===undefined){
     // 災害
@@ -43,12 +43,12 @@ exports.newsOfJapan = functions.https.onRequest(async (req, res) => {
 })
 
 /**
- * http://localhost:5000/dispatchOfJapan
+ * http://localhost:5000/dispatch
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
  */
-exports.dispatchOfJapan = functions.https.onRequest(async (req, res) => {
+exports.dispatch = functions.https.onRequest(async (req, res) => {
   const query = await admin.firestore()
     .collection("dispatch")
     .where("place_country", "==", "日本")
@@ -66,6 +66,33 @@ exports.dispatchOfJapan = functions.https.onRequest(async (req, res) => {
     res.status(200).send(JSON.stringify(results))
   }
 })
+
+/**
+ * http://localhost:5000/tweets
+ * のようなパスを処理する関数
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ */
+exports.tweets = functions.https.onRequest(async (req, res) => {
+  const query = await admin.firestore()
+    .collection("tweets")
+    .where("place_country", "==", "日本")
+    .where("category", "==", "crisis")
+    .where("classification", "==", "selfdefense")
+    .orderBy("tweeted_at", "desc")
+    .limit(1000)
+    .get()
+  if(query.empty){
+    res.status(200).send(JSON.stringify([]))
+  }else{
+    const results = query.docs.map(doc => {
+      const data = doc.data()
+      return data
+    })
+    res.status(200).send(JSON.stringify(results))
+  }
+})
+
 
 /**
  * http://localhost:5000/newsByGeoHash?h=xn774cnd&km=100
@@ -131,7 +158,8 @@ exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 5 m
 // Twitter検索するバッチ処理
 import { Twitter } from './twitter'
 const twitter = new Twitter()
-exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlTwitter)
+exports.crawlSearchTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlSearchTwitter)
+exports.crawlAccountTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlAccountTwitter)
 
 // 全Tweetを更新するバッチ処理
 //exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.updateAllTweets)

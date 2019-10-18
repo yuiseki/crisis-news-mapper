@@ -8,12 +8,16 @@
     ],
     "rewrites": [
       {
-        "source": "/newsOfJapan",
-        "function": "newsOfJapan"
+        "source": "/news",
+        "function": "news"
       },
       {
-        "source": "/dispatchOfJapan",
-        "function": "dispatchOfJapan"
+        "source": "/dispatch",
+        "function": "dispatch"
+      },
+      {
+        "source": "/tweets",
+        "function": "tweets"
       },
       {
         "source": "/newsByGeoHash",
