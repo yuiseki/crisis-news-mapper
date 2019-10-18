@@ -99,7 +99,7 @@ const runtimeOpt = {
 }
 
 import { News } from './news'
-exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 12 hours').onRun(News.updateAllNews)
+exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.updateAllNews)
 
 
 import { Twitter } from './twitter'

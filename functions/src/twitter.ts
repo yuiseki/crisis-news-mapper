@@ -208,7 +208,8 @@ export class Twitter {
         })
       }else{
         // 存在していない場合
-        // 全部空の状態で追加する
+        // 全部nullの状態で追加する
+        // nullにしておかないとあとでfirestoreで検索できない
         await admin.firestore().collection('news').doc(enurl).set({
           redirect:       0,
           url:            url,
@@ -220,24 +221,27 @@ export class Twitter {
           og_desc:        null,
           og_image:       null,
           og_url:         null,
-          lat:            null,
-          long:           null,
-          geohash:        null,
           category:       null,
           place_country:  null,
           place_pref:     null,
           place_city:     null,
-          place_mountain: null,
           place_river:    null,
+          place_mountain: null,
           place_station:  null,
           place_airport:  null,
+          lat:            null,
+          long:           null,
+          geohash:        null,
         })
       }
       if(url!==undefined && url!==null){
         // ニュース本文の分析を実行する
         const dataRef = await admin.firestore().collection('news').doc(enurl).get()
         if(dataRef.exists){
-          await News.updateNews(dataRef.data())
+          const data = dataRef.data()
+          const news = new News(data.url)
+          await news.ready
+          await news.setOrUpdateNews()
         }
       }
     }

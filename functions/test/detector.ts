@@ -25,6 +25,9 @@ describe('Detectorクラスのテスト', () => {
     assert(detector.country==="日本")
     assert(detector.pref==="東京都")
     assert(detector.city==="台東区")
+    assert(detector.location!==null)
+    assert(detector.location.lat!==null)
+    assert(detector.location.long!==null)
   })
 
   it('街の名前だけで国と県も特定できる2', async ()=>{
@@ -33,6 +36,9 @@ describe('Detectorクラスのテスト', () => {
     assert(detector.country==="日本")
     assert(detector.pref==="東京都")
     assert(detector.city==="町田市")
+    assert(detector.location!==null)
+    assert(detector.location.lat!==null)
+    assert(detector.location.long!==null)
   })
 
   it('適当な文字列からカテゴリと地名を検出できる1', async ()=>{
@@ -42,6 +48,9 @@ describe('Detectorクラスのテスト', () => {
     assert(detector.country==='日本')
     assert(detector.pref==='東京都')
     assert(detector.city===null)
+    assert(detector.location!==null)
+    assert(detector.location.lat!==null)
+    assert(detector.location.long!==null)
   })
 
   it('適当な文字列からカテゴリと地名を抽出できる2', async ()=>{

@@ -1,8 +1,7 @@
 
-
-
 const fs = require('fs')
 const csvParseSync = require('csv-parse/lib/sync')
+const ngeohash = require('ngeohash')
 
 const categoryList = {
   crisis: [
@@ -164,6 +163,7 @@ const locationList = {
 export class Detector {
   ready:Promise<any>
   text:string
+  category:string
   country:string
   pref:string
   city:string
@@ -172,7 +172,7 @@ export class Detector {
   station:string
   airport:string
   location:any
-  category:string
+  geohash:string
   
   static locationList = null
 
@@ -263,6 +263,11 @@ export class Detector {
   constructor(text:string){
     this.text = text
     this.location = null
+    this.location = {
+      lat: null,
+      long: null,
+    }
+    this.geohash = null
     this.ready = new Promise(async resolve => {
       // クラスメソッド Detector.locationList が存在しない最初の時だけ
       // loadLocationListを呼ぶ
@@ -275,9 +280,34 @@ export class Detector {
   }
 
   /**
+   * setter for location
+   * @param {any} location lat, longプロパティを持つオブジェクト
+   */
+  private setLocation(location){
+    if (location===undefined || location===null){
+      this.location = {
+        lat: null,
+        long: null,
+      }
+    }else{
+      this.location = location
+      if (this.location.lat===undefined || this.location.long===undefined){
+        this.location.lat = null
+        this.location.long = null
+      }
+    }
+    // geohashを得る
+    if (this.location.lat!==null && this.location.long!==null) {
+      this.geohash = ngeohash.encode(location.lat, location.long)
+    }else{
+      this.geohash = null
+    }
+  }
+
+  /**
    * すべての検出メソッドを順番に実行する
    */
-  public detecting = () => {
+  public detecting(){
     this.detectCategory()
     this.detectCountry()
     this.detectPref()
@@ -311,7 +341,7 @@ export class Detector {
   public detectCountry(){
     this.country = Detector.detect(this.text, Object.keys(locationList.country.data))
     if (this.country!==null){
-      this.location = locationList.country.data[this.country]
+      this.setLocation(locationList.country.data[this.country])
     }
   }
 
@@ -323,7 +353,7 @@ export class Detector {
     if (this.pref!==null){
       // 都道府県が検出できているなら国は日本とする
       this.country = "日本"
-      this.location = locationList.pref.data[this.pref]
+      this.setLocation(locationList.pref.data[this.pref])
     }
   }
 
@@ -343,9 +373,9 @@ export class Detector {
       // 空だったら都道府県の座標にしておく
       if(locationList.city.data[this.city].lat===undefined 
         || locationList.city.data[this.city].long===undefined){
-        this.location = locationList.city.data[this.pref]
+        this.setLocation(locationList.pref.data[this.pref])
       }else{
-        this.location = locationList.city.data[this.city]
+        this.setLocation(locationList.city.data[this.city])
       }
     }
   }
