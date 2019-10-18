@@ -17,8 +17,8 @@ const client = new TwitterClient({
   access_token_secret
 })
 
-import * as md5 from 'md5';
 import { News } from './news'
+import { Detector } from './detector'
 
 export class Twitter {
 
@@ -158,94 +158,121 @@ export class Twitter {
     // ツイートに含まれる写真、動画、gifを得る
     const photos = []
     let video = null
-    let gif = null
     for (const idx in tweet.entities.media){
       switch(tweet.entities.media[idx].type){
         case "photo":
           photos.push(tweet.entities.media[idx].media_url_https)
           break
         case "video":
-          video = tweet.entities.media[idx].media_url_https
+          video = tweet.entities.media[idx].video_info.variants[0].url
           break
         case "animated_gif":
-          gif = tweet.entities.media[idx].media_url_https
+          video = tweet.entities.media[idx].video_info.variants[0].url
           break
       }
     }
+    // ツイートのカテゴリ、位置情報を検出する
+    const detector = new Detector(tweet.text)
+    await detector.ready
     // firestoreに保存するdocument objectを組み立てる
     const tweetDoc = {
-      tweet_id_str: tweet.id_str,
-      user_id_str:  tweet.user.id_str,
-      is_protected: tweet.user.protected,
-      screen_name:  tweet.user.screen_name,
-      display_name: tweet.user.name,
-      icon_url:     tweet.user.profile_image_url_https,
-      text:         tweet.text,
-      urls:         urls,
-      photos:       photos,
-      videos:       video,
-      gifs:         gif,
-      tweeted_at:   new Date(Date.parse(tweet.created_at)),
-      rt_count:     tweet.retweet_count,
-      fav_count:    tweet.favorite_count,
-      score:        tweet.retweet_count + tweet.favorite_count,
-      updated_at:   admin.firestore.FieldValue.serverTimestamp(),
+      tweet_id_str:   tweet.id_str,
+      user_id_str:    tweet.user.id_str,
+      is_protected:   tweet.user.protected,
+      screen_name:    tweet.user.screen_name,
+      display_name:   tweet.user.name,
+      icon_url:       tweet.user.profile_image_url_https,
+      text:           tweet.text,
+      urls:           urls,
+      photos:         photos,
+      videos:         video,
+      rt_count:       tweet.retweet_count,
+      fav_count:      tweet.favorite_count,
+      score:          tweet.retweet_count + tweet.favorite_count,
+      category:       detector.category,
+      place_country:  detector.country,
+      place_pref:     detector.pref,
+      place_city:     detector.city,
+      place_river:    detector.river,
+      place_mountain: detector.mountain,
+      place_station:  detector.station,
+      place_airport:  detector.airport,
+      lat:            detector.location.lat,
+      long:           detector.location.long,
+      geohash:        detector.geohash,
+      tweeted_at:     new Date(Date.parse(tweet.created_at)),
+      updated_at:     admin.firestore.FieldValue.serverTimestamp(),
     }
     // tweet idをキーにして保存する
     await admin.firestore().collection('tweets').doc(tweet.id_str).set(tweetDoc)
     // newsコレクションも更新する
     for (const url of urls){
-      // urlのmd5 hashをキーにしてnewsドキュメントが存在するかチェックする
-      const enurl = md5(url)
-      const newsDocRef = await admin.firestore().collection('news').doc(enurl).get()
-      if (newsDocRef.exists){
-        // すでに存在している場合
-        await admin.firestore().collection('news').doc(enurl).update({
-          // MEMO: admin.firestore()だとダメ！！！
-          // 言及ツイートに追加
-          tweets: admin.firestore.FieldValue.arrayUnion(tweet.id_str),
-          // 最終言及日時を更新
-          tweeted_at: new Date(Date.parse(tweet.created_at)),
-        })
+      const news = new News(url)
+      if (news.exists){
+        await news.updateByLastTweet(tweet)
       }else{
-        // 存在していない場合
-        // 全部nullの状態で追加する
-        // nullにしておかないとあとでfirestoreで検索できない
-        await admin.firestore().collection('news').doc(enurl).set({
-          redirect:       0,
-          url:            url,
-          enurl:          enurl,
-          tweets:         [tweet.id_str],
-          tweeted_at:     new Date(Date.parse(tweet.created_at)),
-          title:          null,
-          og_title:       null,
-          og_desc:        null,
-          og_image:       null,
-          og_url:         null,
-          category:       null,
-          place_country:  null,
-          place_pref:     null,
-          place_city:     null,
-          place_river:    null,
-          place_mountain: null,
-          place_station:  null,
-          place_airport:  null,
-          lat:            null,
-          long:           null,
-          geohash:        null,
-        })
-      }
-      if(url!==undefined && url!==null){
-        // ニュース本文の分析を実行する
-        const dataRef = await admin.firestore().collection('news').doc(enurl).get()
-        if(dataRef.exists){
-          const data = dataRef.data()
-          const news = new News(data.url)
-          await news.ready
-          await news.setOrUpdateNews()
-        }
+        await news.setOrUpdateNews(tweet)
       }
     }
   }
+
+  public static updateTweetAsync = async (tweetData) => {
+    const text = tweetData.text
+    const detector = new Detector(text)
+    await detector.ready
+    const tweetDoc = {
+      category:       detector.category,
+      place_country:  detector.country,
+      place_pref:     detector.pref,
+      place_city:     detector.city,
+      place_river:    detector.river,
+      place_mountain: detector.mountain,
+      place_station:  detector.station,
+      place_airport:  detector.airport,
+      lat:            detector.location.lat,
+      long:           detector.location.long,
+      geohash:        detector.geohash,
+      updated_at:     admin.firestore.FieldValue.serverTimestamp(),
+    }
+    await admin.firestore().collection("tweets").doc(tweetData.tweet_id_str).update(tweetDoc)
+  }
+
+  public static updateAllTweetsByDocRef = (docRef)=>{
+    return new Promise(async (resolve, reject)=>{
+      const tweetSnapshot = await admin.firestore().collection("tweets")
+        .orderBy('updated_at', 'desc')
+        .startAfter(docRef)
+        .limit(1)
+        .get()
+      if (tweetSnapshot.empty) {
+        reject('No matching documents!')
+      }else{
+        const data = tweetSnapshot.docs[0].data()
+        await Twitter.updateTweetAsync(data)
+        await Twitter.updateAllTweetsByDocRef(tweetSnapshot.docs[0])
+      }
+    })
+  }
+
+  public static updateAllTweets = async() => {
+    return new Promise(async (resolve, reject)=>{
+      console.log("----> updateAllTweets start: ")
+      const now = new Date()
+      const tenMinutesAgo = new Date(now.getTime() - 60 * 10)
+      const tweetSnapshot = await admin.firestore().collection("tweets")
+        .orderBy('updated_at', 'desc')
+        .startAfter(tenMinutesAgo)
+        .limit(1)
+        .get()
+      if (tweetSnapshot.empty) {
+        reject('No matching documents!')
+      }else{
+        const data = tweetSnapshot.docs[0].data()
+        await Twitter.updateTweetAsync(data)
+        await Twitter.updateAllTweetsByDocRef(tweetSnapshot.docs[0])
+      }
+    })
+  }
+
 }
 

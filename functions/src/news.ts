@@ -201,10 +201,21 @@ export class News {
     return param
   }
 
+  public updateByLastTweet = async(tweet) => {
+    const enurl = md5(tweet.url)
+    await admin.firestore().collection('news').doc(enurl).update({
+      // MEMO: admin.firestore()だとダメ！！！
+      // 言及ツイートに追加
+      tweets: admin.firestore.FieldValue.arrayUnion(tweet.id_str),
+      // 最終言及日時を更新
+      tweeted_at: new Date(Date.parse(tweet.created_at)),
+    })
+  }
+
   /**
    * ニュース記事をfirestoreのnewsコレクションに追加/更新する非同期メソッド
    */
-  public setOrUpdateNews = async() => {
+  public setOrUpdateNews = async(tweet) => {
     console.log("setOrUpdateNews: "+this.url)
     console.log("setOrUpdateNews: "+this.enurl)
     const param = await this.getNewsDocParamAsync()
@@ -216,6 +227,10 @@ export class News {
           console.log("----------")
         })
     }else{
+      if(tweet!==null){
+        param.tweets = [tweet.id_str]
+        param.tweeted_at = new Date(Date.parse(tweet.created_at))
+      }
       await admin.firestore().collection('news').doc(this.enurl).set(param)
         .catch((error)=> {
           console.log("----------")
@@ -225,22 +240,22 @@ export class News {
     }
   }
 
-  public static updateAllNewsBySnapshot = (docs)=>{
+  public static updateAllNewsByDocRef = (docRef)=>{
     return new Promise(async (resolve, reject)=>{
-      const newSnapshot = await admin.firestore().collection("news")
+      const newsSnapshot = await admin.firestore().collection("news")
         .orderBy('updated_at', 'desc')
-        .startAfter(docs)
+        .startAfter(docRef)
         .limit(1)
         .get()
-      if (newSnapshot.empty) {
+      if (newsSnapshot.empty) {
         reject('No matching documents!')
       }else{
-        const data = newSnapshot.docs[0].data()
+        const data = newsSnapshot.docs[0].data()
         const news = new News(data.url)
         await news.ready
-        await news.setOrUpdateNews()
+        await news.setOrUpdateNews(null)
         // 再帰
-        await News.updateAllNewsBySnapshot(newSnapshot.docs[0])
+        await News.updateAllNewsByDocRef(newsSnapshot.docs[0])
       }
     })
   }
@@ -250,19 +265,19 @@ export class News {
       console.log("----> updateAllNews start: ")
       const now = new Date()
       const tenMinutesAgo = new Date(now.getTime() - 60 * 10)
-      const snapshot = await admin.firestore().collection("news")
+      const newsSnapshot = await admin.firestore().collection("news")
         .orderBy('updated_at', 'desc')
         .startAfter(tenMinutesAgo)
         .limit(1)
         .get()
-      if (snapshot.empty) {
+      if (newsSnapshot.empty) {
         reject('No matching documents!')
       }else{
-        const data = snapshot.docs[0].data()
+        const data = newsSnapshot.docs[0].data()
         const news = new News(data.url)
         await news.ready
-        await news.setOrUpdateNews()
-        await News.updateAllNewsBySnapshot(snapshot.docs[0])
+        await news.setOrUpdateNews(null)
+        await News.updateAllNewsByDocRef(newsSnapshot.docs[0])
       }
     })
   }
