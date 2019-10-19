@@ -159,7 +159,7 @@ exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 5 m
 import { Twitter } from './twitter'
 const twitter = new Twitter()
 exports.crawlSearchTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlSearchTwitter)
-exports.crawlAccountTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlAccountTwitter)
+exports.crawlAccountTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 1 minutes').onRun(twitter.crawlSelfDefenseTwitter)
 
 // 全Tweetを更新するバッチ処理
 //exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.updateAllTweets)

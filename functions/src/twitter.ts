@@ -17,162 +17,12 @@ const client = new TwitterClient({
   access_token_secret
 })
 
+const selfDefenseAccountList = require('../data/yuiseki.net/self_defense_twitter.json')
+
 import { News } from './news'
 import { Detector } from './detector'
 
 export class Twitter {
-
-  public static selfDefenseAccountList = [
-    // 防衛省 自衛隊
-    "ModJapan_saigai",
-
-
-    // 陸上総隊司令部
-    "jgsdf_gcc_pao",
-    // 師団
-    // 第一師団
-    "1D_nerima",
-    // 第三師団
-    "JGSDF_MA_3D",
-    // 第十師団
-    "JGSDF_MA_10D",
-    // 旅団
-    // 第五旅団
-    "5b_na_jgsdf",
-    // 第十三旅団
-    "13b_jgsdf",
-    // 第十五旅団
-    "jgsdf_15b_pr",
-    // 第七普通科連隊
-    "7th_Inf_Kyoto",
-    // 第一空挺団
-    "jgsdf_1stAbnB",
-    // 第一ヘリコプター団
-    "1st_helb",
-
-
-    // 陸上自衛隊 北部方面隊
-    "northernarmy_pr",
-    // 旭川地方協力本部
-    // ない！！！
-    // 帯広地方協力本部
-    "hq1obihiropco",
-    // 札幌地方協力本部
-    "sapporo_PCO",
-    // 函館地方協力本部
-    // ない！！！
-
-
-    // 陸上自衛隊 東北方面隊
-    "NeaAdminpr",
-    // 岩手地方協力本部
-    "iwate_pco",
-    // 福島地方協力本部
-    "Fukushimapco",
-    // 秋田地方協力本部
-    "jieitaiakitapco",
-    // 青森地方協力本部
-    "aomori_PCO",
-    // 山形地方協力本部
-    "yamagata_pco",
-    // 宮城地方協力本部
-    "miyagipco",
-
-
-    // 陸上自衛隊 東部方面隊
-    "JGSDF_EA_PR",
-    // 群馬地方協力本部
-    "gunma_pco",
-    // 栃木地方協力本部
-    "tochigi_pco",
-    // 茨城地方協力本部
-    // ない！！！
-    // 埼玉地方協力本部
-    "saitamapco",
-    // 千葉地方協力本部
-    "chiba_pco",
-    // 東京地方協力本部
-    "tokyo_pco",
-    // 神奈川地方協力本部
-    "kanagawa_pco",
-
-
-    // 陸上自衛隊 中部方面隊
-    "JGSDF_MA_pr",
-    // 新潟地方協力本部
-    "niigata_pco",
-    // 富山地方協力本部
-    "toyama_pco",
-    // 石川地方協力本部
-    "ishikawa_pco",
-    // 福井地方協力本部
-    "fukui_pco",
-    // 山梨地方協力本部
-    "yamanashi_pco",
-    // 長野地方協力本部
-    "pconagano",
-    // 岐阜地方協力本部
-    "gifupco",
-    // 静岡地方協力本部
-    "shizuoka_pco",
-    // 愛知地方協力本部
-    // ない！！！
-
-
-    // 陸上自衛隊 西部方面隊
-    "JGSDF_WA_pr",
-    // 滋賀地方協力本部
-    "shigapco",
-    // 三重地方協力本部
-    "mie_pco",
-    // 京都地方協力本部
-    "kyotopco",
-    // 奈良地方協力本部
-    "narapco",
-    // 大阪地方協力本部
-    "osaka_pco",
-    // 和歌山地方協力本部
-    "wakayama_pco",
-    // 兵庫地方協力本部
-    "pco_hyogo",
-    // 鳥取地方協力本部
-    "tottoripcojsdf",
-    // 岡山地方協力本部
-    "okayamaPCO",
-    // 島根地方協力本部
-    "shimane_pco",
-    // 広島地方協力本部
-    // ない！！！
-    // 山口地方協力本部
-    "yamaguchi_pco",
-    // 四国
-    // 香川地方協力本部
-    // ない！！！
-    // 徳島
-    "tokushima_pco",
-    // 愛媛
-    "ehime_pco",
-    // 高知
-    "pco_kochi",
-    // 九州
-    // 大分地方協力本部
-    "oita_pco",
-    // 宮崎
-    "miyazaki_pco",
-    // 鹿児島地方協力本部
-    "kagoshima_pco",
-    // 福岡
-    "fukuoka_PCO",
-    // 熊本
-    "kumamotopco",
-    // 佐賀
-    "saga_pco",
-    // 長崎
-    "nagasakichihon",
-    // 沖縄
-    // ない！！！
-
-  ]
 
   public static queryList = [
     // 新聞 5
@@ -245,15 +95,17 @@ export class Twitter {
     '通信障害',
   ]
 
-  public crawlAccountTwitter = async (context) => {
-    console.log("----> crawlAccountTwitter start")
+  public crawlSelfDefenseTwitter = async (context) => {
+    console.log("----> crawlSelfDefenseTwitter start")
     const now = new Date()
     let query
-    if (Twitter.selfDefenseAccountList.length > now.getMinutes()+1){
-      query = Twitter.selfDefenseAccountList[now.getMinutes()]
+    if (selfDefenseAccountList.length > now.getMinutes()+1){
+      if (selfDefenseAccountList[now.getMinutes()].twitter!==null){
+        query = selfDefenseAccountList[now.getMinutes()].twitter
+        await this.searchTweetsAndSave("from:"+query)
+      }
     }
-    await this.searchTweetsAndSave("from:"+query)
-    console.log("----> crawlAccountTwitter finish")
+    console.log("----> crawlSelfDefenseTwitter finish")
   }
 
   /**
@@ -337,7 +189,7 @@ export class Twitter {
       }
     }
     let classification
-    if(Twitter.selfDefenseAccountList.includes(tweet.user.screen_name)){
+    if(selfDefenseAccountList.includes(tweet.user.screen_name)){
       classification = "selfdefense"
     }else{
       classification = null

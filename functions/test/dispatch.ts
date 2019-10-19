@@ -6,13 +6,13 @@ import { Dispatch } from '../src/dispatch'
 describe('Dispatchクラスのテスト', () => {
 
   it('Dispatch.fetchJsonAsync()', async ()=>{
-    const json = await Dispatch.fetchJsonAsync()
+    const json = await Dispatch.fetchFireDeptDispatchJsonAsync()
     assert(json!==null)
   }).timeout(10000)
 
   it('Dispatch.convertJsonAsync()', async ()=>{
-    const json = await Dispatch.fetchJsonAsync()
-    const dispatches = await Dispatch.convertJsonAsync(json)
+    const json = await Dispatch.fetchFireDeptDispatchJsonAsync()
+    const dispatches = await Dispatch.convertFireDeptDispatchJsonAsync(json)
     assert(dispatches!==null)
     assert(dispatches.length > 0)
     assert(dispatches[0]!==null)

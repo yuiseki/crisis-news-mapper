@@ -3,159 +3,10 @@ const fs = require('fs')
 const csvParseSync = require('csv-parse/lib/sync')
 const ngeohash = require('ngeohash')
 
-const categoryList = {
-  crisis: [
-    "災害",
-    "被災",
-    "避難",
-    "地震",
-    "台風",
-    "豪雨",
-    "竜巻",
-    "突風",
-    "倒壊",
-    "崩落",
-    // ライフイン
-    "停電",
-    "断水",
-    "給水",
-    "通信障害",
-    // 水関係
-    "洪水",
-    "浸水",
-    "冠水",
-    "氾濫",
-    "決壊",
-    // 山関係
-    "崖崩れ",
-    "土砂崩れ",
-    "土砂流入",
-    "土砂災害",
-  ],
-  children: [
-    "虐待",
-    "性的虐待",
-    "性虐待",
-    "性暴力",
-    "児童買春",
-    "児童ポルノ",
-    "児童福祉法",
-    "児童福祉司",
-    "児童相談所",
-    "保護責任者",
-  ],
-  drug: [
-    "麻薬",
-    "薬物",
-    "乱用",
-    "大麻",
-    "コカイン",
-    "覚醒剤",
-    "覚せい剤",
-    "危険ドラッグ",
-  ],
-  politics: [
-    "職権乱用",
-    "権力乱用",
-    "地位乱用",
-    "資産乱用",
-    "捜査の乱用",
-    "優越的地位の乱用",
-  ],
-  sports: [
-    "オリンピック",
-    "ワールドカップ",
-    "サッカー",
-    "ラグビー",
-    "テニス",
-    "バスケ",
-    "ゴルフ",
-    "野球",
-    "セ・リーグ",
-    "パ・リーグ",
-  ]
-}
+const locationList = require('../data/geonlp.ex.nii.ac.jp/geonlp_japan.json')
 
-const locationList = {
-  country:
-    {
-      index:
-        {
-          filename: 'geonlp_world_country_20130912_u.csv',
-          name_idx: 4,
-          lat_idx:  9,
-          long_idx: 10
-        },
-      data: {}
-    },
-  pref:
-    {
-      index:
-        {
-          filename: 'geonlp_japan_pref_20140115_u.csv',
-          name_idx: 6,
-          lat_idx:  12,
-          long_idx: 11
-        },
-      data: {}
-    },
-  city:
-    {
-      index:
-        {
-          filename: 'geonlp_japan_city_20140310_u.csv',
-          name_idx: 4,
-          lat_idx:  12,
-          long_idx: 11,
-          hyperpref: 8
-        },
-      data: {}
-    },
-  river:
-    {
-      index:
-        {
-          filename: 'geonlp_japan_river_20130912_u.csv',
-          name_idx: 2,
-          lat_idx:  6,
-          long_idx: 7
-        },
-      data: {}
-    },
-  mountain:
-    {
-      index:
-        {
-          filename: 'geonlp_japan_city_20140310_u.csv',
-          name_idx: 4,
-          lat_idx:  12,
-          long_idx: 11,
-        },
-      data: {}
-    },
-  station:
-    {
-      index:
-        {
-          filename: 'geonlp_japan_station_20130912_u.csv',
-          name_idx: 2,
-          lat_idx:  8,
-          long_idx: 9
-        },
-      data: {}
-    },
-  airport:
-    {
-      index:
-        {
-          filename: 'geonlp_japan_airport_20130912_u.csv',
-          name_idx: 6,
-          lat_idx:  10,
-          long_idx: 11
-        },
-      data: {}
-    },
-}
+const categoryList = require('../data/yuiseki.net/news_category_words.json')
+
 
 /**
  * 文字列を与えるとカテゴリや位置情報を検出するクラス
@@ -187,7 +38,7 @@ export class Detector {
       for (const locationKey of Object.keys(locationList)){
         const location = locationList[locationKey]
         // ファイルを読み込む
-        const fileData:string = fs.readFileSync('./data/'+location.index.filename)
+        const fileData:string = fs.readFileSync('./data/geonlp.ex.nii.ac.jp/'+location.index.filename)
         // CSVとして解析する
         const rows = csvParseSync(fileData)
         for (const row of rows){
