@@ -2,7 +2,9 @@
     "cSpell.words": [
         "Nowcast",
         "choco",
+        "filepath",
         "firedept",
+        "geojson",
         "geonlp",
         "hypernym",
         "hyperpref",
@@ -11,6 +13,8 @@
         "predeploy",
         "promisify",
         "selfdefense",
+        "togeojson",
         "yuiseki"
-    ]
+    ],
+    "python.pythonPath": "C:\\Python37\\python.exe"
 }
