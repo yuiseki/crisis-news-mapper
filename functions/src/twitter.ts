@@ -1,9 +1,7 @@
 
 
 const admin = require('firebase-admin')
-
 const TwitterClient = require('twitter')
-
 const dotenv = require('dotenv')
 dotenv.config()
 const consumer_key = process.env.CONSUMER_KEY
@@ -17,66 +15,23 @@ const client = new TwitterClient({
   access_token_secret
 })
 
-const selfDefenseAccountList = require('../data/yuiseki.net/self_defense_twitter.json')
+//const categoryList = require('../data/yuiseki.net/detector_category_words.json')
+const selfDefenseList = require('../data/yuiseki.net/self_defense.json')
+//const governmentList = require('../data/yuiseki.net/government_japan.json')
+const massMediaList = require('../data/yuiseki.net/mass_media_japan.json')
 
 import { News } from './news'
 import { Detector } from './detector'
 
 export class Twitter {
 
-  public static queryList = [
-    // 行政 11
-    // 内閣府
-    'cao.go.jp',
-    // 内閣府 防災情報
-    'bousai.go.jp',
-    // 首相官邸
-    'kantei.go.jp',
-    // 防衛省 自衛隊
-    'mod.go.jp',
-    // 気象庁
-    'jma.go.jp',
-    // 国土交通省
-    'mlit.go.jp',
-    // 総務省 消防庁
-    'fdma.go.jp',
-    // 厚生労働省
-    'mhlw.go.jp',
-    // 経済産業省
-    'meti.go.jp',
-    // インフラ
-    // 東京電力
-    // TODO: 全国の電力会社
-    'tepco.co.jp',
-    // キーワード 5
-    '自衛隊',
-    '災害',
-    '被災',
-    '地震',
-    '台風',
-    // 水 5
-    '洪水',
-    '浸水',
-    '冠水',
-    '氾濫',
-    '決壊',
-    // 山 2
-    '崖崩れ',
-    '土砂',
-    // ライフライン 4
-    '停電',
-    '断水',
-    '給水',
-    '通信障害',
-  ]
-
   public crawlSelfDefenseTwitter = async (context) => {
     console.log("----> crawlSelfDefenseTwitter start")
     const now = new Date()
     let query
-    if (selfDefenseAccountList.length > now.getMinutes()+1){
-      if (selfDefenseAccountList[now.getMinutes()].twitter!==null){
-        query = selfDefenseAccountList[now.getMinutes()].twitter
+    if (selfDefenseList.length > now.getMinutes()+1){
+      if (selfDefenseList[now.getMinutes()].twitter!==null){
+        query = selfDefenseList[now.getMinutes()].twitter
         await this.searchTweetsAndSave("from:"+query)
       }
     }
@@ -88,12 +43,12 @@ export class Twitter {
    * functionsは最大540秒でタイムアウトしてしまう
    * 毎分実行し、毎分ちがうqueryで検索する
    */
-  public crawlSearchTwitter = async (context) => {
+  public crawlMassMediaTwitter = async (context) => {
     console.log("----> crawlSearchTwitter start")
     const now = new Date()
     let query
-    if (Twitter.queryList.length > now.getMinutes()+1){
-      query = Twitter.queryList[now.getMinutes()]
+    if (massMediaList.length > now.getMinutes()+1){
+      query = massMediaList[now.getMinutes()].query
     }
     await this.searchTweetsAndSave(query)
     console.log("----> crawlSearchTwitter finish")
@@ -164,7 +119,7 @@ export class Twitter {
       }
     }
     let classification
-    if(selfDefenseAccountList.includes(tweet.user.screen_name)){
+    if(selfDefenseList.includes(tweet.user.screen_name)){
       classification = "selfdefense"
     }else{
       classification = null

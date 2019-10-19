@@ -5,7 +5,7 @@ const ngeohash = require('ngeohash')
 
 const locationList = require('../data/geonlp.ex.nii.ac.jp/geonlp_japan.json')
 
-const categoryList = require('../data/yuiseki.net/news_category_words.json')
+const categoryList = require('../data/yuiseki.net/detector_category_words.json')
 
 
 /**
@@ -175,7 +175,6 @@ export class Detector {
    * 文章のカテゴリーを検出する
    */
   public detectCategory(){
-    this.category = null
     // category = crisis, drug, sports, ...
     for (const category of Object.keys(Detector.categoryList)){
       for (const keyword of Detector.categoryList[category]){
@@ -184,6 +183,9 @@ export class Detector {
           this.category = category
         }
       }
+    }
+    if(this.category===undefined){
+      this.category = null
     }
   }
 
