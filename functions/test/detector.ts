@@ -2,7 +2,7 @@ import { describe, it } from 'mocha'
 import assert = require('assert'); 
 import { Detector } from '../src/detector'
 
-describe('Detectorクラスのテスト', () => {
+describe('class Detector', () => {
 
   it('Detector.locationListが正常に展開される', async ()=>{
     const detector = new Detector("")
@@ -13,7 +13,7 @@ describe('Detectorクラスのテスト', () => {
     assert(Object.keys(Detector.locationList.city.data).includes("台東区")===true)
   })
 
-  it('new Detector()できる', async ()=>{
+  it('new Detector(text)できる', async ()=>{
     const detector = new Detector("東京特許許可局")
     await detector.ready
     assert(detector!==null)

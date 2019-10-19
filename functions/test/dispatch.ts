@@ -3,14 +3,14 @@ import assert = require('assert');
 import { Dispatch } from '../src/dispatch'
 
 
-describe('Dispatchクラスのテスト', () => {
+describe('class Dispatch', () => {
 
-  it('Dispatch.fetchJsonAsync()', async ()=>{
+  it('Dispatch.fetchFireDeptDispatchJsonAsync()でJSONを取得できる', async ()=>{
     const json = await Dispatch.fetchFireDeptDispatchJsonAsync()
     assert(json!==null)
   }).timeout(10000)
 
-  it('Dispatch.convertJsonAsync()', async ()=>{
+  it('Dispatch.convertFireDeptDispatchJsonAsync()でfirestoreに保存するobjectに変換できる', async ()=>{
     const json = await Dispatch.fetchFireDeptDispatchJsonAsync()
     const dispatches = await Dispatch.convertFireDeptDispatchJsonAsync(json)
     assert(dispatches!==null)

@@ -1,38 +1,39 @@
+const test = require('firebase-functions-test')();
 import { describe, it } from 'mocha'
 import assert = require('assert')
 import { News } from '../src/news'
 
-describe('Newsクラスのテスト', () => {
+describe('class News', () => {
   const firebase = require('firebase-admin')
   firebase.initializeApp()
 
-  it('News.fetchAsync()できる', async () => {
+  it('News.fetchAsync(url)でHTMLを取得できる', async () => {
     const html = await News.fetchAsync('https://www.google.co.jp/')
     assert(html!==null)
   })
 
-  it('News.parseAsync()でHTMLを解釈できる1', async () => {
+  it('News.parseAsync(html)でHTMLを解釈できる1', async () => {
     const html = await News.fetchAsync('https://www.google.co.jp/')
     const web = await News.parseAsync(html)
     assert(web!==null)
     assert(web.title==='Google')
   })
 
-  it('News.parse()メソッドでhtmlを解釈できる2', async () => {
+  it('News.parseAsync(html)メソッドでhtmlを解釈できる2', async () => {
     const html:string = await News.fetchAsync('https://www.asahi.com/articles/ASMBF32G3MBFUOOB00L.html')
     const web:any = await News.parseAsync(html)
     assert(web!==null)
     assert(web.title==='千曲川決壊、老人施設で避難　家族数人逃げ遅れの情報も [台風１９号]：朝日新聞デジタル')
   }).timeout(3000)
 
-  it('News.parse()メソッドでhtmlを解釈できる3', async () => {
+  it('News.parseAsync(html)メソッドでhtmlを解釈できる3', async () => {
     const html:string = await News.fetchAsync('https://tenki.jp/forecaster/deskpart/2019/10/12/6281.html')
     const web:any = await News.parseAsync(html)
     assert(web!==null)
     assert(web.title==='台風19号　東京都心でも猛烈な風　歴代2位(日直予報士 2019年10月12日) - 日本気象協会 tenki.jp')
   }).timeout(5000)
 
-  it('new News()できる', async () => {
+  it('new News(url)できる', async () => {
     const news = new News('https://www.google.co.jp/')
     await news.ready
     assert(news!==null)
@@ -40,7 +41,7 @@ describe('Newsクラスのテスト', () => {
     assert(news.enurl!==null)
   }).timeout(5000)
 
-  it('firestoreに存在しないURLの場合: new News()したらfetchAsyncとparseAsyncを呼ぶ', async () => {
+  it('new News(url)したときfirestoreに存在しなかったらfetchAsyncとparseAsyncを呼ぶ', async () => {
     const news = new News('https://www.google.co.jp/')
     await news.ready
     assert(news.exists===false)
@@ -49,7 +50,7 @@ describe('Newsクラスのテスト', () => {
     assert(news.web.title==='Google')
   }).timeout(5000)
 
-  it('firestoreに存在するURLの場合: new News()したらfirestoreのデータを取得する', async () => {
+  it('new News(url)したときfirestoreに存在したらfirestoreのデータを取得する', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
     await news.ready
     assert(news.exists===true)
@@ -58,7 +59,7 @@ describe('Newsクラスのテスト', () => {
     assert(news.web.title==='【速報】利根川が満潮で増水　床上浸水などの被害も - FNN.jpプライムオンライン')
   }).timeout(5000)
 
-  it('最新ツイート日時が取得できる', async () => {
+  it('news.getTweetedAtAsync()で最新ツイート日時が取得できる', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
     await news.ready
     assert(news.data.tweets!==null)
@@ -67,7 +68,7 @@ describe('Newsクラスのテスト', () => {
     assert(tweeted_at!==null)
   })
 
-  it('detectorが正常に動作する', async () => {
+  it('news.getDetectorAsync()でDetectorを取得できる', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
     await news.ready
     const detector = await news.getDetectorAsync()
@@ -82,7 +83,7 @@ describe('Newsクラスのテスト', () => {
     assert(detector.geohash!==null)
   })
 
-  it('newsDocParamを組み立てられる', async () => {
+  it('news.getNewsDocParamAsync()でfirestoreに保存するobjectを取得できる', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
     await news.ready
     const param = await news.getNewsDocParamAsync()
