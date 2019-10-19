@@ -1,0 +1,12 @@
+[
+  {
+    "classification": "政府",
+    "name": "内閣府",
+    "domain": "cao.go.jpm",
+    "query": "cao.go.jp",
+    "url": "https://www.cao.go.jp",
+    "favicon": "https://www.cao.go.jp/favicon.ico",
+    "touch_icon": null,
+    "twitter": "cao_japan"
+  },
+]

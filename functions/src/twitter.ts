@@ -25,31 +25,6 @@ import { Detector } from './detector'
 export class Twitter {
 
   public static queryList = [
-    // 新聞 5
-    'yomiuri.co.jp',
-    'mainichi.jp',
-    'asahi.com',
-    'sankei.com',
-    'nikkei.com',
-    // TV 5
-    'nhk.or.jp',
-    'news24.jp',
-    'news.tbs.co.jp',
-    'fnn.jp',
-    'news.tv-asahi.co.jp',
-    // 通信社 4
-    'this.kiji.is',
-    '47news',
-    'jiji.com',
-    'www.afpbb.com',
-    // Web ニュース 3
-    'news.yahoo.co.jp',
-    'headlines.yahoo.co.jp',
-    'times.abema.tv',
-    // UTF-8じゃない
-    //'news.livedoor.com',
-    // 海外 ニュース 1
-    'www.bbc.com/japanese',
     // 行政 11
     // 内閣府
     'cao.go.jp',
