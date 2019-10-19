@@ -125,7 +125,9 @@ export class Detector {
       if (Detector.locationList===null) {
         Detector.locationList = await Detector.loadLocationList()
       }
-      this.detecting()
+      if(this.text.length > 0){
+        this.detecting()
+      }
       resolve()
     })
   }

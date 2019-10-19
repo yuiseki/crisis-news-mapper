@@ -39,6 +39,9 @@ export class News {
                 // tslint:disable-next-line: no-floating-promises
                 resolve(await News.fetchAsync(newUrl))
                 break
+              case 404:
+                resolve(null)
+                break
               default:
                 resolve(null)
             }
@@ -55,32 +58,43 @@ export class News {
   public static parseAsync = async(html:string):Promise<any> => {
     return new Promise( resolve => {
       console.log("----> parseAsync start")
-      const result:any = {}
-      const document = cheerio.load(html)
-      result.title = cheerio.text(document('title'))
-      if (result.title===undefined){
-        result.title = null
+      const result:any = {
+        title: null,
+        og_title: null,
+        og_desc: null,
+        og_image: null,
+        og_url: null,
       }
-      result.og_title = document("meta[property='og:title']").attr('content')
-      if (result.og_title===undefined){
-        result.og_title = null
+      try{
+        const document = cheerio.load(html)
+        result.title = cheerio.text(document('title'))
+        if (result.title===undefined){
+          result.title = null
+        }
+        result.og_title = document("meta[property='og:title']").attr('content')
+        if (result.og_title===undefined){
+          result.og_title = null
+        }
+        result.og_desc  = document("meta[property='og:description']").attr('content')
+        if (result.og_desc===undefined){
+          result.og_desc = null
+        }
+        result.og_image = document("meta[property='og:image']").attr('content')
+        if (result.og_image===undefined){
+          result.og_image = null
+        }
+        result.og_url   = document("meta[property='og:url']").attr('content')
+        if (result.og_url===undefined){
+          result.og_url = null
+        }
+        console.log("----> parseAsync og_title: "+result.og_title)
+        console.log("----> parseAsync og_desc: "+result.og_desc)
+        console.log("----> parseAsync finish")
+        resolve(result)
+      }catch(e){
+        resolve(result)
       }
-      result.og_desc  = document("meta[property='og:description']").attr('content')
-      if (result.og_desc===undefined){
-        result.og_desc = null
-      }
-      result.og_image = document("meta[property='og:image']").attr('content')
-      if (result.og_image===undefined){
-        result.og_image = null
-      }
-      result.og_url   = document("meta[property='og:url']").attr('content')
-      if (result.og_url===undefined){
-        result.og_url = null
-      }
-      console.log("----> parseAsync og_title: "+result.og_title)
-      console.log("----> parseAsync og_desc: "+result.og_desc)
-      console.log("----> parseAsync finish")
-      resolve(result)
+      
     })
   }
 
@@ -112,11 +126,14 @@ export class News {
           await admin.firestore().collection('news').doc(this.enurl).update({
             url: this.url,
             redirect: 1
+          }).catch((error)=> {
+            console.log("----------")
+            console.log(error)
+            console.log("----------")
           })
         }
         this.web = await News.parseAsync(this.html)
       }else {
-        this.html = null
         this.web = {
           title: this.data.title,
           og_title: this.data.og_title,
@@ -201,14 +218,17 @@ export class News {
     return param
   }
 
-  public updateByLastTweet = async(tweet, url) => {
-    const enurl = md5(url)
-    await admin.firestore().collection('news').doc(enurl).update({
+  public updateByLastTweet = async(tweet) => {
+    await admin.firestore().collection('news').doc(this.enurl).update({
       // MEMO: admin.firestore()だとダメ！！！
       // 言及ツイートに追加
       tweets: admin.firestore.FieldValue.arrayUnion(tweet.id_str),
       // 最終言及日時を更新
       tweeted_at: new Date(Date.parse(tweet.created_at)),
+    }).catch((error)=> {
+      console.log("----------")
+      console.log(error)
+      console.log("----------")
     })
   }
 
@@ -220,7 +240,8 @@ export class News {
     console.log("setOrUpdateNews: "+this.enurl)
     const param = await this.getNewsDocParamAsync()
     if (this.exists){
-      await admin.firestore().collection('news').doc(this.enurl).update(param)
+      await admin.firestore().collection('news').doc(this.enurl)
+        .update(param)
         .catch((error)=> {
           console.log("----------")
           console.log(error)
@@ -231,7 +252,8 @@ export class News {
         param.tweets = [tweet.id_str]
         param.tweeted_at = new Date(Date.parse(tweet.created_at))
       }
-      await admin.firestore().collection('news').doc(this.enurl).set(param)
+      await admin.firestore().collection('news').doc(this.enurl)
+        .set(param)
         .catch((error)=> {
           console.log("----------")
           console.log(error)

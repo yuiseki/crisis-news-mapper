@@ -234,7 +234,7 @@ export class Twitter {
       const news = new News(url)
       await news.ready
       if (news.exists){
-        await news.updateByLastTweet(tweet, url)
+        await news.updateByLastTweet(tweet)
       }else{
         await news.setOrUpdateNews(tweet)
       }
