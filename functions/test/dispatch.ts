@@ -1,3 +1,4 @@
+const test = require('firebase-functions-test')();
 import { describe, it } from 'mocha'
 import assert = require('assert'); 
 import { Dispatch } from '../src/dispatch'
