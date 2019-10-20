@@ -52,7 +52,7 @@ exports.dispatch = functions.https.onRequest(async (req, res) => {
   const query = await admin.firestore()
     .collection("dispatch")
     .where("place_country", "==", "日本")
-    .where("category", "==", "crisis")
+    //.where("category", "==", "crisis")
     .orderBy("created_at", "desc")
     .limit(1000)
     .get()
@@ -155,14 +155,20 @@ const runtimeOpt = {
 import { Dispatch } from './dispatch'
 exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 5 minutes').onRun(Dispatch.fetchAndSaveFireDeptDispatchAsync)
 
+// マスコミニュース記事を収集するバッチ処理
+import { Feed } from './feed'
+exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Feed.crawlMediaFeeds)
+
+
 // Twitter検索するバッチ処理
 import { Twitter } from './twitter'
-const twitter = new Twitter()
-exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 2 minutes').onRun(twitter.crawlTwitter)
-
+//const twitter = new Twitter()
+//exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 2 minutes').onRun(twitter.crawlTwitter)
 // 全Tweetを更新するバッチ処理
-//exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.updateAllTweets)
+exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.updateAllTweets)
 
+/*
 // 全ニュースを更新するバッチ処理
-//import { News } from './news'
-//exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.updateAllNews)
+import { News } from './news'
+exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.updateAllNews)
+*/

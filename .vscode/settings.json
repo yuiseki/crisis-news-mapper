@@ -3,6 +3,8 @@
         "Nowcast",
         "YOLP",
         "choco",
+        "domcontentloaded",
+        "feedparser",
         "filepath",
         "firedept",
         "geojson",
@@ -11,12 +13,15 @@
         "hyperpref",
         "hyperunit",
         "libxmljs",
+        "networkidle",
         "predeploy",
         "promisify",
         "selfdefense",
         "togeojson",
+        "tweetdeck",
+        "twint",
         "twttr",
         "yuiseki"
     ],
-    "python.pythonPath": "C:\\Python37\\python.exe"
+    "python.pythonPath": "/usr/local/bin/python3"
 }

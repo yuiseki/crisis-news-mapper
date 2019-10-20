@@ -7,22 +7,26 @@ const a_consumer_key = functions.config().twitter.a_consumer_key
 const a_consumer_secret = functions.config().twitter.a_consumer_secret
 const a_access_token_key = functions.config().twitter.a_access_token_key
 const a_access_token_secret = functions.config().twitter.a_access_token_secret
+
+const b_consumer_key = functions.config().twitter.b_consumer_key
+const b_consumer_secret = functions.config().twitter.b_consumer_secret
+const b_access_token_key = functions.config().twitter.b_access_token_key
+const b_access_token_secret = functions.config().twitter.b_access_token_secret
+
+
 const a_client = new TwitterClient({
   a_consumer_key,
   a_consumer_secret,
   a_access_token_key,
   a_access_token_secret
 })
-const b_consumer_key = functions.config().twitter.b_consumer_key
-const b_consumer_secret = functions.config().twitter.b_consumer_secret
-const b_access_token_key = functions.config().twitter.b_access_token_key
-const b_access_token_secret = functions.config().twitter.b_access_token_secret
 const b_client = new TwitterClient({
   b_consumer_key,
   b_consumer_secret,
   b_access_token_key,
   b_access_token_secret
 })
+
 
 const categoryList = require('../data/yuiseki.net/detector_category_words.json')
 const selfDefenseList = require('../data/yuiseki.net/self_defense.json')
@@ -32,20 +36,20 @@ const massMediaList = require('../data/yuiseki.net/mass_media_japan.json')
 import { News } from './news'
 import { Detector } from './detector'
 
-const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+//const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
 
 export class Twitter {
 
   public crawlTwitter = async (context) => {
+    //await sleep(1000 + Math.random() * 1000)
+    //await this.crawlSelfDefenseTwitter(context)
     // 最低5秒、最大10秒間隔を開ける
-    await sleep(5000 + Math.random() * 5000)
-    await this.crawlCrisisWordTwitter(context)
-    await sleep(5000 + Math.random() * 5000)
-    await this.crawlMassMediaTwitter(context)
-    await sleep(5000 + Math.random() * 5000)
-    await this.crawlGovernmentTwitter(context)
-    await sleep(5000 + Math.random() * 5000)
-    await this.crawlSelfDefenseTwitter(context)
+    //await sleep(5000 + Math.random() * 5000)
+    //await this.crawlCrisisWordTwitter(context)
+    //await sleep(5000 + Math.random() * 5000)
+    //await this.crawlMassMediaTwitter(context)
+    //await sleep(5000 + Math.random() * 5000)
+    //await this.crawlGovernmentTwitter(context)
   }
 
   public crawlCrisisWordTwitter = async (context) => {
@@ -316,6 +320,7 @@ export class Twitter {
       const now = new Date()
       const tenMinutesAgo = new Date(now.getTime() - 60 * 10)
       const tweetSnapshot = await admin.firestore().collection("tweets")
+        .where('icon_url', '==', null)
         .orderBy('updated_at', 'desc')
         .startAfter(tenMinutesAgo)
         .limit(1)

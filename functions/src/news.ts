@@ -105,7 +105,7 @@ export class News {
   constructor(url:string){
     this.url = url
     this.enurl = md5(url)
-    this.ready = new Promise(async (resolve,reject) => {
+    this.ready = new Promise(async (resolve, reject) => {
       let firestoreIsOnline = true
       let shouldFetch = true
       try{
@@ -289,6 +289,9 @@ export class News {
       if(tweet!==null){
         param.tweets = [tweet.id_str]
         param.tweeted_at = new Date(Date.parse(tweet.created_at))
+      }else{
+        param.tweets = []
+        param.tweeted_at = new Date()
       }
       await admin.firestore().collection('news').doc(this.enurl)
         .set(param)
