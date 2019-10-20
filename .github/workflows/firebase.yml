@@ -1,4 +1,4 @@
-name: Firebase deploy
+name: Firebase build, test, deploy
 
 on: [push]
 
@@ -34,7 +34,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Build /public
-      working-directory: /public
+      working-directory: public
       run: |
         npm ci
         npm run build
