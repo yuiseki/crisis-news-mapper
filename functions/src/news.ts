@@ -241,6 +241,18 @@ export class News {
     if(newData.place_city===undefined){
       newData.place_city = null
     }
+    if(newData.place_river===undefined){
+      newData.place_river = null
+    }
+    if(newData.place_mountain===undefined){
+      newData.place_mountain = null
+    }
+    if(newData.place_station===undefined){
+      newData.place_station = null
+    }
+    if(newData.place_airport===undefined){
+      newData.place_airport = null
+    }
     return newData
   }
 

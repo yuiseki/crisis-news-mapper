@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  app:
+    build: ./docker/firestore-emulator/
+    volumes:
+      - .:/usr/src/app:cached
+      - node_modules-data:/usr/src/app/node_modules
+
+volumes:
+  node_modules-data:
+    driver: local

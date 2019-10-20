@@ -53,8 +53,6 @@ const renderLeafLetPromise = new Promise(async resolve => {
   japanCitiesGeoJson.addTo(map);
 
 
-
-
   // 国土地理院淡色地図タイルの定義
   const cyberJapanPaleTileLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
     id: 'CyberJapanPaleTile',
@@ -72,7 +70,9 @@ const renderLeafLetPromise = new Promise(async resolve => {
     maxZoom: 15,
   }).setOpacity(0.4)
 
+
   // YOLPのタイルをleafletで読み込むためのクラスの定義
+  // @ts-ignore
   L.YOLPTileLayer = L.TileLayer.extend({
       getTileUrl: function (coords) {
         //雨雲リクエスト日付の作成
@@ -94,6 +94,7 @@ const renderLeafLetPromise = new Promise(async resolve => {
         let minutesStr = String(minutes)
         if (minutes < 10) minutesStr = '0' + String(minutes);
         const dateStr = "" + String(year) + monthStr + dayStr + hoursStr + minutesStr;
+        // @ts-ignore
         return L.Util.template(this._url, L.extend({
           d: dateStr,
           x: coords.x,
@@ -104,70 +105,12 @@ const renderLeafLetPromise = new Promise(async resolve => {
     });
 
   // YOLP雨雲画像タイルの定義
+  // @ts-ignore
   const rainMapTileLayer = new L.YOLPTileLayer('http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}', {
     attribution: '<a href="https://developer.yahoo.co.jp/webapi/map/">Yahoo! Open Local Platform</a>',
     maxZoom: 18,
   }).setOpacity(0.7)
 
-  // ニュース記事マーカーレイヤーの定義
-  let category = ""
-  switch (location.hash){
-    case "#drug":
-      category = "?category=drug";
-      break;
-    case "#children":
-      category = "?category=children";
-      break;
-    default:
-      category = ""
-  }
-
-
-  const newsRes = await fetch("/news"+category)
-  const newsJson = await newsRes.json()
-  const news = []
-  newsJson.forEach(function(element){
-    if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
-    if (element.og_title===undefined || element.og_title===null || element.og_desc===undefined || element.og_desc===null){return;}
-    let content = "<h3>"+element.og_title+"</h3><p>";
-    if (element.og_url){
-      content = content + "<a href='"+element.og_url+"'>";
-    }
-    content = content + element.og_desc
-    if (element.og_url){
-      content = content + "</a>"
-    }
-    content = content + "</p>"
-    if (element.og_image){
-      content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
-    }
-    const marker = L.marker([element.lat, element.long]);
-    marker.bindPopup(content);
-    news.push(marker)
-  });
-  const newsClusterGroup = L.markerClusterGroup.layerSupport()
-  //newsClusterGroup.freezeAtZoom(11);
-  const newsLayerGroup = L.layerGroup(news)
-  newsClusterGroup.addTo(map);
-  newsClusterGroup.checkIn(newsLayerGroup); 
-
-  // 消防出動情報マーカーレイヤーの定義
-  const firetruckIcon = L.icon({
-    iconUrl: 'firetruck.png',
-    iconSize:     [20, 20],
-    iconAnchor:   [10, 10],
-    popupAnchor:  [0, -10]
-  });
-  const fireDeptDispatchRes = await fetch("/dispatch")
-  const fireDeptDispatchJson = await fireDeptDispatchRes.json()
-  const fireDeptDispatch = []
-  fireDeptDispatchJson.forEach(function(element){
-    if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
-    const marker = L.marker([element.lat, element.long], {icon: firetruckIcon});
-    marker.bindPopup("<b>"+element.division+"</b>:"+element.detail);
-    fireDeptDispatch.push(marker)
-  });
-  const fireDeptDispatchLayerGroup = L.layerGroup(fireDeptDispatch)
 
   // 自衛隊災害派遣情報マーカーレイヤーの定義
   var selfdefenseIcon = L.icon({
@@ -196,6 +139,71 @@ const renderLeafLetPromise = new Promise(async resolve => {
     selfDefenseDispatch.push(marker)
   });
   const selfDefenseDispatchLayerGroup = L.layerGroup(selfDefenseDispatch)
+  map.addLayer(selfDefenseDispatchLayerGroup)
+
+
+  // 消防出動情報マーカーレイヤーの定義
+  const firetruckIcon = L.icon({
+    iconUrl: 'firetruck.png',
+    iconSize:     [20, 20],
+    iconAnchor:   [10, 10],
+    popupAnchor:  [0, -10]
+  });
+  const fireDeptDispatchRes = await fetch("/dispatch")
+  const fireDeptDispatchJson = await fireDeptDispatchRes.json()
+  const fireDeptDispatch = []
+  fireDeptDispatchJson.forEach(function(element){
+    if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
+    const marker = L.marker([element.lat, element.long], {icon: firetruckIcon});
+    marker.bindPopup("<b>"+element.division+"</b>:"+element.detail);
+    fireDeptDispatch.push(marker)
+  });
+  const fireDeptDispatchLayerGroup = L.layerGroup(fireDeptDispatch)
+  map.addLayer(fireDeptDispatchLayerGroup)
+
+
+  // ニュース記事マーカーレイヤーの定義
+  let category = ""
+  switch (location.hash){
+    case "#drug":
+      category = "?category=drug";
+      break;
+    case "#children":
+      category = "?category=children";
+      break;
+    default:
+      category = ""
+  }
+  const newsRes = await fetch("/news"+category)
+  const newsJson = await newsRes.json()
+  const news = []
+  newsJson.forEach(function(element){
+    if (element.lat===undefined || element.lat===null || element.long===undefined || element.long===null){return;}
+    if (element.og_title===undefined || element.og_title===null || element.og_desc===undefined || element.og_desc===null){return;}
+    let content = "<h3>"+element.og_title+"</h3><p>";
+    if (element.og_url){
+      content = content + "<a href='"+element.og_url+"'>";
+    }
+    content = content + element.og_desc
+    if (element.og_url){
+      content = content + "</a>"
+    }
+    content = content + "</p>"
+    if (element.og_image){
+      content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
+    }
+    const marker = L.marker([element.lat, element.long]);
+    marker.bindPopup(content);
+    news.push(marker)
+  });
+  // @ts-ignore
+  const newsClusterGroup = L.markerClusterGroup.layerSupport()
+  //newsClusterGroup.freezeAtZoom(11);
+  const newsLayerGroup = L.layerGroup(news)
+  newsClusterGroup.addTo(map);
+  newsClusterGroup.checkIn(newsLayerGroup); 
+  map.addLayer(newsLayerGroup)
+
 
   const baseLayerData = {
     "国土地理院淡色地図": cyberJapanPaleTileLayer
@@ -207,10 +215,6 @@ const renderLeafLetPromise = new Promise(async resolve => {
     "消防出動情報": fireDeptDispatchLayerGroup,
     "自衛隊災害派遣情報": selfDefenseDispatchLayerGroup
   }
-  map.addLayer(newsLayerGroup)
-  map.addLayer(fireDeptDispatchLayerGroup)
-  map.addLayer(selfDefenseDispatchLayerGroup)
-
   // レイヤー切り替えコントロールを追加
   L.control.layers(baseLayerData, overlayLayerData, {collapsed:false, position: 'bottomright'}).addTo(map)
 

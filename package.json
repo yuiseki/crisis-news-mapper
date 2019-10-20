@@ -1,0 +1,16 @@
+{
+  "name": "firebase",
+  "scripts": {
+    "build": "cd functions && npm run build && cd ../public/ && npm run build",
+    "serve": "firebase serve",
+    "start": "firebase serve",
+    "deploy": "firebase deploy",
+    "start-firestore": "firebase serve --only firestore",
+    "test": "cd functions && npm run test"
+  },
+  "engines": {
+    "node": "10"
+  },
+  "main": "lib/index.js",
+  "private": true
+}

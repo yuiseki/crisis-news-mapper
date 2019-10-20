@@ -6,9 +6,10 @@
     "serve": "npm run build && firebase serve --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
+    "firestore": "firebase serve --only firestore",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "mocha --require espower-typescript/guess test/**/*.ts"
+    "test": "npm run firestore & mocha --require espower-typescript/guess test/**/*.ts"
   },
   "engines": {
     "node": "10"

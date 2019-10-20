@@ -1,0 +1,25 @@
+name: Firebase hosting Build
+
+on: [push]
+
+jobs:
+  hosting:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x]
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Build /public
+      working-directory: /public
+      run: |
+        npm ci
+        npm run build --if-present
+      env:
+        CI: true

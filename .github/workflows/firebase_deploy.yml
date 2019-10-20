@@ -1,0 +1,22 @@
+name: Firebase functions Build & Test
+
+on: [push]
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    needs: [functions, hosting]
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Deploy to Firebase
+      uses: w9jds/firebase-action@master
+      with:
+        args: deploy
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

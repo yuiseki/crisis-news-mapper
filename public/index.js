@@ -56,6 +56,7 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
         maxZoom: 15,
     }).setOpacity(0.4);
     // YOLPのタイルをleafletで読み込むためのクラスの定義
+    // @ts-ignore
     L.YOLPTileLayer = L.TileLayer.extend({
         getTileUrl: function (coords) {
             //雨雲リクエスト日付の作成
@@ -81,6 +82,7 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
             if (minutes < 10)
                 minutesStr = '0' + String(minutes);
             const dateStr = "" + String(year) + monthStr + dayStr + hoursStr + minutesStr;
+            // @ts-ignore
             return L.Util.template(this._url, L.extend({
                 d: dateStr,
                 x: coords.x,
@@ -90,10 +92,63 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
         }
     });
     // YOLP雨雲画像タイルの定義
+    // @ts-ignore
     const rainMapTileLayer = new L.YOLPTileLayer('http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}', {
         attribution: '<a href="https://developer.yahoo.co.jp/webapi/map/">Yahoo! Open Local Platform</a>',
         maxZoom: 18,
     }).setOpacity(0.7);
+    // 自衛隊災害派遣情報マーカーレイヤーの定義
+    var selfdefenseIcon = L.icon({
+        iconUrl: 'selfdefense.png',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -10]
+    });
+    const selfDefenseDispatchRes = await fetch("/tweets");
+    const selfDefenseDispatchJson = await selfDefenseDispatchRes.json();
+    const selfDefenseDispatch = [];
+    selfDefenseDispatchJson.forEach(function (element) {
+        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
+            return;
+        }
+        if (element.text.startsWith("RT")) {
+            return;
+        }
+        var marker = L.marker([element.lat, element.long], { icon: selfdefenseIcon });
+        var content = "<h3><img width=20 height=20 src='" + element.icon_url + "' />" + element.display_name + "</h3>";
+        content = content + "<p>";
+        content = content + "<a href='https://twitter.com/" + element.screen_name + "/status/" + element.tweet_id_str + "'>";
+        content = content + element.text;
+        content = content + "</a>";
+        content = content + "</p>";
+        if (element.photos.length > 0) {
+            content = content + "<img width=150 height=100 src='" + element.photos[0] + "' />";
+        }
+        marker.bindPopup(content);
+        selfDefenseDispatch.push(marker);
+    });
+    const selfDefenseDispatchLayerGroup = L.layerGroup(selfDefenseDispatch);
+    map.addLayer(selfDefenseDispatchLayerGroup);
+    // 消防出動情報マーカーレイヤーの定義
+    const firetruckIcon = L.icon({
+        iconUrl: 'firetruck.png',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -10]
+    });
+    const fireDeptDispatchRes = await fetch("/dispatch");
+    const fireDeptDispatchJson = await fireDeptDispatchRes.json();
+    const fireDeptDispatch = [];
+    fireDeptDispatchJson.forEach(function (element) {
+        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
+            return;
+        }
+        const marker = L.marker([element.lat, element.long], { icon: firetruckIcon });
+        marker.bindPopup("<b>" + element.division + "</b>:" + element.detail);
+        fireDeptDispatch.push(marker);
+    });
+    const fireDeptDispatchLayerGroup = L.layerGroup(fireDeptDispatch);
+    map.addLayer(fireDeptDispatchLayerGroup);
     // ニュース記事マーカーレイヤーの定義
     let category = "";
     switch (location.hash) {
@@ -132,61 +187,13 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
         marker.bindPopup(content);
         news.push(marker);
     });
+    // @ts-ignore
     const newsClusterGroup = L.markerClusterGroup.layerSupport();
     //newsClusterGroup.freezeAtZoom(11);
     const newsLayerGroup = L.layerGroup(news);
     newsClusterGroup.addTo(map);
     newsClusterGroup.checkIn(newsLayerGroup);
-    // 消防出動情報マーカーレイヤーの定義
-    const firetruckIcon = L.icon({
-        iconUrl: 'firetruck.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const fireDeptDispatchRes = await fetch("/dispatch");
-    const fireDeptDispatchJson = await fireDeptDispatchRes.json();
-    const fireDeptDispatch = [];
-    fireDeptDispatchJson.forEach(function (element) {
-        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
-            return;
-        }
-        const marker = L.marker([element.lat, element.long], { icon: firetruckIcon });
-        marker.bindPopup("<b>" + element.division + "</b>:" + element.detail);
-        fireDeptDispatch.push(marker);
-    });
-    const fireDeptDispatchLayerGroup = L.layerGroup(fireDeptDispatch);
-    // 自衛隊災害派遣情報マーカーレイヤーの定義
-    var selfdefenseIcon = L.icon({
-        iconUrl: 'selfdefense.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const selfDefenseDispatchRes = await fetch("/tweets");
-    const selfDefenseDispatchJson = await selfDefenseDispatchRes.json();
-    const selfDefenseDispatch = [];
-    selfDefenseDispatchJson.forEach(function (element) {
-        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
-            return;
-        }
-        if (element.text.startsWith("RT")) {
-            return;
-        }
-        var marker = L.marker([element.lat, element.long], { icon: selfdefenseIcon });
-        var content = "<h3><img width=20 height=20 src='" + element.icon_url + "' />" + element.display_name + "</h3>";
-        content = content + "<p>";
-        content = content + "<a href='https://twitter.com/" + element.screen_name + "/status/" + element.tweet_id_str + "'>";
-        content = content + element.text;
-        content = content + "</a>";
-        content = content + "</p>";
-        if (element.photos.length > 0) {
-            content = content + "<img width=150 height=100 src='" + element.photos[0] + "' />";
-        }
-        marker.bindPopup(content);
-        selfDefenseDispatch.push(marker);
-    });
-    const selfDefenseDispatchLayerGroup = L.layerGroup(selfDefenseDispatch);
+    map.addLayer(newsLayerGroup);
     const baseLayerData = {
         "国土地理院淡色地図": cyberJapanPaleTileLayer
     };
@@ -197,9 +204,6 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
         "消防出動情報": fireDeptDispatchLayerGroup,
         "自衛隊災害派遣情報": selfDefenseDispatchLayerGroup
     };
-    map.addLayer(newsLayerGroup);
-    map.addLayer(fireDeptDispatchLayerGroup);
-    map.addLayer(selfDefenseDispatchLayerGroup);
     // レイヤー切り替えコントロールを追加
     L.control.layers(baseLayerData, overlayLayerData, { collapsed: false, position: 'bottomright' }).addTo(map);
     resolve();
