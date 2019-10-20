@@ -1,0 +1,56 @@
+name: Firebase deploy
+
+on: [push]
+
+jobs:
+  functions:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [10.x]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Build and Test /functions
+      working-directory: functions
+      run: |
+        npm install firebase-cli -g
+        firebase setup:emulators:firestore
+        npm ci
+        npm run build
+        npm test
+      env:
+        CI: true
+  hosting:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [10.x]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Build /public
+      working-directory: /public
+      run: |
+        npm ci
+        npm run build
+      env:
+        CI: true
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [functions, hosting]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Deploy to Firebase
+      uses: w9jds/firebase-action@master
+      with:
+        args: deploy
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
