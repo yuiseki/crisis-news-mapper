@@ -3,6 +3,10 @@
     "public": "public",
     "ignore": [
       "firebase.json",
+      "tsconfig.json",
+      "package.json",
+      "package-lock.json",
+      ".gitignore",
       "**/.*",
       "**/node_modules/**"
     ],

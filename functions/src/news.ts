@@ -105,24 +105,46 @@ export class News {
   constructor(url:string){
     this.url = url
     this.enurl = md5(url)
-    this.ready = new Promise(async resolve => {
-      // firestoreにすでにnews docが存在するか？
-      const docRef = await admin.firestore().collection('news').doc(this.enurl).get()
-      let shouldFetch
-      if (docRef.exists){
-        this.exists = true
-        this.data = docRef.data()
-        if (this.data.og_title===null || this.data.og_title===undefined){
-          shouldFetch = true
-        }
-      }else {
+    this.ready = new Promise(async (resolve,reject) => {
+      let firestoreIsOnline = true
+      let shouldFetch = true
+      try{
+        admin.firestore()
+      }catch(e){
+        // firestoreがオフラインのときはnews docがないものとして扱う
+        firestoreIsOnline = false
         this.exists = false
         this.data = {}
         shouldFetch = true
       }
+      if(firestoreIsOnline){
+        const docRef = await admin.firestore().collection('news').doc(this.enurl).get()
+        if(docRef.exists){
+          // firestoreにすでにnews docが存在する
+          this.exists = true
+          this.data = docRef.data()
+          // スクレイピング済みか？
+          if (this.data.og_title===null || this.data.og_title===undefined){
+            shouldFetch = true
+          }else{
+            this.web = {
+              title: this.data.title,
+              og_title: this.data.og_title,
+              og_desc: this.data.og_desc,
+              og_image: this.data.og_image,
+              og_url: this.data.og_url,
+            }
+          }
+        }else{
+          // firestoreにまだnews docが存在しない
+          this.exists = false
+          this.data = {}
+          shouldFetch = true
+        }
+      }
       if (shouldFetch){
         this.html = await News.fetchAsync(this.url)
-        if (this.html===null){
+        if (firestoreIsOnline && this.html===null){
           await admin.firestore().collection('news').doc(this.enurl).update({
             url: this.url,
             redirect: 1
@@ -133,14 +155,6 @@ export class News {
           })
         }
         this.web = await News.parseAsync(this.html)
-      }else {
-        this.web = {
-          title: this.data.title,
-          og_title: this.data.og_title,
-          og_desc: this.data.og_desc,
-          og_image: this.data.og_image,
-          og_url: this.data.og_url,
-        }
       }
       resolve()
     })
@@ -214,8 +228,20 @@ export class News {
       long:           detector.location.long,
       geohash:        detector.geohash,
     }
-    const param = Object.assign(newData, detectorData)
-    return param
+    newData = Object.assign(newData, detectorData)
+    if(newData.category===undefined){
+      newData.category = null
+    }
+    if(newData.place_country===undefined){
+      newData.place_country = null
+    }
+    if(newData.place_pref===undefined){
+      newData.place_pref = null
+    }
+    if(newData.place_city===undefined){
+      newData.place_city = null
+    }
+    return newData
   }
 
   public updateByLastTweet = async(tweet) => {

@@ -1,12 +1,14 @@
-const test = require('firebase-functions-test')();
 import { describe, it } from 'mocha'
 import assert = require('assert')
-import { News } from '../src/news'
+
 
 describe('class News', () => {
-  const firebase = require('firebase-admin')
-  firebase.initializeApp()
+  let News
 
+  before(()=>{
+    News = require('../src/news').News
+  })
+  
   it('News.fetchAsync(url)でHTMLを取得できる', async () => {
     const html = await News.fetchAsync('https://www.google.co.jp/')
     assert(html!==null)
@@ -39,34 +41,18 @@ describe('class News', () => {
     assert(news!==null)
     assert(news.url==='https://www.google.co.jp/')
     assert(news.enurl!==null)
-  }).timeout(5000)
+  }).timeout(15000)
 
   it('new News(url)したときfirestoreに存在しなかったらfetchAsyncとparseAsyncを呼ぶ', async () => {
-    const news = new News('https://www.google.co.jp/')
+    const url = 'https://www.google.co.jp/'
+
+    const news = new News(url)
     await news.ready
     assert(news.exists===false)
     assert(news.html!==null)
     assert(news.web!==null)
     assert(news.web.title==='Google')
-  }).timeout(5000)
-
-  it('new News(url)したときfirestoreに存在したらfirestoreのデータを取得する', async () => {
-    const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
-    await news.ready
-    assert(news.exists===true)
-    assert(news.html===null)
-    assert(news.web!==null)
-    assert(news.web.title==='【速報】利根川が満潮で増水　床上浸水などの被害も - FNN.jpプライムオンライン')
-  }).timeout(5000)
-
-  it('news.getTweetedAtAsync()で最新ツイート日時が取得できる', async () => {
-    const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
-    await news.ready
-    assert(news.data.tweets!==null)
-    assert(news.data.tweets.length > 0)
-    const tweeted_at = await news.getTweetedAtAsync()
-    assert(tweeted_at!==null)
-  })
+  }).timeout(15000)
 
   it('news.getDetectorAsync()でDetectorを取得できる', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
@@ -81,7 +67,7 @@ describe('class News', () => {
     assert(detector.location.lat!==null)
     assert(detector.location.long!==null)
     assert(detector.geohash!==null)
-  })
+  }).timeout(15000)
 
   it('news.getNewsDocParamAsync()でfirestoreに保存するobjectを取得できる', async () => {
     const news = new News('https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
@@ -91,12 +77,9 @@ describe('class News', () => {
     assert(param.url==='https://www.fnn.jp/posts/00425593CX/201910141711_CX_CX')
     assert(param.enurl!==null)
     assert(param.updated_at!==null)
-    assert(param.tweeted_at!==null)
-    assert(param.tweets!==null)
-    assert(param.tweets.length > 0)
     assert(param.category==='crisis')
     assert(param.lat!==null)
     assert(param.long!==null)
-  })
+  }).timeout(15000)
 
 })

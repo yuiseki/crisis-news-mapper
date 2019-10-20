@@ -37,6 +37,7 @@
     "firebase-functions-test": "^0.1.6",
     "mocha": "^6.2.1",
     "power-assert": "^1.6.1",
+    "sinon": "^7.5.0",
     "tslint": "^5.12.0",
     "twitter-d": "^0.4.0",
     "typescript": "^3.6.4"
