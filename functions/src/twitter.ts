@@ -32,12 +32,19 @@ const massMediaList = require('../data/yuiseki.net/mass_media_japan.json')
 import { News } from './news'
 import { Detector } from './detector'
 
+const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+
 export class Twitter {
 
   public crawlTwitter = async (context) => {
+    // 最低5秒、最大10秒間隔を開ける
+    await sleep(5000 + Math.random() * 5000)
     await this.crawlCrisisWordTwitter(context)
+    await sleep(5000 + Math.random() * 5000)
     await this.crawlMassMediaTwitter(context)
+    await sleep(5000 + Math.random() * 5000)
     await this.crawlGovernmentTwitter(context)
+    await sleep(5000 + Math.random() * 5000)
     await this.crawlSelfDefenseTwitter(context)
   }
 
@@ -47,6 +54,7 @@ export class Twitter {
     let query
     if (categoryList.crisis.length > now.getMinutes()+1){
       query = categoryList.crisis[now.getMinutes()]
+      console.log("----> crawlCrisisWordTwitter query: "+query)
       await this.searchTweetsAndSaveAsync(query)
     }
     console.log("----> crawlCrisisWordTwitter finish")
@@ -58,6 +66,7 @@ export class Twitter {
     let query
     if (massMediaList.length > now.getMinutes()+1){
       query = massMediaList[now.getMinutes()].query
+      console.log("----> crawlMassMediaTwitter query: "+query)
       await this.searchTweetsAndSaveAsync(query)
     }
     console.log("----> crawlMassMediaTwitter finish")
@@ -69,6 +78,7 @@ export class Twitter {
     let screen_name
     if (governmentList.length > now.getMinutes()+1){
       screen_name = governmentList[now.getMinutes()].twitter
+      console.log("----> crawlGovernmentTwitter screen_name: "+screen_name)
       await this.getTimelineAndSaveAsync(screen_name)
     }
     console.log("----> crawlGovernmentTwitter finish")
@@ -81,6 +91,7 @@ export class Twitter {
     if (selfDefenseList.length > now.getMinutes()+1){
       if (selfDefenseList[now.getMinutes()].twitter!==null){
         screen_name = selfDefenseList[now.getMinutes()].twitter
+      console.log("----> crawlSelfDefenseTwitter screen_name: "+screen_name)
         await this.getTimelineAndSaveAsync(screen_name)
       }
     }
@@ -111,7 +122,7 @@ export class Twitter {
    */
   public searchTweetsAsync = async (query) => {
     return new Promise((resolve, reject)=>{
-      console.log("----> searchTweetPromise start : "+query)
+      console.log("----> searchTweetsAsync start : "+query)
       const params = {q: query+" exclude:retweets", result_type:'recent', count: 100}
       const now = new Date()
       let client
@@ -122,10 +133,10 @@ export class Twitter {
       }
       client.get('search/tweets', params, (error, results, response) => {
         if (error){
-          console.log("error: "+error)
+          console.log("error: "+JSON.stringify(error))
           reject(error)
         }else{
-          console.log("----> searchTweetPromise finish : "+query)
+          console.log("----> searchTweetsAsync finish : "+query)
           resolve(results.statuses)
         }
       })
@@ -137,12 +148,12 @@ export class Twitter {
    * @param {string} screen_name 検索クエリ文字列
    */
   public getTimelineAndSaveAsync = async (screen_name) => {
-    console.log("----> searchTweetsAndSave start: "+screen_name)
+    console.log("----> getTimelineAndSave start: "+screen_name)
     const results:any = await this.getTimelineAsync(screen_name)
     for (const tweet of results) {
       await this.saveTweetAsync(tweet)
     }
-    console.log("----> searchTweetsAndSave finish: "+screen_name)
+    console.log("----> getTimelineAndSave finish: "+screen_name)
   }
 
   /**
@@ -168,7 +179,7 @@ export class Twitter {
       }
       client.get('statuses/user_timeline', params, (error, results, response) => {
         if (error){
-          console.log("error: "+error)
+          console.log("error: "+JSON.stringify(error))
           reject(error)
         }else{
           console.log("----> getTimelineAsync finish : "+screen_name)
@@ -183,6 +194,9 @@ export class Twitter {
    * @param {tweet} tweet
    */
   public saveTweetAsync = async (tweet) => {
+    if (tweet===undefined || tweet === null){
+      return
+    }
     // ツイートに含まれるURLを得る
     const urls = []
     for (const idx in tweet.entities.urls){
