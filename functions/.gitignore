@@ -6,11 +6,12 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 
-.env
 lib/
 
 # Dependency directories
 node_modules/
 
-# dotenv environment variables file
-.env
+# firebase functions:config:set twitter="$(cat twitter.json)"
+twitter.json
+# firebase functions:config:get > .runtimeconfig.json
+.runtimeconfig.json

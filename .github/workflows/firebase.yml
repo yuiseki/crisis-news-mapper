@@ -48,12 +48,12 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install dependency
+    - name: Install dependency for functions
       working-directory: functions
       run: npm ci
       env:
         CI: true
-    - name: Install dependency
+    - name: Install dependency for hosting
       working-directory: public
       run: npm ci
       env:

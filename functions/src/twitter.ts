@@ -1,23 +1,32 @@
 
-
+const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const TwitterClient = require('twitter')
-const dotenv = require('dotenv')
-dotenv.config()
-const consumer_key = process.env.CONSUMER_KEY
-const consumer_secret = process.env.CONSUMER_SECRET
-const access_token_key = process.env.ACCESS_TOKEN_KEY
-const access_token_secret = process.env.ACCESS_TOKEN_SECRET
-const client = new TwitterClient({
-  consumer_key,
-  consumer_secret,
-  access_token_key,
-  access_token_secret
+
+const a_consumer_key = functions.config().twitter.a_consumer_key
+const a_consumer_secret = functions.config().twitter.a_consumer_secret
+const a_access_token_key = functions.config().twitter.a_access_token_key
+const a_access_token_secret = functions.config().twitter.a_access_token_secret
+const a_client = new TwitterClient({
+  a_consumer_key,
+  a_consumer_secret,
+  a_access_token_key,
+  a_access_token_secret
+})
+const b_consumer_key = functions.config().twitter.b_consumer_key
+const b_consumer_secret = functions.config().twitter.b_consumer_secret
+const b_access_token_key = functions.config().twitter.b_access_token_key
+const b_access_token_secret = functions.config().twitter.b_access_token_secret
+const b_client = new TwitterClient({
+  b_consumer_key,
+  b_consumer_secret,
+  b_access_token_key,
+  b_access_token_secret
 })
 
-//const categoryList = require('../data/yuiseki.net/detector_category_words.json')
+const categoryList = require('../data/yuiseki.net/detector_category_words.json')
 const selfDefenseList = require('../data/yuiseki.net/self_defense.json')
-//const governmentList = require('../data/yuiseki.net/government_japan.json')
+const governmentList = require('../data/yuiseki.net/government_japan.json')
 const massMediaList = require('../data/yuiseki.net/mass_media_japan.json')
 
 import { News } from './news'
@@ -25,40 +34,65 @@ import { Detector } from './detector'
 
 export class Twitter {
 
+  public crawlTwitter = async (context) => {
+    await this.crawlCrisisWordTwitter(context)
+    await this.crawlMassMediaTwitter(context)
+    await this.crawlGovernmentTwitter(context)
+    await this.crawlSelfDefenseTwitter(context)
+  }
+
+  public crawlCrisisWordTwitter = async (context) => {
+    console.log("----> crawlCrisisWordTwitter start")
+    const now = new Date()
+    let query
+    if (categoryList.crisis.length > now.getMinutes()+1){
+      query = categoryList.crisis[now.getMinutes()]
+      await this.searchTweetsAndSaveAsync(query)
+    }
+    console.log("----> crawlCrisisWordTwitter finish")
+  }
+
+  public crawlMassMediaTwitter = async (context) => {
+    console.log("----> crawlMassMediaTwitter start")
+    const now = new Date()
+    let query
+    if (massMediaList.length > now.getMinutes()+1){
+      query = massMediaList[now.getMinutes()].query
+      await this.searchTweetsAndSaveAsync(query)
+    }
+    console.log("----> crawlMassMediaTwitter finish")
+  }
+
+  public crawlGovernmentTwitter = async (context) => {
+    console.log("----> crawlGovernmentTwitter start")
+    const now = new Date()
+    let screen_name
+    if (governmentList.length > now.getMinutes()+1){
+      screen_name = governmentList[now.getMinutes()].twitter
+      await this.getTimelineAndSaveAsync(screen_name)
+    }
+    console.log("----> crawlGovernmentTwitter finish")
+  }
+
   public crawlSelfDefenseTwitter = async (context) => {
     console.log("----> crawlSelfDefenseTwitter start")
     const now = new Date()
-    let query
+    let screen_name
     if (selfDefenseList.length > now.getMinutes()+1){
       if (selfDefenseList[now.getMinutes()].twitter!==null){
-        query = selfDefenseList[now.getMinutes()].twitter
-        await this.searchTweetsAndSave("from:"+query)
+        screen_name = selfDefenseList[now.getMinutes()].twitter
+        await this.getTimelineAndSaveAsync(screen_name)
       }
     }
     console.log("----> crawlSelfDefenseTwitter finish")
   }
 
-  /**
-   * twitterの検索を実行する非同期メソッド
-   * functionsは最大540秒でタイムアウトしてしまう
-   * 毎分実行し、毎分ちがうqueryで検索する
-   */
-  public crawlMassMediaTwitter = async (context) => {
-    console.log("----> crawlSearchTwitter start")
-    const now = new Date()
-    let query
-    if (massMediaList.length > now.getMinutes()+1){
-      query = massMediaList[now.getMinutes()].query
-    }
-    await this.searchTweetsAndSave(query)
-    console.log("----> crawlSearchTwitter finish")
-  }
 
   /**
    * Twitterを検索してその結果をfirestoreに保存する非同期メソッド
    * @param {string} query 検索クエリ文字列
    */
-  public searchTweetsAndSave = async (query) => {
+  public searchTweetsAndSaveAsync = async (query) => {
     console.log("----> searchTweetsAndSave start: "+query)
     // awaitで検索結果を待つ
     const results:any = await this.searchTweetsAsync(query)
@@ -79,6 +113,13 @@ export class Twitter {
     return new Promise((resolve, reject)=>{
       console.log("----> searchTweetPromise start : "+query)
       const params = {q: query+" exclude:retweets", result_type:'recent', count: 100}
+      const now = new Date()
+      let client
+      if(now.getMinutes() % 2 === 0){
+        client = a_client
+      }else{
+        client = b_client
+      }
       client.get('search/tweets', params, (error, results, response) => {
         if (error){
           console.log("error: "+error)
@@ -86,6 +127,52 @@ export class Twitter {
         }else{
           console.log("----> searchTweetPromise finish : "+query)
           resolve(results.statuses)
+        }
+      })
+    })
+  }
+
+  /**
+   * Twitterを検索してその結果をfirestoreに保存する非同期メソッド
+   * @param {string} screen_name 検索クエリ文字列
+   */
+  public getTimelineAndSaveAsync = async (screen_name) => {
+    console.log("----> searchTweetsAndSave start: "+screen_name)
+    const results:any = await this.getTimelineAsync(screen_name)
+    for (const tweet of results) {
+      await this.saveTweetAsync(tweet)
+    }
+    console.log("----> searchTweetsAndSave finish: "+screen_name)
+  }
+
+  /**
+   * TwitterのタイムラインAPIを呼び結果を返す非同期メソッド
+   * @param {string} screen_name Twitter screen name
+   * @return {tweets[]} 検索結果
+   */
+  public getTimelineAsync = async (screen_name) => {
+    return new Promise((resolve, reject)=>{
+      console.log("----> getTimelineAsync start : "+screen_name)
+      const params = {
+        screen_name: screen_name,
+        exclude_replies: true,
+        include_rts: false,
+        count: 200
+      }
+      const now = new Date()
+      let client
+      if(now.getMinutes() % 2 === 0){
+        client = a_client
+      }else{
+        client = b_client
+      }
+      client.get('statuses/user_timeline', params, (error, results, response) => {
+        if (error){
+          console.log("error: "+error)
+          reject(error)
+        }else{
+          console.log("----> getTimelineAsync finish : "+screen_name)
+          resolve(results)
         }
       })
     })
