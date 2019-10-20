@@ -15,6 +15,7 @@
         "promisify",
         "selfdefense",
         "togeojson",
+        "twttr",
         "yuiseki"
     ],
     "python.pythonPath": "C:\\Python37\\python.exe"
