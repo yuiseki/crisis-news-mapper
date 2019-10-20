@@ -48,6 +48,16 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Install dependency
+      working-directory: functions
+      run: npm ci
+      env:
+        CI: true
+    - name: Install dependency
+      working-directory: public
+      run: npm ci
+      env:
+        CI: true
     - name: Deploy to Firebase
       uses: w9jds/firebase-action@master
       with:

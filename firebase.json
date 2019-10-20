@@ -1,6 +1,15 @@
 {
+  "functions": {
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run lint",
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
+  },
   "hosting": {
     "public": "public",
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ],
     "ignore": [
       "firebase.json",
       "tsconfig.json",
@@ -31,12 +40,6 @@
         "source": "**",
         "destination": "/index.html"
       }
-    ]
-  },
-  "functions": {
-    "predeploy": [
-      "npm --prefix \"$RESOURCE_DIR\" run lint",
-      "npm --prefix \"$RESOURCE_DIR\" run build"
     ]
   }
 }
