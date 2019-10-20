@@ -16,7 +16,7 @@ jobs:
     - name: Build and Test /functions
       working-directory: functions
       run: |
-        npm install firebase-cli -g
+        npm install firebase-tools -g
         firebase setup:emulators:firestore
         npm ci
         npm run build
