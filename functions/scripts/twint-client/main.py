@@ -9,20 +9,22 @@ db = firestore.Client()
 
 filelist = [
     {
-        'filepath': './data/yuiseki.net/self_defense.json',
+        'filepath': 'self_defense.json',
         'classification': 'selfdefense'
     },
     {
-        'filepath': './data/yuiseki.net/government_japan.json',
+        'filepath': 'government_japan.json',
         'classification': 'government'
     },
     {
-        'filepath': './data/yuiseki.net/mass_media_japan.json',
+        'filepath': 'mass_media_japan.json',
         'classification': 'massmedia'
     }
 ]
 
-def twint_account(last_account):
+last_account = None
+
+def twintAccountPubSub(event, context):
     for fileinfo in filelist:
         classification = fileinfo['classification']
         json_file = open(fileinfo['filepath'])
@@ -34,6 +36,7 @@ def twint_account(last_account):
             if last_account is not None and screen_name != last_account:
                 continue
             print("twint start: "+screen_name)
+            twint.output.tweets_list = []
             # https://github.com/twintproject/twint/wiki/Configuration
             c = twint.Config()
             c.Username = screen_name
@@ -96,7 +99,6 @@ def twint_account(last_account):
                     docs = db.collection('tweets').document(tweet.id_str).set(finalParams)
 
 if __name__ == "__main__":
-    last_account = None
     if (len(sys.argv)>2):
         last_account = sys.argv[1]
-    twint_account(last_account)
+    twintAccountPubSub()

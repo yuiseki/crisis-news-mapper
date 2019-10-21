@@ -103,14 +103,14 @@ exports.selfdefense = functions.https.onRequest(async (req, res) => {
 
 
 /**
- * http://localhost:5000/newsByGeoHash?h=xn774cnd&km=100
+ * http://localhost:5000/geohash?h=xn774cnd&km=100
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
  * @param {string} req.query.h データを取得する中心とするgeohash
  * @param {number} req.query.km データを取得する半径
  */
-exports.newsByGeoHash = functions.https.onRequest(async (req, res) => {
+exports.geohash = functions.https.onRequest(async (req, res) => {
   let h
   if (req.query.h===undefined){
     // 新宿駅
@@ -170,10 +170,10 @@ exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 1
 
 
 // Twitter検索するバッチ処理
-//import { Twitter } from './twitter'
+import { Twitter } from './twitter'
 //const twitter = new Twitter()
 //exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 2 minutes').onRun(twitter.crawlTwitter)
-//exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
+exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
 
 
 //import { News } from './news'

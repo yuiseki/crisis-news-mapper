@@ -304,6 +304,13 @@ export class Twitter {
       updated_at:     admin.firestore.FieldValue.serverTimestamp(),
     }
     await admin.firestore().collection("tweets").doc(tweetData.tweet_id_str).update(tweetDoc)
+    for (const url of tweetData.urls){
+      const news = new News(url)
+      await news.ready
+      if (!news.exists){
+        await news.setOrUpdateNews(null)
+      }
+    }
   }
 
   public static updateAll = async(startAfterDocRef) => {
@@ -312,9 +319,10 @@ export class Twitter {
         // tslint:disable-next-line: no-parameter-reassignment
         startAfterDocRef = null
       }
-      console.log("----> Twitter.updateAll start: "+startAfterDocRef.id)
+      console.log("-----> Twitter.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("tweets")
-        .where('category', '==', 'crisis')
+        .where('classification', '==', 'massmedia')
+        .where('category', '==', null)
         .orderBy('updated_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(1)
@@ -330,7 +338,8 @@ export class Twitter {
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("tweets")
-      .where('category', '==', 'crisis')
+      .where('classification', '==', 'massmedia')
+      .where('category', '==', null)
       .orderBy('updated_at', 'desc')
       .limit(1)
       .get()

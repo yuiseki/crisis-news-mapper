@@ -270,8 +270,8 @@ export class News {
    * ニュース記事をfirestoreのnewsコレクションに追加/更新する非同期メソッド
    */
   public setOrUpdateNews = async(tweet) => {
-    console.log("setOrUpdateNews: "+this.url)
-    console.log("setOrUpdateNews: "+this.enurl)
+    console.log("-----> setOrUpdateNews: "+this.url)
+    console.log("-----> setOrUpdateNews: "+this.enurl)
     const param = await this.getNewsDocParamAsync()
     if (this.exists){
       await admin.firestore().collection('news').doc(this.enurl)
@@ -335,6 +335,8 @@ export class News {
       }
       console.log("----> News.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
+        .where('place_country', '==', '日本')
+        .where('category', '==', 'crisis')
         .orderBy('updated_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(1)
@@ -350,6 +352,8 @@ export class News {
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("news")
+      .where('place_country', '==', '日本')
+      .where('category', '==', 'crisis')
       .orderBy('updated_at', 'desc')
       .limit(1)
       .get()

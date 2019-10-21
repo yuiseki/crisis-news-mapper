@@ -43,7 +43,7 @@ const renderLeafLetPromise = new Promise(async resolve => {
   const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json()
   const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {
     style: {
-      weight: 1,
+      weight: 2,
       opacity: 0.3
     },
     onEachFeature: function (feature, layer) {
@@ -283,11 +283,11 @@ const renderLeafLetPromise = new Promise(async resolve => {
     "国土地理院色別標高図": cyberJapanReliefTileLayer,
     "YOLP 雨雲レーダー": rainMapTileLayer,
     "災害ニュース記事": newsLayerGroup,
+    "自衛隊災害派遣情報": selfDefenseDispatchLayerGroup,
     "消防災害出動情報": fireDeptDispatchCrisisLayerGroup,
     "消防火災出動情報": fireDeptDispatchFireLayerGroup,
     "消防救急出動情報": fireDeptDispatchRescueLayerGroup,
     "消防その他出動情報": fireDeptDispatchOtherLayerGroup,
-    "自衛隊災害派遣情報": selfDefenseDispatchLayerGroup
   }
   // レイヤー切り替えコントロールを追加
   L.control.layers(baseLayerData, overlayLayerData, {collapsed:false, position: 'bottomright'}).addTo(map)
