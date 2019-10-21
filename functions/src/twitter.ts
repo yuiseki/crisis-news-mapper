@@ -277,6 +277,7 @@ export class Twitter {
   }
 
   public static updateTweetAsync = async (tweetData) => {
+    console.log('updateTweetAsync: '+tweetData.screen_name+' - '+tweetData.tweet_id_str)
     const text = tweetData.text
     const detector = new Detector(text)
     await detector.ready

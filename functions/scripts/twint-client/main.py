@@ -31,15 +31,16 @@ def twint_pubsub(event, context):
             if screen_name is None:
                 continue
             print("twint start: "+screen_name)
+            # https://github.com/twintproject/twint/wiki/Configuration
             c = twint.Config()
             c.Username = screen_name
             c.Format = 'twint tweet: {username} - {id}'
-            #c.Hide_output = True
             c.Limit = 100
             c.Store_object = True
             twint.run.Search(c)
             tweets = twint.output.tweets_list
             for tweet in tweets:
+                # https://github.com/twintproject/twint/blob/master/twint/tweet.py
                 params = {
                     'tweet_id_str':   tweet.id_str,
                     'user_id_str':    tweet.user_id_str,
@@ -75,7 +76,7 @@ def twint_pubsub(event, context):
                 }
                 docRef = db.collection('tweets').document(tweet.id_str).get()
                 if not docRef.exists:
-                    print('twint: write to firestore '+tweet.id_str)
+                    print('twint: write to firestore '+tweet.username+' - '+tweet.id_str)
                     docs = db.collection('tweets').document(tweet.id_str).set(params)
 
 if __name__ == "__main__":
