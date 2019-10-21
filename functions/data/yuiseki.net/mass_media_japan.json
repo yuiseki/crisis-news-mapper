@@ -262,5 +262,29 @@
     "favicon": "https://d13krdvwknzmgv.cloudfront.net/files/user/images/design/favicon-times.png",
     "touch_icon": null,
     "twitter": "AbemaTIMES"
+  },
+  {
+    "classification": "新聞/地方紙",
+    "name": "東奥日報",
+    "domain": "www.toonippo.co.jp",
+    "query": "toonippo.co.jp",
+    "url": "https://www.toonippo.co.jp/",
+    "feed": "https://www.toonippo.co.jp/list/feed/rss",
+    "json": null,
+    "favicon": "https://www.toonippo.co.jp/common/images/favicon.ico",
+    "touch_icon": "https://www.toonippo.co.jp/common/images/apple_icon.png",
+    "twitter": "toonippo"
+  },
+  {
+    "classification": "新聞/地方紙",
+    "name": "秋田魁新報",
+    "domain": "www.sakigake.jp",
+    "query": "sakigake.jp",
+    "url": "https://www.sakigake.jp",
+    "feed": "http://feeds.feedburner.com/akita_news",
+    "json": null,
+    "favicon": "https://www.sakigake.jp/favicon.ico",
+    "touch_icon": null,
+    "twitter": "sakigake"
   }
 ]
