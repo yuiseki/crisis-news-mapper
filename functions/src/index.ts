@@ -27,6 +27,7 @@ exports.news = functions.https.onRequest(async (req, res) => {
     .where("place_country", "==", "日本")
     .where("category", "==", category)
     .orderBy("tweeted_at", "desc")
+    .endAt()
     .limit(1000)
     .get()
   if(query.empty){
