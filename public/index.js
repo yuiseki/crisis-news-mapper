@@ -172,7 +172,7 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
     const fireDeptDispatchJson = await fireDeptDispatchRes.json();
     const fireDeptDispatchCrisis = [];
     const fireDeptDispatchFire = [];
-    const fireDeptDispatchFirstAid = [];
+    const fireDeptDispatchRescue = [];
     const fireDeptDispatchOther = [];
     fireDeptDispatchJson.forEach(function (element) {
         if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
@@ -192,10 +192,10 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
                 marker.bindPopup(content);
                 fireDeptDispatchFire.push(marker);
                 break;
-            case "firstaid":
+            case "rescue":
                 marker = L.marker([element.lat, element.long], { icon: ambulanceIcon });
                 marker.bindPopup(content);
-                fireDeptDispatchFirstAid.push(marker);
+                fireDeptDispatchRescue.push(marker);
                 break;
             case "caution":
                 marker = L.marker([element.lat, element.long], { icon: cautionIcon });
@@ -216,7 +216,7 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
     });
     const fireDeptDispatchCrisisLayerGroup = L.layerGroup(fireDeptDispatchCrisis);
     const fireDeptDispatchFireLayerGroup = L.layerGroup(fireDeptDispatchFire);
-    const fireDeptDispatchFirstAidLayerGroup = L.layerGroup(fireDeptDispatchFirstAid);
+    const fireDeptDispatchRescueLayerGroup = L.layerGroup(fireDeptDispatchRescue);
     const fireDeptDispatchOtherLayerGroup = L.layerGroup(fireDeptDispatchOther);
     map.addLayer(fireDeptDispatchCrisisLayerGroup);
     // ニュース記事マーカーレイヤーの定義
@@ -270,10 +270,10 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
     const overlayLayerData = {
         "国土地理院色別標高図": cyberJapanReliefTileLayer,
         "YOLP 雨雲レーダー": rainMapTileLayer,
-        "ニュース記事": newsLayerGroup,
+        "災害ニュース記事": newsLayerGroup,
         "消防災害出動情報": fireDeptDispatchCrisisLayerGroup,
         "消防火災出動情報": fireDeptDispatchFireLayerGroup,
-        "消防救急出動情報": fireDeptDispatchFirstAidLayerGroup,
+        "消防救急出動情報": fireDeptDispatchRescueLayerGroup,
         "消防その他出動情報": fireDeptDispatchOtherLayerGroup,
         "自衛隊災害派遣情報": selfDefenseDispatchLayerGroup
     };

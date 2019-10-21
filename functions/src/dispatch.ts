@@ -84,6 +84,7 @@ export class Dispatch{
   public static updateAll = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
       if(startAfterDocRef===null || startAfterDocRef===undefined){
+        // tslint:disable-next-line: no-parameter-reassignment
         startAfterDocRef = null
       }
       console.log("----> Dispatch.updateAll start: "+startAfterDocRef.id)

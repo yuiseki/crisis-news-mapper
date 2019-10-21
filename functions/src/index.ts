@@ -170,14 +170,13 @@ exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 1
 
 
 // Twitter検索するバッチ処理
-import { Twitter } from './twitter'
+//import { Twitter } from './twitter'
 //const twitter = new Twitter()
 //exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 2 minutes').onRun(twitter.crawlTwitter)
 // 全Tweetを更新するバッチ処理
-exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
+//exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
 
-/*
+
 // 全ニュースを更新するバッチ処理
-import { News } from './news'
-exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.updateAllNews)
-*/
+//import { News } from './news'
+//exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.updateAllNews)
