@@ -1,5 +1,5 @@
 
-const functions = require('firebase-functions')
+
 const admin = require('firebase-admin')
 const TwitterClient = require('twitter')
 
@@ -280,7 +280,7 @@ export class Twitter {
 
   public static updateAsync = async (docRef) => {
     const tweetData = docRef.data()
-    console.log('-----> Twitter.updateAsync: '+tweetData.screen_name+' - '+tweetData.tweet_id_str)
+    console.log('-----> Twitter.updateAsync: '+tweetData.tweet_id_str)
     const text = tweetData.text
     const detector = new Detector(text)
     await detector.ready
@@ -314,8 +314,8 @@ export class Twitter {
       }
       console.log("----> Twitter.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("tweets")
-        .where('classification', '==', 'selfdefense')
-        .orderBy('updated_at', 'asc')
+        .where('category', '==', 'crisis')
+        .orderBy('updated_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(1)
         .get()
@@ -330,8 +330,8 @@ export class Twitter {
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("tweets")
-      .where('classification', '==', 'selfdefense')
-      .orderBy('updated_at', 'asc')
+      .where('category', '==', 'crisis')
+      .orderBy('updated_at', 'desc')
       .limit(1)
       .get()
     await Twitter.updateAll(snapshot.docs[0])

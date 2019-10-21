@@ -21,14 +21,12 @@ export class News {
    */
   public static fetchAsync = async(url:string):Promise<string> => {
     return new Promise( resolve => {
-      console.log("----> fetchAsync start: "+url)
       request(url, async (error, response, body) => {
           if (error) {
             resolve(null)
           }else{
             switch (response.statusCode) {
               case 200:
-                console.log("----> fetchAsync finish")
                 resolve(body)
                 break
               case 301:
@@ -57,7 +55,6 @@ export class News {
    */
   public static parseAsync = async(html:string):Promise<any> => {
     return new Promise( resolve => {
-      console.log("----> parseAsync start")
       const result:any = {
         title: null,
         og_title: null,
@@ -89,7 +86,6 @@ export class News {
         }
         console.log("----> parseAsync og_title: "+result.og_title)
         console.log("----> parseAsync og_desc: "+result.og_desc)
-        console.log("----> parseAsync finish")
         resolve(result)
       }catch(e){
         resolve(result)
@@ -303,45 +299,51 @@ export class News {
     }
   }
 
-  public static updateAllNewsByDocRef = (docRef)=>{
+  public static updateAsync = async(docRef) => {
+    const newsData = docRef.data()
+    if(newsData.title===null || newsData.og_title===null || newsData.og_desc===null){return}
+    const text = newsData.title+newsData.og_title+newsData.og_desc
+    const detector = new Detector(text)
+    await detector.ready
+    newsData.category = detector.category
+    newsData.place_country = detector.country
+    newsData.place_pref = detector.pref
+    newsData.place_city = detector.city
+    newsData.lat = detector.location.lat
+    newsData.long = detector.location.long
+    newsData.geohash = detector.geohash
+    newsData.updated_at = admin.firestore.FieldValue.serverTimestamp()
+    await admin.firestore().collection("news").doc(docRef.id).update(newsData)
+  }
+
+
+
+  public static updateAll = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
-      const newsSnapshot = await admin.firestore().collection("news")
+      if(startAfterDocRef===null || startAfterDocRef===undefined){
+        // tslint:disable-next-line: no-parameter-reassignment
+        startAfterDocRef = null
+      }
+      console.log("----> News.updateAll start: "+startAfterDocRef.id)
+      const snapshot = await admin.firestore().collection("news")
         .orderBy('updated_at', 'desc')
-        .startAfter(docRef)
+        .startAfter(startAfterDocRef)
         .limit(1)
         .get()
-      if (newsSnapshot.empty) {
+      if (snapshot.empty) {
         reject('No matching documents!')
       }else{
-        const data = newsSnapshot.docs[0].data()
-        const news = new News(data.url)
-        await news.ready
-        await news.setOrUpdateNews(null)
-        // 再帰
-        await News.updateAllNewsByDocRef(newsSnapshot.docs[0])
+        await News.updateAsync(snapshot.docs[0])
+        await News.updateAll(snapshot.docs[0])
       }
     })
   }
 
-  public static updateAllNews = async() => {
-    return new Promise(async (resolve, reject)=>{
-      console.log("----> updateAllNews start: ")
-      const now = new Date()
-      const tenMinutesAgo = new Date(now.getTime() - 60 * 10)
-      const newsSnapshot = await admin.firestore().collection("news")
-        .orderBy('updated_at', 'desc')
-        .startAfter(tenMinutesAgo)
-        .limit(1)
-        .get()
-      if (newsSnapshot.empty) {
-        reject('No matching documents!')
-      }else{
-        const data = newsSnapshot.docs[0].data()
-        const news = new News(data.url)
-        await news.ready
-        await news.setOrUpdateNews(null)
-        await News.updateAllNewsByDocRef(newsSnapshot.docs[0])
-      }
-    })
+  public static startUpdateAll = async(context) => {
+    const snapshot = await admin.firestore().collection("news")
+      .orderBy('updated_at', 'desc')
+      .limit(1)
+      .get()
+    await News.updateAll(snapshot.docs[0])
   }
 }

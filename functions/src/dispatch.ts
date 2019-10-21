@@ -89,7 +89,7 @@ export class Dispatch{
       }
       console.log("----> Dispatch.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("dispatch")
-        .orderBy('created_at', 'asc')
+        .orderBy('updated_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(1)
         .get()
@@ -104,7 +104,7 @@ export class Dispatch{
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("dispatch")
-      .orderBy('created_at', 'asc')
+      .orderBy('updated_at', 'desc')
       .limit(1)
       .get()
     await Dispatch.updateAll(snapshot.docs[0])
