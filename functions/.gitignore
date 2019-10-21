@@ -17,3 +17,4 @@ node_modules/
 twitter.json
 # firebase functions:config:get > .runtimeconfig.json
 .runtimeconfig.json
+.env

@@ -3,15 +3,17 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const TwitterClient = require('twitter')
 
-const a_consumer_key = functions.config().twitter.a_consumer_key
-const a_consumer_secret = functions.config().twitter.a_consumer_secret
-const a_access_token_key = functions.config().twitter.a_access_token_key
-const a_access_token_secret = functions.config().twitter.a_access_token_secret
+const dotenv = require('dotenv')
+dotenv.config()
+const a_consumer_key = process.env.A_CONSUMER_KEY
+const a_consumer_secret = process.env.A_CONSUMER_SECRET
+const a_access_token_key = process.env.A_ACCESS_TOKEN_KEY
+const a_access_token_secret = process.env.A_ACCESS_TOKEN_SECRET
+const b_consumer_key = process.env.B_CONSUMER_KEY
+const b_consumer_secret = process.env.B_CONSUMER_SECRET
+const b_access_token_key = process.env.B_ACCESS_TOKEN_KEY
+const b_access_token_secret = process.env.B_ACCESS_TOKEN_SECRET
 
-const b_consumer_key = functions.config().twitter.b_consumer_key
-const b_consumer_secret = functions.config().twitter.b_consumer_secret
-const b_access_token_key = functions.config().twitter.b_access_token_key
-const b_access_token_secret = functions.config().twitter.b_access_token_secret
 
 
 const a_client = new TwitterClient({

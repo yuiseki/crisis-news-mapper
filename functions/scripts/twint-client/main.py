@@ -37,7 +37,7 @@ def twint_account(last_account):
             # https://github.com/twintproject/twint/wiki/Configuration
             c = twint.Config()
             c.Username = screen_name
-            c.Format = 'twint tweet: {username} - {id}'
+            c.Format = 'twint tweet: '+classification+' - {username} - {id}'
             c.Limit = 20
             c.Store_object = True
             twint.run.Search(c)
@@ -74,10 +74,10 @@ def twint_account(last_account):
                 # 追加または更新
                 docRef = db.collection('tweets').document(tweet.id_str).get()
                 if docRef.exists:
-                    print('twint update: '+tweet.username+' - '+tweet.id_str)
+                    print('twint update: '+classification+' - '+tweet.username+' - '+tweet.id_str)
                     docs = db.collection('tweets').document(tweet.id_str).update(params)
                 else:
-                    print('twint set: '+tweet.username+' - '+tweet.id_str)
+                    print('twint set: '+classification+' - '+tweet.username+' - '+tweet.id_str)
                     detectorParams = {
                         'category':       None,
                         'place_country':  None,
