@@ -18,6 +18,7 @@ jobs:
       run: |
         npm install firebase-tools -g
         firebase setup:emulators:firestore
+        firebase functions:config:get > .runtimeconfig.json
         npm ci
         npm run build
         npm test
