@@ -5,6 +5,8 @@ const cheerio = require('cheerio')
 import * as md5 from 'md5'
 import { Detector } from './detector'
 
+const massMediaList = require('../data/yuiseki.net/mass_media_japan.json')
+
 export class News {
   ready:Promise<any>
   url:string
@@ -311,6 +313,15 @@ export class News {
     newsData.long = detector.location.long
     newsData.geohash = detector.geohash
     newsData.updated_at = admin.firestore.FieldValue.serverTimestamp()
+    if(newsData.url.startsWith('https://twitter.com/')){
+      newsData.classification = "twitter"
+      newsData.category = "twitter"
+    }
+    for(const massMedia of massMediaList){
+      if(newsData.url.startsWith(massMedia.url)){
+        newsData.classification = "massmedia"
+      }
+    }
     await admin.firestore().collection("news").doc(docRef.id).update(newsData)
   }
 

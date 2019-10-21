@@ -28,7 +28,7 @@ const renderLeafLetPromise = new Promise(async resolve => {
   // 初期座標とズームを指定
   map.setView([35.3622222, 138.7313889], 8);
   // 都道府県の境界線の描画
-  const japanGeoJsonRes = await fetch("/japan.geojson")
+  const japanGeoJsonRes = await fetch("/geojson/japan.geojson")
   const japanGeoJsonJson = await japanGeoJsonRes.json()
   const japanGeoJson = L.geoJSON(japanGeoJsonJson, {
     style: {
@@ -39,7 +39,7 @@ const renderLeafLetPromise = new Promise(async resolve => {
   })
   japanGeoJson.addTo(map);
   // 市区町村の境界線の描画
-  const japanCitiesGeoJsonRes = await fetch("/japan_cities.geojson")
+  const japanCitiesGeoJsonRes = await fetch("/geojson/japan_cities.geojson")
   const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json()
   const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {
     style: {
