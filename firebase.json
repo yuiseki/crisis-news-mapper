@@ -25,12 +25,12 @@
         "function": "news"
       },
       {
-        "source": "/dispatch",
-        "function": "dispatch"
+        "source": "/firedept",
+        "function": "firedept"
       },
       {
-        "source": "/tweets",
-        "function": "tweets"
+        "source": "/selfdefense",
+        "function": "selfdefense"
       },
       {
         "source": "/newsByGeoHash",

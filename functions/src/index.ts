@@ -21,13 +21,15 @@ exports.news = functions.https.onRequest(async (req, res) => {
   }else{
     category = req.query.category
   }
+  const today = new Date();
+  const daysAgo = new Date(today.getTime() - (10 * 24 * 60 * 60 * 1000));
   // firestoreクエリを組み立てる
   const query = await admin.firestore()
     .collection("news")
     .where("place_country", "==", "日本")
     .where("category", "==", category)
     .orderBy("tweeted_at", "desc")
-    .endAt()
+    .endAt(daysAgo)
     .limit(1000)
     .get()
   if(query.empty){
@@ -44,18 +46,20 @@ exports.news = functions.https.onRequest(async (req, res) => {
 })
 
 /**
- * http://localhost:5000/dispatch
+ * http://localhost:5000/firedept
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
  */
-exports.dispatch = functions.https.onRequest(async (req, res) => {
+exports.firedept = functions.https.onRequest(async (req, res) => {
+  const today = new Date();
+  const daysAgo = new Date(today.getTime() - (10 * 24 * 60 * 60 * 1000));
   const query = await admin.firestore()
     .collection("dispatch")
     .where("place_country", "==", "日本")
-    //.where("category", "==", "crisis")
     .orderBy("created_at", "desc")
-    .limit(1000)
+    .endAt(daysAgo)
+    .limit(500)
     .get()
   if(query.empty){
     res.status(200).send(JSON.stringify([]))
@@ -69,19 +73,22 @@ exports.dispatch = functions.https.onRequest(async (req, res) => {
 })
 
 /**
- * http://localhost:5000/tweets
+ * http://localhost:5000/selfdefense
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
  */
-exports.tweets = functions.https.onRequest(async (req, res) => {
+exports.selfdefense = functions.https.onRequest(async (req, res) => {
+  //const today = new Date();
+  //const daysAgo = new Date(today.getTime() - (10 * 24 * 60 * 60 * 1000));
   const query = await admin.firestore()
     .collection("tweets")
     .where("place_country", "==", "日本")
     .where("category", "==", "crisis")
     .where("classification", "==", "selfdefense")
     .orderBy("tweeted_at", "desc")
-    .limit(1000)
+    //.endAt(daysAgo)
+    .limit(500)
     .get()
   if(query.empty){
     res.status(200).send(JSON.stringify([]))
@@ -155,6 +162,7 @@ const runtimeOpt = {
 // 消防出動情報を収集するバッチ処理
 import { Dispatch } from './dispatch'
 exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 5 minutes').onRun(Dispatch.fetchAndSaveFireDeptDispatchAsync)
+exports.updateAllDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 60 minutes').onRun(Dispatch.startUpdateAll)
 
 // マスコミニュース記事を収集するバッチ処理
 import { Feed } from './feed'
@@ -166,7 +174,7 @@ import { Twitter } from './twitter'
 //const twitter = new Twitter()
 //exports.crawlTwitter = functions.runWith(runtimeOpt).pubsub.schedule('every 2 minutes').onRun(twitter.crawlTwitter)
 // 全Tweetを更新するバッチ処理
-exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.updateAllTweets)
+exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
 
 /*
 // 全ニュースを更新するバッチ処理

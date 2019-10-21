@@ -276,11 +276,16 @@ export class Twitter {
     }
   }
 
-  public static updateTweetAsync = async (tweetData) => {
-    console.log('updateTweetAsync: '+tweetData.screen_name+' - '+tweetData.tweet_id_str)
+  public static updateAsync = async (docRef) => {
+    const tweetData = docRef.data()
+    console.log('-----> Twitter.updateAsync: '+tweetData.screen_name+' - '+tweetData.tweet_id_str)
     const text = tweetData.text
     const detector = new Detector(text)
     await detector.ready
+    let tweeted_at = tweetData.tweeted_at
+    if (tweetData.tweeted_at instanceof String){
+      tweeted_at = new Date(tweetData.tweeted_at)
+    }
     const tweetDoc = {
       category:       detector.category,
       place_country:  detector.country,
@@ -293,47 +298,40 @@ export class Twitter {
       lat:            detector.location.lat,
       long:           detector.location.long,
       geohash:        detector.geohash,
+      tweeted_at:     tweeted_at,
       updated_at:     admin.firestore.FieldValue.serverTimestamp(),
     }
     await admin.firestore().collection("tweets").doc(tweetData.tweet_id_str).update(tweetDoc)
   }
 
-  public static updateAllTweetsByDocRef = (docRef)=>{
+  public static updateAll = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
-      const tweetSnapshot = await admin.firestore().collection("tweets")
-        .orderBy('updated_at', 'desc')
-        .startAfter(docRef)
+      if(startAfterDocRef===null || startAfterDocRef===undefined){
+        startAfterDocRef = null
+      }
+      console.log("----> Twitter.updateAll start: "+startAfterDocRef.id)
+      const snapshot = await admin.firestore().collection("tweets")
+        .where('classification', '==', 'selfdefense')
+        .orderBy('updated_at', 'asc')
+        .startAfter(startAfterDocRef)
         .limit(1)
         .get()
-      if (tweetSnapshot.empty) {
+      if (snapshot.empty) {
         reject('No matching documents!')
       }else{
-        const data = tweetSnapshot.docs[0].data()
-        await Twitter.updateTweetAsync(data)
-        await Twitter.updateAllTweetsByDocRef(tweetSnapshot.docs[0])
+        await Twitter.updateAsync(snapshot.docs[0])
+        await Twitter.updateAll(snapshot.docs[0])
       }
     })
   }
 
-  public static updateAllTweets = async() => {
-    return new Promise(async (resolve, reject)=>{
-      console.log("----> updateAllTweets start: ")
-      const now = new Date()
-      const tenMinutesAgo = new Date(now.getTime() - 60 * 10)
-      const tweetSnapshot = await admin.firestore().collection("tweets")
-        .where('icon_url', '==', null)
-        .orderBy('updated_at', 'desc')
-        .startAfter(tenMinutesAgo)
-        .limit(1)
-        .get()
-      if (tweetSnapshot.empty) {
-        reject('No matching documents!')
-      }else{
-        const data = tweetSnapshot.docs[0].data()
-        await Twitter.updateTweetAsync(data)
-        await Twitter.updateAllTweetsByDocRef(tweetSnapshot.docs[0])
-      }
-    })
+  public static startUpdateAll = async(context) => {
+    const snapshot = await admin.firestore().collection("tweets")
+      .where('classification', '==', 'selfdefense')
+      .orderBy('updated_at', 'asc')
+      .limit(1)
+      .get()
+    await Twitter.updateAll(snapshot.docs[0])
   }
 
 }

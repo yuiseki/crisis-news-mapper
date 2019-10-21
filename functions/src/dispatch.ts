@@ -60,9 +60,52 @@ export class Dispatch{
       dispatch.lat = detector.location.lat
       dispatch.long = detector.location.long
       dispatch.geohash = detector.geohash
+      dispatch.updated_at = admin.firestore.FieldValue.serverTimestamp()
       dispatches.push(dispatch)
     }
     return dispatches
   }
 
+  public static updateAsync = async(docRef) => {
+    const dispatch = docRef.data()
+    const detector = new Detector(dispatch.division+dispatch.detail)
+    await detector.ready
+    dispatch.category = detector.category
+    dispatch.place_country = detector.country
+    dispatch.place_pref = detector.pref
+    dispatch.place_city = detector.city
+    dispatch.lat = detector.location.lat
+    dispatch.long = detector.location.long
+    dispatch.geohash = detector.geohash
+    dispatch.updated_at = admin.firestore.FieldValue.serverTimestamp()
+    await admin.firestore().collection("dispatch").doc(dispatch.id).update(dispatch)
+  }
+
+  public static updateAll = async(startAfterDocRef) => {
+    return new Promise(async (resolve, reject)=>{
+      if(startAfterDocRef===null || startAfterDocRef===undefined){
+        startAfterDocRef = null
+      }
+      console.log("----> Dispatch.updateAll start: "+startAfterDocRef.id)
+      const snapshot = await admin.firestore().collection("dispatch")
+        .orderBy('created_at', 'asc')
+        .startAfter(startAfterDocRef)
+        .limit(1)
+        .get()
+      if (snapshot.empty) {
+        reject('No matching documents!')
+      }else{
+        await Dispatch.updateAsync(snapshot.docs[0])
+        await Dispatch.updateAll(snapshot.docs[0])
+      }
+    })
+  }
+
+  public static startUpdateAll = async(context) => {
+    const snapshot = await admin.firestore().collection("dispatch")
+      .orderBy('created_at', 'asc')
+      .limit(1)
+      .get()
+    await Dispatch.updateAll(snapshot.docs[0])
+  }
 }
