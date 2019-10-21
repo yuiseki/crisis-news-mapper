@@ -84,8 +84,6 @@ export class News {
         if (result.og_url===undefined){
           result.og_url = null
         }
-        console.log("----> parseAsync og_title: "+result.og_title)
-        console.log("----> parseAsync og_desc: "+result.og_desc)
         resolve(result)
       }catch(e){
         resolve(result)
