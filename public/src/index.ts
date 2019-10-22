@@ -9,8 +9,8 @@ class LeafletInitializer {
   layerGroup:any
   layerControl:any
 
-  baseLayerData = null
-  overlayLayerData = null
+  private baseLayerData = null
+  private overlayLayerData = null
 
   constructor(){
     this.ready = new Promise(async resolve => {
@@ -27,8 +27,11 @@ class LeafletInitializer {
     });
   }
 
+  /**
+   * マーカーの重なる順番を指定するために使うやつを初期化しておく
+   * https://leafletjs.com/reference-1.0.0.html#map-pane
+   */
   public createPane = () => {
-    // https://leafletjs.com/reference-1.0.0.html#map-pane
     this.map.createPane("pane610").style.zIndex = "610";
     this.map.createPane("pane620").style.zIndex = "620";
     this.map.createPane("pane630").style.zIndex = "630";
@@ -46,10 +49,6 @@ class LeafletInitializer {
       this.baseLayerData = {
         "国土地理院淡色地図": this.layer
       }
-  }
-
-  public addOverlayLayer = (layer, name) => {
-    this.layerControl.addOverlay(layer , name);
   }
 
   public renderLayerControl = () => {
@@ -108,11 +107,14 @@ class PaleTileLayer extends L.TileLayer {
   constructor(){
     super(PaleTileLayer.urlTemplate, PaleTileLayer.options)
   }
-  public addToOverlay(leaflet){
+  public addOverlay(leaflet){
     leaflet.layerControl.addOverlay(this, PaleTileLayer.displayName, "基本")
   }
   public show(leaflet){
     leaflet.map.addLayer(this)
+  }
+  public hide(leaflet){
+    leaflet.map.removeLayer(this)
   }
 }
 
@@ -132,11 +134,14 @@ class ReliefTileLayer extends L.TileLayer {
   constructor(){
     super(ReliefTileLayer.urlTemplate, ReliefTileLayer.options)
   }
-  public addToOverlay(leaflet){
+  public addOverlay(leaflet){
     leaflet.layerControl.addOverlay(this, ReliefTileLayer.displayName, "基本")
   }
   public show(leaflet){
     leaflet.map.addLayer(this)
+  }
+  public hide(leaflet){
+    leaflet.map.removeLayer(this)
   }
 }
 
@@ -156,11 +161,14 @@ class RainTileLayer extends L.TileLayer {
   constructor(){
     super(RainTileLayer.urlTemplate, RainTileLayer.options)
   }
-  public addToOverlay(leaflet){
+  public addOverlay(leaflet){
     leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, "基本")
   }
   public show(leaflet){
     leaflet.map.addLayer(this)
+  }
+  public hide(leaflet){
+    leaflet.map.removeLayer(this)
   }
   public getTileUrl = (coords) => {
     //雨雲リクエスト日付の作成
@@ -193,7 +201,7 @@ class RainTileLayer extends L.TileLayer {
 }
 
 /**
- * GeoJson表現する基底クラス
+ * GeoJsonを表現する基底クラス
  */
 class GeoJson {
   displayName:string
@@ -202,6 +210,13 @@ class GeoJson {
   ready:Promise<any>
   geojson:any = null
 
+  /**
+   * コンストラクタ
+   * await geojson.ready すると geojson を読み込む 
+   * @param displayName geojsonの表示名
+   * @param url jsonのURL
+   * @param icon 表示に使いたいアイコン
+   */
   constructor(displayName, url, icon){
     this.displayName = displayName
     this.url = url
@@ -218,10 +233,16 @@ class GeoJson {
     })
   }
 
+  /**
+   * jsonがGeoJSONではないとき、変換処理をする必要があるときに上書きする
+   */
   public toGeoJson = (arcgisjson) => {
     return arcgisjson
   }
 
+  /**
+   * coordinatesが[lat, lng]形式ではないときに上書きする
+   */
   public pointToLayer = (feature, coordinates) => {
     return L.marker(coordinates, {icon: this.icon})
   }
@@ -229,17 +250,28 @@ class GeoJson {
   public onEachFeature = (feature, layer) => {
   }
 
-  public addToOverlay(leaflet, groupName){
+  public addOverlay(leaflet, groupName){
     leaflet.layerControl.addOverlay(this.geojson, this.displayName, groupName)
   }
 
   public show(leaflet){
     leaflet.map.addLayer(this.geojson)
   }
+
+  public hide(leaflet){
+    leaflet.map.removeLayer(this.geojson)
+  }
 }
 
 /**
  * 水害情報GeoJson
+ * http://crs.bosai.go.jp/DynamicCRS/index.html?appid=9424c7b32d784b60a9b70d59ff32ac96
+ * ここのデータを拝借している
+ * コツ
+ * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=true&outSR=4326&outFields=*&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&cacheHint=true
+ *   - f=pbf を f=json にする
+ *   - outSR=xxxx を outSR=4326 にする
+ * こうしないとarcgisToGeoJSONでGeoJSONに変換できない
  */
 class FloodArcGisJson extends GeoJson {
   static displayName = "水害情報"
@@ -304,7 +336,7 @@ class VolunteerGeoJson extends GeoJson {
 }
 
 /**
- *  マーカー読み込んで描画する基底クラス
+ *  lat, longプロパティを持つjsonを読み込んで描画する基底クラス
  */
 class Markers {
   displayName:string
@@ -326,14 +358,33 @@ class Markers {
     })
   }
 
+  /**
+   * 描画したくないマーカーの条件があるときに上書きする
+   */
   public shouldIgnore = (element) => {
     return false
   }
 
+  /**
+   * 条件に応じてアイコンを切り替えたいときに上書きする
+   */
   public getIcon = (element) => {
     return this.icon
   }
 
+  /**
+   * 条件に応じて複数のカテゴリに分類して表示したいときに上書きする
+   * addOverlayも上書きする必要がある
+   * @param element 
+   * @param marker 
+   */
+  public pushTo(element, marker){
+    this.markers.push(marker)
+  }
+
+  /**
+   * マーカーのポップアップに指定するHTMLを構築するために上書きする
+   */
   public getContent = (element) => {
     return null
   }
@@ -353,17 +404,17 @@ class Markers {
     this.pushTo(element, marker)
   }
 
-  public pushTo(element, marker){
-    this.markers.push(marker)
-  }
-
-  public addToOverlay(leaflet, groupName){
+  public addOverlay(leaflet, groupName){
     this.layerGroup = L.layerGroup(this.markers)
     leaflet.layerControl.addOverlay(this.layerGroup, this.displayName, groupName)
   }
 
   public show(leaflet){
     leaflet.map.addLayer(this.layerGroup)
+  }
+
+  public hide(leaflet){
+    leaflet.map.removeLayer(this.layerGroup)
   }
 }
 
@@ -513,7 +564,7 @@ class FireDeptMarkers extends Markers {
     }
   }
 
-  public addToOverlay(leaflet){
+  public addOverlay(leaflet){
     this.fireDeptDispatchCrisisLayerGroup = L.layerGroup(this.fireDeptDispatchCrisis)
     this.fireDeptDispatchFireLayerGroup = L.layerGroup(this.fireDeptDispatchFire)
     this.fireDeptDispatchRescueLayerGroup = L.layerGroup(this.fireDeptDispatchRescue)
@@ -560,7 +611,7 @@ class NewsMarkers extends Markers {
     return content
   }
 
-  public addToOverlay = (leaflet) => {
+  public addOverlay = (leaflet) => {
     // @ts-ignore
     const newsClusterGroup = L.markerClusterGroup.layerSupport({clusterPane: 'pane690'})
     const newsLayerGroup = L.layerGroup(this.markers)
@@ -583,9 +634,9 @@ const renderLeafLetPromise = new Promise(async resolve => {
 
   
   const reliefTileLayer = new ReliefTileLayer()
-  reliefTileLayer.addToOverlay(leaflet)
+  reliefTileLayer.addOverlay(leaflet)
   const rainTileLayer = new RainTileLayer()
-  rainTileLayer.addToOverlay(leaflet)
+  rainTileLayer.addOverlay(leaflet)
 
 
   let category = ""
@@ -601,28 +652,28 @@ const renderLeafLetPromise = new Promise(async resolve => {
   }
   const newsLayer = new NewsMarkers(category)
   await newsLayer.ready
-  newsLayer.addToOverlay(leaflet)
+  newsLayer.addOverlay(leaflet)
   newsLayer.show(leaflet)
 
 
   const floodArcGisJson = new FloodArcGisJson()
   await floodArcGisJson.ready
-  floodArcGisJson.addToOverlay(leaflet, "情報")
+  floodArcGisJson.addOverlay(leaflet, "情報")
   floodArcGisJson.show(leaflet)
 
   const volunteerGeoJson = new VolunteerGeoJson()
   await volunteerGeoJson.ready
-  volunteerGeoJson.addToOverlay(leaflet, "情報")
+  volunteerGeoJson.addOverlay(leaflet, "情報")
   volunteerGeoJson.show(leaflet)
 
   const selfDefenseMarkers = new SelfDefenseMarkers()
   await selfDefenseMarkers.ready
-  selfDefenseMarkers.addToOverlay(leaflet, "自衛隊")
+  selfDefenseMarkers.addOverlay(leaflet, "自衛隊")
   selfDefenseMarkers.show(leaflet)
 
   const fireDeptMarkers = new FireDeptMarkers()
   await fireDeptMarkers.ready
-  fireDeptMarkers.addToOverlay(leaflet)
+  fireDeptMarkers.addOverlay(leaflet)
   fireDeptMarkers.show(leaflet)
 
   resolve()
