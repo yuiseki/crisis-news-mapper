@@ -1,7 +1,7 @@
 #
 # 必ず crisis-news-mapper/functions/twint-client ディレクトリで実行する
 #
-cp -r ../data/yuiseki.net/*.json
+cp -r ../data/yuiseki.net/*.json .
 gcloud config configurations activate yuiseki
 gcloud beta functions deploy twintAccountPubSub \
   --trigger-resource firebase-schedule-crawlMediaFeeds-us-central1 \

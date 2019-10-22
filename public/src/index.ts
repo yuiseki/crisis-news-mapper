@@ -306,9 +306,11 @@ class GeoJson {
  * ここからデータを拝借している
  * コツ
  * Chrome developer tools の Network タブで `query` で filter してそれっぽいデータを探す
- * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=true&outSR=4326&outFields=*&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&cacheHint=true
+ * https://services.arcgis.com/VZFBz62gxB8VrbIS/arcgis/rest/services/RISKMAP_FLOOD_FLOWPATH_2/FeatureServer/0/query?f=pbf&where=FLOODFCST%20%3D%20%275%27&returnGeometry=true&spatialRel=esriSpatialRelIntersects&maxAllowableOffset=1.0583354500042323&outFields=*&maxRecordCountFactor=2&outSR=102100&resultOffset=0&resultRecordCount=4000&cacheHint=true&quantizationParameters=%7B%22mode%22%3A%22view%22%2C%22originPosition%22%3A%22upperLeft%22%2C%22tolerance%22%3A1.0583354500042323%2C%22extent%22%3A%7B%22xmin%22%3A15373897.387860192%2C%22ymin%22%3A4236843.074605733%2C%22xmax%22%3A15804630.34636624%2C%22ymax%22%3A4954576.727776327%2C%22spatialReference%22%3A%7B%22wkid%22%3A102100%2C%22latestWkid%22%3A3857%7D%7D%7D
+ *   - 余計なパラメーターを全部削る
  *   - `f=pbf` を `f=json` にする
  *   - `outSR=xxxx` を `outSR=4326` にする
+ * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=true&outSR=4326&outFields=*&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&cacheHint=true
  * こうしないとarcgisToGeoJSONでGeoJSONに変換できる座標を持ったJSONにならない
  */
 class FloodArcGisJson extends GeoJson {

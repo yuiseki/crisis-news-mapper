@@ -5,7 +5,6 @@ import datetime
 import twint
 from google.cloud import firestore
 
-last_account = None
 db = firestore.Client()
 
 filelist = [
@@ -23,9 +22,8 @@ filelist = [
     }
 ]
 
-keywordfile = 'detector_category_words.json'
-
 def setOrUpdateTweet(classification, user, tweet):
+    print(".", end="")
     avatar = None
     if user is not None:
         avatar = user.avatar
@@ -85,7 +83,7 @@ def twintAccountPubSub(event, context):
             screen_name = account["twitter"]
             if screen_name is None:
                 continue
-            if last_account is not None and screen_name != last_account:
+            if start_after is not None and screen_name == start_after:
                 continue
             print("twint start: "+screen_name)
             # このへんを毎回空にしないと前回のループの内容が消えない
@@ -98,11 +96,13 @@ def twintAccountPubSub(event, context):
             c.Store_object = True
             c.Hide_output = True
             twint.run.Lookup(c)
-            user = twint.output.users_list[0]
+            user = None
+            if len(twint.output.users_list) > 0:
+                user = twint.output.users_list[0]
             # タイムラインを取得する
             c = twint.Config()
             c.Username = screen_name
-            c.Format = 'twint tweet: '+classification+' - {username} - {id}'
+            c.Format = 'twint account: '+classification+' - {username} - {id}'
             c.Limit = 20
             c.Store_object = True
             twint.run.Search(c)
@@ -111,30 +111,54 @@ def twintAccountPubSub(event, context):
                 print('twint classification: '+classification)
                 setOrUpdateTweet(classification, user, tweet)
 
+keywordfile = 'detector_category_words.json'
+
 def twintKeywordPubSub(event, context):
     json_file = open(keywordfile)
     category_dict = json.load(json_file)
     for category in category_dict:
+        if category == "other":
+            continue
+        if category == "sports":
+            continue
         for keyword in category_dict[category]:
-            twint.output.users_list = []
             twint.output.tweets_list = []
             c = twint.Config()
-            c.Search = keyword+" filter:links exclude:retweets exclude:nativeretweets"
-            c.Format = 'twint tweet: '+category+'/'+keyword+' - {username} - {id}'
+            c.Search = keyword+" filter:links -filter:replies -filter:retweets -filter:nativeretweets"
+            c.Format = 'twint search: '+category+'/'+keyword+' - {username} - {id}'
             c.Limit = 20
             c.Store_object = True
             twint.run.Search(c)
             tweets = twint.output.tweets_list
+            print(".", end="")
             for tweet in tweets:
+                print(".", end="")
                 if tweet.tweet.startswith('RT'):
                     continue
                 if len(tweet.urls) == 0:
                     continue
-                setOrUpdateTweet(None, None, tweet)
+                twint.output.users_list = []
+                c = twint.Config()
+                c.Username = tweet.username
+                c.Store_object = True
+                c.Hide_output = True
+                twint.run.Lookup(c)
+                user = None
+                if len(twint.output.users_list) > 0:
+                    user = twint.output.users_list[0]
+                setOrUpdateTweet(None, user, tweet)
+            print(".")
 
 
+target = None
+start_after = None
 if __name__ == "__main__":
+    if (len(sys.argv)>1):
+        target = sys.argv[1]
     if (len(sys.argv)>2):
-        last_account = sys.argv[1]
-    twintAccountPubSub(None, None)
-    #twintKeywordPubSub(None, None)
+        start_after = sys.argv[2]
+    if target is not None:
+        if target == "account":
+            twintAccountPubSub(None, None)
+        if target == "keyword":
+            twintKeywordPubSub(None, None)
