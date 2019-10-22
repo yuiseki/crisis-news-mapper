@@ -42,10 +42,10 @@ import { Detector } from './detector'
 
 export class Twitter {
 
+  // 最低5秒、最大10秒間隔を開ける
   public crawlTwitter = async (context) => {
     //await sleep(1000 + Math.random() * 1000)
-    //await this.crawlSelfDefenseTwitter(context)
-    // 最低5秒、最大10秒間隔を開ける
+    await this.crawlSelfDefenseTwitter(context)
     //await sleep(5000 + Math.random() * 5000)
     //await this.crawlCrisisWordTwitter(context)
     //await sleep(5000 + Math.random() * 5000)

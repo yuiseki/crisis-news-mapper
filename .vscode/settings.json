@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "Arcgis",
         "Nowcast",
         "YOLP",
         "choco",
@@ -12,6 +13,7 @@
         "hypernym",
         "hyperpref",
         "hyperunit",
+        "latlng",
         "libxmljs",
         "networkidle",
         "predeploy",
@@ -21,6 +23,7 @@
         "tweetdeck",
         "twint",
         "twttr",
+        "utmlatlng",
         "yuiseki"
     ],
     "python.pythonPath": "/usr/local/bin/python3"

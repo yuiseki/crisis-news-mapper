@@ -36,8 +36,17 @@ def twintAccountPubSub(event, context):
             if last_account is not None and screen_name != last_account:
                 continue
             print("twint start: "+screen_name)
+            twint.output.users_list = []
             twint.output.tweets_list = []
             # https://github.com/twintproject/twint/wiki/Configuration
+            # get user info
+            c = twint.Config()
+            c.Username = screen_name
+            c.Store_object = True
+            c.Hide_output = True
+            twint.run.Lookup(c)
+            user = twint.output.users_list[0]
+            # get timeline
             c = twint.Config()
             c.Username = screen_name
             c.Format = 'twint tweet: '+classification+' - {username} - {id}'
@@ -54,7 +63,7 @@ def twintAccountPubSub(event, context):
                     'is_retweet':     tweet.retweet,
                     'screen_name':    tweet.username,
                     'display_name':   tweet.name,
-                    'icon_url':       None,
+                    'icon_url':       user.avatar,
                     'tweeted_at':     datetime.datetime.fromtimestamp(tweet.datetime/1000.0),
                     'text':           tweet.tweet,
                     'hashtags':       tweet.hashtags,
@@ -69,11 +78,6 @@ def twintAccountPubSub(event, context):
                     'classification': classification,
                     'updated_at':     firestore.SERVER_TIMESTAMP,
                 }
-                # アイコン探す
-                iconRefs = db.collection('tweets').where('screen_name', '==', screen_name).order_by('tweeted_at', direction=firestore.Query.ASCENDING).limit(1).stream()
-                for iconRef in iconRefs:
-                    iconDoc = iconRef.to_dict()
-                    params['icon_url'] = iconDoc['icon_url']
                 # 追加または更新
                 docRef = db.collection('tweets').document(tweet.id_str).get()
                 if docRef.exists:
@@ -101,4 +105,4 @@ def twintAccountPubSub(event, context):
 if __name__ == "__main__":
     if (len(sys.argv)>2):
         last_account = sys.argv[1]
-    twintAccountPubSub()
+    twintAccountPubSub(None, None)

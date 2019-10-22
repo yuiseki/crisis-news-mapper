@@ -1,64 +1,131 @@
-window.twttr = (function (d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
-    if (d.getElementById(id))
-        return t;
-    js = d.createElement(s);
-    js.id = id;
-    js.src = "https://platform.twitter.com/widgets.js";
-    fjs.parentNode.insertBefore(js, fjs);
-    t._e = [];
-    t.ready = function (f) {
-        t._e.push(f);
-    };
-    return t;
-}(document, "script", "twitter-wjs"));
-const renderLeafLetPromise = new Promise(async (resolve) => {
-    // Leafletの初期化
-    const map = L.map('map');
-    // 初期座標とズームを指定
-    map.setView([35.3622222, 138.7313889], 8);
-    // 都道府県の境界線の描画
-    const japanGeoJsonRes = await fetch("/geojson/japan.geojson");
-    const japanGeoJsonJson = await japanGeoJsonRes.json();
-    const japanGeoJson = L.geoJSON(japanGeoJsonJson, {
-        style: {
-            weight: 5
-        },
-        onEachFeature: function (feature, layer) {
-        }
-    });
-    japanGeoJson.addTo(map);
-    // 市区町村の境界線の描画
-    const japanCitiesGeoJsonRes = await fetch("/geojson/japan_cities.geojson");
-    const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json();
-    const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {
-        style: {
-            weight: 2,
-            opacity: 0.3
-        },
-        onEachFeature: function (feature, layer) {
-            layer.bindTooltip(feature.properties.cityname_k);
-        }
-    });
-    japanCitiesGeoJson.addTo(map);
-    // 国土地理院淡色地図タイルの定義
-    const cyberJapanPaleTileLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-        id: 'CyberJapanPaleTile',
-        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#pale">国土地理院淡色地図</a>',
-        minZoom: 5,
-        maxZoom: 18,
-    }).addTo(map);
-    // 国土地理院色別標高図タイルの定義
-    const cyberJapanReliefTileLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png', {
-        id: 'CyberJapanReliefTile',
-        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#relief">国土地理院色別標高図</a>',
-        minZoom: 5,
-        maxZoom: 15,
-    }).setOpacity(0.4);
-    // YOLPのタイルをleafletで読み込むためのクラスの定義
-    // @ts-ignore
-    L.YOLPTileLayer = L.TileLayer.extend({
-        getTileUrl: function (coords) {
+/**
+ * Leafletを初期化するクラス
+ */
+class LeafletInitializer {
+    constructor() {
+        this.baseLayerData = null;
+        this.overlayLayerData = null;
+        this.createPane = () => {
+            // https://leafletjs.com/reference-1.0.0.html#map-pane
+            this.map.createPane("pane610").style.zIndex = "610";
+            this.map.createPane("pane620").style.zIndex = "620";
+            this.map.createPane("pane630").style.zIndex = "630";
+            this.map.createPane("pane640").style.zIndex = "640";
+            this.map.createPane("pane650").style.zIndex = "650";
+            this.map.createPane("pane660").style.zIndex = "660";
+            this.map.createPane("pane670").style.zIndex = "670";
+            this.map.createPane("pane680").style.zIndex = "680";
+            this.map.createPane("pane690").style.zIndex = "690";
+        };
+        this.renderBaseLayer = () => {
+            this.layer = new PaleTileLayer();
+            this.layer.addTo(this.map);
+            this.baseLayerData = {
+                "国土地理院淡色地図": this.layer
+            };
+        };
+        this.addOverlayLayer = (layer, name) => {
+            this.layerControl.addOverlay(layer, name);
+        };
+        this.renderLayerControl = () => {
+            // @ts-ignore
+            this.layerControl = L.control.groupedLayers(this.baseLayerData, this.overlayLayerData, { collapsed: false, position: 'bottomright' }).addTo(this.map);
+        };
+        // 都道府県の境界線の描画
+        this.renderPref = async () => {
+            const japanGeoJsonRes = await fetch("/geojson/japan.geojson");
+            const japanGeoJsonJson = await japanGeoJsonRes.json();
+            const japanGeoJson = L.geoJSON(japanGeoJsonJson, {
+                style: {
+                    weight: 5
+                },
+                onEachFeature: function (feature, layer) {
+                }
+            });
+            japanGeoJson.addTo(this.map);
+        };
+        // 市区町村の境界線の描画
+        this.renderCity = async () => {
+            const japanCitiesGeoJsonRes = await fetch("/geojson/japan_cities.geojson");
+            const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json();
+            const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {
+                style: {
+                    weight: 2,
+                    opacity: 0.3
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.bindTooltip(feature.properties.cityname_k);
+                }
+            });
+            japanCitiesGeoJson.addTo(this.map);
+        };
+        this.ready = new Promise(async (resolve) => {
+            // Leafletの初期化
+            this.map = L.map('map');
+            // 初期座標とズームを指定
+            this.map.setView([36.56028, 139.19333], 7);
+            this.createPane();
+            this.renderBaseLayer();
+            this.renderLayerControl();
+            await this.renderPref();
+            await this.renderCity();
+            resolve();
+        });
+    }
+}
+/**
+ * 国土地理院淡色地図タイル
+ */
+class PaleTileLayer extends L.TileLayer {
+    constructor() {
+        super(PaleTileLayer.urlTemplate, PaleTileLayer.options);
+    }
+    addToOverlay(leaflet) {
+        leaflet.layerControl.addOverlay(this, PaleTileLayer.displayName, "基本");
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this);
+    }
+}
+PaleTileLayer.displayName = '国土地理院淡色地図';
+PaleTileLayer.urlTemplate = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
+PaleTileLayer.options = {
+    id: 'CyberJapanPaleTile',
+    attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#pale">国土地理院淡色地図</a>',
+    minZoom: 5,
+    maxZoom: 18,
+    opacity: 1,
+};
+/**
+ * 国土地理院色別標高図タイル
+ */
+class ReliefTileLayer extends L.TileLayer {
+    constructor() {
+        super(ReliefTileLayer.urlTemplate, ReliefTileLayer.options);
+    }
+    addToOverlay(leaflet) {
+        leaflet.layerControl.addOverlay(this, ReliefTileLayer.displayName, "基本");
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this);
+    }
+}
+ReliefTileLayer.displayName = '国土地理院色別標高図';
+ReliefTileLayer.urlTemplate = 'https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png';
+ReliefTileLayer.options = {
+    id: 'CyberJapanReliefTile',
+    attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#relief">国土地理院色別標高図</a>',
+    minZoom: 5,
+    maxZoom: 15,
+    opacity: 0.4,
+};
+/**
+ * YOLP 雨雲レーダータイル
+ */
+class RainTileLayer extends L.TileLayer {
+    constructor() {
+        super(RainTileLayer.urlTemplate, RainTileLayer.options);
+        this.getTileUrl = (coords) => {
             //雨雲リクエスト日付の作成
             const now = new Date();
             const year = now.getFullYear();
@@ -89,137 +156,364 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
                 y: Math.pow(2, this._getZoomForUrl() - 1) - 1 - coords.y,
                 z: this._getZoomForUrl() + 1
             }, this.options));
-        }
-    });
-    // YOLP雨雲画像タイルの定義
-    // @ts-ignore
-    const rainMapTileLayer = new L.YOLPTileLayer('http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}', {
-        attribution: '<a href="https://developer.yahoo.co.jp/webapi/map/">Yahoo! Open Local Platform</a>',
-        maxZoom: 18,
-    }).setOpacity(0.7);
-    // 自衛隊災害派遣情報マーカーレイヤーの定義
-    var selfdefenseIcon = L.icon({
-        iconUrl: '/img/selfdefense.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    var waterTruckIcon = L.icon({
-        iconUrl: '/img/water_truck.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const selfDefenseDispatchRes = await fetch("/selfdefense");
-    const selfDefenseDispatchJson = await selfDefenseDispatchRes.json();
-    const selfDefenseDispatch = [];
-    selfDefenseDispatchJson.forEach(function (element) {
-        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
-            return;
-        }
-        if (element.text.startsWith("RT")) {
-            return;
-        }
-        const tweeted_at = new Date(element.tweeted_at._seconds * 1000);
-        var content = "<h3><img width=20 height=20 src='" + element.icon_url + "' />" + element.display_name + "</h3>";
-        content = content + "<p>";
-        content = content + "<a href='https://twitter.com/" + element.screen_name + "/status/" + element.tweet_id_str + "'>";
-        content = content + element.text;
-        content = content + "</a>";
-        content = content + " (" + tweeted_at.toLocaleString() + ")";
-        content = content + "</p>";
-        if (element.photos.length > 0) {
-            content = content + "<img width=150 height=100 src='" + element.photos[0] + "' />";
-        }
-        var marker;
-        if (content.indexOf('給水') === -1) {
-            marker = L.marker([element.lat, element.long], { icon: selfdefenseIcon });
-        }
-        else {
-            marker = L.marker([element.lat, element.long], { icon: waterTruckIcon });
-        }
-        marker.bindPopup(content);
-        selfDefenseDispatch.push(marker);
-    });
-    const selfDefenseDispatchLayerGroup = L.layerGroup(selfDefenseDispatch);
-    map.addLayer(selfDefenseDispatchLayerGroup);
-    // 消防出動情報マーカーレイヤーの定義
-    const firetruckIcon = L.icon({
-        iconUrl: '/img/firetruck_fast.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const ambulanceIcon = L.icon({
-        iconUrl: '/img/ambulance_fast.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const fireIcon = L.icon({
-        iconUrl: '/img/fire_icon.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const cautionIcon = L.icon({
-        iconUrl: '/img/caution.png',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-        popupAnchor: [0, -10]
-    });
-    const fireDeptDispatchRes = await fetch("/firedept");
-    const fireDeptDispatchJson = await fireDeptDispatchRes.json();
-    const fireDeptDispatchCrisis = [];
-    const fireDeptDispatchFire = [];
-    const fireDeptDispatchRescue = [];
-    const fireDeptDispatchOther = [];
-    fireDeptDispatchJson.forEach(function (element) {
-        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
-            return;
-        }
-        let marker;
-        let created_at = new Date(element.created_at._seconds * 1000);
-        let content = "<b>" + element.division + "</b>:" + element.detail + '<br /> (' + created_at.toLocaleString() + ')';
-        switch (element.category) {
-            case "crisis":
-                marker = L.marker([element.lat, element.long], { icon: firetruckIcon });
-                marker.bindPopup(content);
-                fireDeptDispatchCrisis.push(marker);
-                break;
-            case "fire":
-                marker = L.marker([element.lat, element.long], { icon: fireIcon });
-                marker.bindPopup(content);
-                fireDeptDispatchFire.push(marker);
-                break;
-            case "rescue":
-                marker = L.marker([element.lat, element.long], { icon: ambulanceIcon });
-                marker.bindPopup(content);
-                fireDeptDispatchRescue.push(marker);
-                break;
-            case "caution":
-                marker = L.marker([element.lat, element.long], { icon: cautionIcon });
-                marker.bindPopup(content);
-                fireDeptDispatchOther.push(marker);
-                break;
-            case "survey":
-                marker = L.marker([element.lat, element.long], { icon: cautionIcon });
-                marker.bindPopup(content);
-                fireDeptDispatchOther.push(marker);
-                break;
-            case "support":
-                marker = L.marker([element.lat, element.long], { icon: cautionIcon });
-                marker.bindPopup("<b>" + element.division + "</b>:" + element.detail + ' (' + created_at.toLocaleString() + ')');
-                fireDeptDispatchOther.push(marker);
-                break;
-        }
-    });
-    const fireDeptDispatchCrisisLayerGroup = L.layerGroup(fireDeptDispatchCrisis);
-    const fireDeptDispatchFireLayerGroup = L.layerGroup(fireDeptDispatchFire);
-    const fireDeptDispatchRescueLayerGroup = L.layerGroup(fireDeptDispatchRescue);
-    const fireDeptDispatchOtherLayerGroup = L.layerGroup(fireDeptDispatchOther);
-    map.addLayer(fireDeptDispatchCrisisLayerGroup);
-    // ニュース記事マーカーレイヤーの定義
+        };
+    }
+    addToOverlay(leaflet) {
+        leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, "基本");
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this);
+    }
+}
+RainTileLayer.displayName = "YOLP 雨雲レーダー";
+RainTileLayer.urlTemplate = 'http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}';
+RainTileLayer.options = {
+    id: 'YOLPRainRadar',
+    attribution: '<a href="https://developer.yahoo.co.jp/webapi/map/">Yahoo! Open Local Platform</a>',
+    minZoom: null,
+    maxZoom: 18,
+    opacity: 0.7,
+};
+/**
+ * GeoJson表現する基底クラス
+ */
+class GeoJson {
+    constructor(displayName, url, icon) {
+        this.geojson = null;
+        this.toGeoJson = (arcgisjson) => {
+            return arcgisjson;
+        };
+        this.pointToLayer = (feature, coordinates) => {
+            return L.marker(coordinates, { icon: this.icon });
+        };
+        this.onEachFeature = (feature, layer) => {
+        };
+        this.displayName = displayName;
+        this.url = url;
+        this.icon = icon;
+        this.ready = new Promise(async (resolve) => {
+            const res = await fetch(this.url);
+            let json = await res.json();
+            json = this.toGeoJson(json);
+            this.geojson = L.geoJSON(json, {
+                pointToLayer: this.pointToLayer,
+                onEachFeature: this.onEachFeature
+            });
+            resolve();
+        });
+    }
+    addToOverlay(leaflet, groupName) {
+        leaflet.layerControl.addOverlay(this.geojson, this.displayName, groupName);
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this.geojson);
+    }
+}
+/**
+ * 水害情報GeoJson
+ */
+class FloodArcGisJson extends GeoJson {
+    constructor() {
+        super(FloodArcGisJson.displayName, FloodArcGisJson.url, FloodArcGisJson.icon);
+        this.toGeoJson = (arcgisjson) => {
+            // @ts-ignore
+            return ArcgisToGeojsonUtils.arcgisToGeoJSON(arcgisjson);
+        };
+        this.onEachFeature = (feature, layer) => {
+            layer.bindPopup(feature.properties['name']);
+        };
+    }
+}
+FloodArcGisJson.displayName = "水害情報";
+FloodArcGisJson.url = "/geojson/2019_typhoon19_flood.arcgisjson";
+FloodArcGisJson.icon = L.icon({
+    iconUrl: '/img/flood.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+/**
+ * 災害ボランティアセンターGeoJson
+ */
+class VolunteerGeoJson extends GeoJson {
+    constructor() {
+        super(VolunteerGeoJson.displayName, VolunteerGeoJson.url, VolunteerGeoJson.icon);
+        this.pointToLayer = (feature, coordinates) => {
+            let lat = feature.properties['緯度_十進数_'];
+            let long = feature.properties['経度_十進数_'];
+            // @ts-ignore
+            return L.marker([lat, long], { icon: VolunteerGeoJson.icon });
+        };
+        this.onEachFeature = (feature, layer) => {
+            let content = '<b>' + feature.properties['都道府県名'] + feature.properties['市町村名'] + '</b><br />';
+            content = content + feature.properties['災害ボランティアセンター名'] + '<br />';
+            if (feature.properties['詳細情報URL']) {
+                content = content + '<a href="' + feature.properties['詳細情報URL'] + '">ウェブサイト</a><br />';
+            }
+            if (feature.properties['電話番号']) {
+                content = content + '電話番号: ' + feature.properties['電話番号'];
+            }
+            layer.bindPopup(content);
+        };
+    }
+}
+VolunteerGeoJson.displayName = "災害ボランティアセンター";
+VolunteerGeoJson.url = "/geojson/2019_typhoon19_volunteer.geojson";
+VolunteerGeoJson.icon = L.icon({
+    iconUrl: '/img/volunteer.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+/**
+ *  マーカー読み込んで描画する基底クラス
+ */
+class Markers {
+    constructor(displayName, url, icon) {
+        this.markers = [];
+        this.layerGroup = null;
+        this.shouldIgnore = (element) => {
+            return false;
+        };
+        this.getIcon = (element) => {
+            return this.icon;
+        };
+        this.getContent = (element) => {
+            return null;
+        };
+        this.forEach = (element) => {
+            if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
+                return;
+            }
+            if (this.shouldIgnore(element)) {
+                return;
+            }
+            const icon = this.getIcon(element);
+            let marker;
+            if (icon === null) {
+                marker = L.marker([element.lat, element.long]);
+            }
+            else {
+                marker = L.marker([element.lat, element.long], { icon: icon });
+            }
+            const content = this.getContent(element);
+            marker.bindPopup(content);
+            this.pushTo(element, marker);
+        };
+        this.displayName = displayName;
+        this.url = url;
+        this.icon = icon;
+        this.ready = new Promise(async (resolve) => {
+            const res = await fetch(this.url);
+            let json = await res.json();
+            json.forEach(this.forEach);
+            resolve();
+        });
+    }
+    pushTo(element, marker) {
+        this.markers.push(marker);
+    }
+    addToOverlay(leaflet, groupName) {
+        this.layerGroup = L.layerGroup(this.markers);
+        leaflet.layerControl.addOverlay(this.layerGroup, this.displayName, groupName);
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this.layerGroup);
+    }
+}
+class SelfDefenseMarkers extends Markers {
+    constructor() {
+        super(SelfDefenseMarkers.displayName, SelfDefenseMarkers.url, SelfDefenseMarkers.selfDefenseIcon);
+        this.shouldIgnore = (element) => {
+            return element.text.startsWith("RT");
+        };
+        this.getIcon = (element) => {
+            if (element.text.indexOf('給水') !== -1) {
+                return SelfDefenseMarkers.waterTruckIcon;
+            }
+            else {
+                return SelfDefenseMarkers.selfDefenseIcon;
+            }
+        };
+        this.getContent = (element) => {
+            const tweeted_at = new Date(element.tweeted_at._seconds * 1000);
+            var content = "<h3><img width=20 height=20 src='" + element.icon_url + "' />" + element.display_name + "</h3>";
+            content = content + "<p>";
+            content = content + "<a href='https://twitter.com/" + element.screen_name + "/status/" + element.tweet_id_str + "'>";
+            content = content + element.text;
+            content = content + "</a>";
+            content = content + " (" + tweeted_at.toLocaleString() + ")";
+            content = content + "</p>";
+            if (element.photos.length > 0) {
+                content = content + "<img width=150 height=100 src='" + element.photos[0] + "' />";
+            }
+            return content;
+        };
+    }
+}
+SelfDefenseMarkers.displayName = "自衛隊災害派遣";
+SelfDefenseMarkers.url = "/selfdefense";
+SelfDefenseMarkers.selfDefenseIcon = L.icon({
+    iconUrl: '/img/selfdefense.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+SelfDefenseMarkers.waterTruckIcon = L.icon({
+    iconUrl: '/img/water_truck.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+class FireDeptMarkers extends Markers {
+    constructor() {
+        super(null, FireDeptMarkers.url, null);
+        this.fireDeptDispatchCrisis = [];
+        this.fireDeptDispatchFire = [];
+        this.fireDeptDispatchRescue = [];
+        this.fireDeptDispatchOther = [];
+        this.fireDeptDispatchCrisisLayerGroup = null;
+        this.fireDeptDispatchFireLayerGroup = null;
+        this.fireDeptDispatchRescueLayerGroup = null;
+        this.fireDeptDispatchOtherLayerGroup = null;
+        this.getContent = (element) => {
+            let created_at = new Date(element.created_at._seconds * 1000);
+            let content = "<b>" + element.division + "</b>:" + element.detail + '<br /> (' + created_at.toLocaleString() + ')';
+            return content;
+        };
+        this.getIcon = (element) => {
+            let icon;
+            switch (element.category) {
+                case "crisis":
+                    icon = FireDeptMarkers.firetruckIcon;
+                    break;
+                case "fire":
+                    icon = FireDeptMarkers.fireIcon;
+                    break;
+                case "rescue":
+                    icon = FireDeptMarkers.ambulanceIcon;
+                    break;
+                case "caution":
+                    icon = FireDeptMarkers.cautionIcon;
+                    break;
+                case "survey":
+                    icon = FireDeptMarkers.cautionIcon;
+                    break;
+                case "support":
+                    FireDeptMarkers.cautionIcon;
+                    break;
+            }
+            return icon;
+        };
+        this.pushTo = (element, marker) => {
+            switch (element.category) {
+                case "crisis":
+                    this.fireDeptDispatchCrisis.push(marker);
+                    break;
+                case "fire":
+                    this.fireDeptDispatchFire.push(marker);
+                    break;
+                case "rescue":
+                    this.fireDeptDispatchRescue.push(marker);
+                    break;
+                case "caution":
+                    this.fireDeptDispatchOther.push(marker);
+                    break;
+                case "survey":
+                    this.fireDeptDispatchOther.push(marker);
+                    break;
+                case "support":
+                    this.fireDeptDispatchOther.push(marker);
+                    break;
+            }
+        };
+    }
+    addToOverlay(leaflet) {
+        this.fireDeptDispatchCrisisLayerGroup = L.layerGroup(this.fireDeptDispatchCrisis);
+        this.fireDeptDispatchFireLayerGroup = L.layerGroup(this.fireDeptDispatchFire);
+        this.fireDeptDispatchRescueLayerGroup = L.layerGroup(this.fireDeptDispatchRescue);
+        this.fireDeptDispatchOtherLayerGroup = L.layerGroup(this.fireDeptDispatchOther);
+        leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, "消防災害出動情報", "消防署");
+        leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, "消防火災出動情報", "消防署");
+        leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, "消防救急出動情報", "消防署");
+        leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, "消防その他出動情報", "消防署");
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup);
+    }
+}
+FireDeptMarkers.url = "/firedept";
+FireDeptMarkers.firetruckIcon = L.icon({
+    iconUrl: '/img/firetruck_fast.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+FireDeptMarkers.ambulanceIcon = L.icon({
+    iconUrl: '/img/ambulance_fast.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+FireDeptMarkers.fireIcon = L.icon({
+    iconUrl: '/img/fire_icon.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+FireDeptMarkers.cautionIcon = L.icon({
+    iconUrl: '/img/caution.png',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10]
+});
+class NewsMarkers extends Markers {
+    constructor(category) {
+        super(NewsMarkers.displayName, NewsMarkers.url + category, null);
+        this.clusterGroup = null;
+        this.shouldIgnore = (element) => {
+            return (element.og_title === undefined || element.og_title === null
+                || element.og_desc === undefined || element.og_desc === null);
+        };
+        this.getContent = (element) => {
+            let content = "<h3>" + element.og_title + "</h3><p>";
+            if (element.og_url) {
+                content = content + "<a href='" + element.og_url + "'>";
+            }
+            content = content + element.og_desc;
+            if (element.og_url) {
+                content = content + "</a>";
+            }
+            content = content + "</p>";
+            if (element.og_image) {
+                content = content + "<img width=150 height=100 src='" + element.og_image + "' />";
+            }
+            return content;
+        };
+        this.addToOverlay = (leaflet) => {
+            // @ts-ignore
+            const newsClusterGroup = L.markerClusterGroup.layerSupport({ clusterPane: 'pane690' });
+            const newsLayerGroup = L.layerGroup(this.markers);
+            newsClusterGroup.addTo(leaflet.map);
+            newsClusterGroup.checkIn(newsLayerGroup);
+            this.layerGroup = newsLayerGroup;
+            this.clusterGroup = newsClusterGroup;
+            leaflet.layerControl.addOverlay(this.layerGroup, NewsMarkers.displayName, "情報");
+        };
+    }
+    show(leaflet) {
+        leaflet.map.addLayer(this.layerGroup);
+    }
+}
+NewsMarkers.displayName = "災害関連ニュース";
+NewsMarkers.url = "/news";
+const renderLeafLetPromise = new Promise(async (resolve) => {
+    const leaflet = new LeafletInitializer();
+    await leaflet.ready;
+    const reliefTileLayer = new ReliefTileLayer();
+    reliefTileLayer.addToOverlay(leaflet);
+    const rainTileLayer = new RainTileLayer();
+    rainTileLayer.addToOverlay(leaflet);
     let category = "";
     switch (location.hash) {
         case "#drug":
@@ -229,60 +523,50 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
             category = "?category=children";
             break;
         default:
-            category = "";
+            category = "?category=crisis";
     }
-    const newsRes = await fetch("/news" + category);
-    const newsJson = await newsRes.json();
-    const news = [];
-    newsJson.forEach(function (element) {
-        if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
-            return;
-        }
-        if (element.og_title === undefined || element.og_title === null || element.og_desc === undefined || element.og_desc === null) {
-            return;
-        }
-        let content = "<h3>" + element.og_title + "</h3><p>";
-        if (element.og_url) {
-            content = content + "<a href='" + element.og_url + "'>";
-        }
-        content = content + element.og_desc;
-        if (element.og_url) {
-            content = content + "</a>";
-        }
-        content = content + "</p>";
-        if (element.og_image) {
-            content = content + "<img width=150 height=100 src='" + element.og_image + "' />";
-        }
-        const marker = L.marker([element.lat, element.long]);
-        marker.bindPopup(content);
-        news.push(marker);
-    });
-    // @ts-ignore
-    const newsClusterGroup = L.markerClusterGroup.layerSupport();
-    //newsClusterGroup.freezeAtZoom(11);
-    const newsLayerGroup = L.layerGroup(news);
-    newsClusterGroup.addTo(map);
-    newsClusterGroup.checkIn(newsLayerGroup);
-    map.addLayer(newsLayerGroup);
-    const baseLayerData = {
-        "国土地理院淡色地図": cyberJapanPaleTileLayer
-    };
-    const overlayLayerData = {
-        "国土地理院色別標高図": cyberJapanReliefTileLayer,
-        "YOLP 雨雲レーダー": rainMapTileLayer,
-        "災害ニュース記事": newsLayerGroup,
-        "自衛隊災害派遣情報": selfDefenseDispatchLayerGroup,
-        "消防災害出動情報": fireDeptDispatchCrisisLayerGroup,
-        "消防火災出動情報": fireDeptDispatchFireLayerGroup,
-        "消防救急出動情報": fireDeptDispatchRescueLayerGroup,
-        "消防その他出動情報": fireDeptDispatchOtherLayerGroup,
-    };
-    // レイヤー切り替えコントロールを追加
-    L.control.layers(baseLayerData, overlayLayerData, { collapsed: false, position: 'bottomright' }).addTo(map);
+    const newsLayer = new NewsMarkers(category);
+    await newsLayer.ready;
+    newsLayer.addToOverlay(leaflet);
+    newsLayer.show(leaflet);
+    const floodArcGisJson = new FloodArcGisJson();
+    await floodArcGisJson.ready;
+    floodArcGisJson.addToOverlay(leaflet, "情報");
+    floodArcGisJson.show(leaflet);
+    const volunteerGeoJson = new VolunteerGeoJson();
+    await volunteerGeoJson.ready;
+    volunteerGeoJson.addToOverlay(leaflet, "情報");
+    volunteerGeoJson.show(leaflet);
+    const selfDefenseMarkers = new SelfDefenseMarkers();
+    await selfDefenseMarkers.ready;
+    selfDefenseMarkers.addToOverlay(leaflet, "自衛隊");
+    selfDefenseMarkers.show(leaflet);
+    const fireDeptMarkers = new FireDeptMarkers();
+    await fireDeptMarkers.ready;
+    fireDeptMarkers.addToOverlay(leaflet);
+    fireDeptMarkers.show(leaflet);
     resolve();
 });
 window.addEventListener("load", async function () {
     console.log("load");
     await renderLeafLetPromise;
 }, false);
+// ツイートボタン
+// @ts-ignore
+window.twttr = (function (d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0], 
+    // @ts-ignore
+    t = window.twttr || {};
+    if (d.getElementById(id))
+        return t;
+    js = d.createElement(s);
+    js.id = id;
+    js.src = "https://platform.twitter.com/widgets.js";
+    fjs.parentNode.insertBefore(js, fjs);
+    t._e = [];
+    t.ready = function (f) {
+        t._e.push(f);
+    };
+    return t;
+}(document, "script", "twitter-wjs"));
 //# sourceMappingURL=index.js.map

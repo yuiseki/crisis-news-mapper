@@ -12,5 +12,8 @@
     "node": "10"
   },
   "main": "lib/index.js",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "wgs84-util": "^3.0.0"
+  }
 }
