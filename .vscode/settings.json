@@ -3,6 +3,7 @@
         "Arcgis",
         "Nowcast",
         "YOLP",
+        "arcgisjson",
         "choco",
         "domcontentloaded",
         "feedparser",

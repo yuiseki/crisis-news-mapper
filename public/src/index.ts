@@ -236,8 +236,8 @@ class GeoJson {
   /**
    * jsonがGeoJSONではないとき、変換処理をする必要があるときに上書きする
    */
-  public toGeoJson = (arcgisjson) => {
-    return arcgisjson
+  public toGeoJson = (json) => {
+    return json
   }
 
   /**
