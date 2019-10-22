@@ -597,7 +597,7 @@ class NewsMarkers extends Markers {
   }
 
   public getContent = (element) => {
-    let content = "<h3>"+element.og_title+"</h3><p>";
+    let content = "<h3 title='"+element.category+"'>"+element.og_title+"</h3><p>";
     if (element.og_url){
       content = content + "<a href='"+element.og_url+"'>";
     }

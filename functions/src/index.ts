@@ -196,5 +196,5 @@ import { Twitter } from './twitter'
 exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
 
 
-//import { News } from './news'
-//exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.startUpdateAll)
+import { News } from './news'
+exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.startUpdateAll)
