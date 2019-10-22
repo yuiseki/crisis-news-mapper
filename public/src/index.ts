@@ -35,7 +35,7 @@ class LeafletInitializer {
   constructor(){
     this.ready = new Promise(async resolve => {
       // Leafletの初期化
-      this.map = L.map('map');
+      this.map = L.map('map', { zoomControl: false });
       this.map.on('overlayadd',    (event)=>{console.log('overlayadd: ', event)});
       this.map.on('overlayremove', (event)=>{console.log('overlayremove: ', event)});
       // 初期座標とズームを指定
@@ -74,18 +74,27 @@ class LeafletInitializer {
   }
 
   public renderControls = () => {
-    // @ts-ignore
-    this.layerControl = L.control.groupedLayers(
-      this.baseLayerData,
-      this.overlayLayerData,
-      {collapsed:true, position: 'bottomright'}
-    ).addTo(this.map);
+    // 現在地に移動するやつ
     // @ts-ignore
     this.locatorControl = L.control.locate({
+      position: 'bottomright',
       locateOptions: {
         maxZoom: 10
       }
     }).addTo(this.map);
+    // ズームインズームアウトするやつ
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(this.map);
+    // レイヤーの表示非表示を切り替えるやつ
+    // @ts-ignore
+    this.layerControl = L.control.groupedLayers(
+      this.baseLayerData, this.overlayLayerData,
+      {
+        collapsed:true,
+        position: 'bottomright'
+      }
+    ).addTo(this.map);
   }
 
   // 都道府県の境界線の描画
