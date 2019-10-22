@@ -266,12 +266,13 @@ class GeoJson {
 /**
  * 水害情報GeoJson
  * http://crs.bosai.go.jp/DynamicCRS/index.html?appid=9424c7b32d784b60a9b70d59ff32ac96
- * ここのデータを拝借している
+ * ここからデータを拝借している
  * コツ
+ * Chrome developer tools の Network タブで `query` で filter してそれっぽいデータを探す
  * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=true&outSR=4326&outFields=*&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&cacheHint=true
- *   - f=pbf を f=json にする
- *   - outSR=xxxx を outSR=4326 にする
- * こうしないとarcgisToGeoJSONでGeoJSONに変換できない
+ *   - `f=pbf` を `f=json` にする
+ *   - `outSR=xxxx` を `outSR=4326` にする
+ * こうしないとarcgisToGeoJSONでGeoJSONに変換できる座標を持ったJSONにならない
  */
 class FloodArcGisJson extends GeoJson {
   static displayName = "水害情報"
