@@ -13,6 +13,7 @@
 .git
 .gitignore
 firebase-debug.log
+deploy.sh
 
 node_modules
 #!include:.gitignore

@@ -11,7 +11,8 @@ const ngeohash = require('ngeohash')
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
- * @param {string} req.query.category 絞り込むカテゴリ
+ * @param {string} req.query.category ニュースを絞り込むカテゴリ
+ * @param {number} req.query.daysago ニュースを何日前まで取得するか
  */
 exports.news = functions.https.onRequest(async (req, res) => {
   let category
@@ -21,15 +22,22 @@ exports.news = functions.https.onRequest(async (req, res) => {
   }else{
     category = req.query.category
   }
+  let daysago
+  if (req.query.daysago===undefined){
+    // 災害
+    daysago = 3
+  }else{
+    daysago = req.query.daysago
+  }
   const today = new Date();
-  const daysAgo = new Date(today.getTime() - (10 * 24 * 60 * 60 * 1000));
+  const endat = new Date(today.getTime() - (daysago * 24 * 60 * 60 * 1000));
   // firestoreクエリを組み立てる
   const query = await admin.firestore()
     .collection("news")
     .where("place_country", "==", "日本")
     .where("category", "==", category)
     .orderBy("tweeted_at", "desc")
-    .endAt(daysAgo)
+    .endAt(endat)
     .limit(1000)
     .get()
   if(query.empty){
@@ -50,15 +58,23 @@ exports.news = functions.https.onRequest(async (req, res) => {
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
+ * @param {number} req.query.daysago 何日前まで取得するか
  */
 exports.firedept = functions.https.onRequest(async (req, res) => {
+  let daysago
+  if (req.query.daysago===undefined){
+    // 災害
+    daysago = 3
+  }else{
+    daysago = req.query.daysago
+  }
   const today = new Date();
-  const daysAgo = new Date(today.getTime() - (10 * 24 * 60 * 60 * 1000));
+  const endat = new Date(today.getTime() - (daysago * 24 * 60 * 60 * 1000));
   const query = await admin.firestore()
     .collection("dispatch")
     .where("place_country", "==", "日本")
     .orderBy("created_at", "desc")
-    .endAt(daysAgo)
+    .endAt(endat)
     .limit(500)
     .get()
   if(query.empty){
@@ -77,17 +93,25 @@ exports.firedept = functions.https.onRequest(async (req, res) => {
  * のようなパスを処理する関数
  * @param {Express.Request} req
  * @param {Express.Response} res
+ * @param {number} req.query.daysago 何日前まで取得するか
  */
 exports.selfdefense = functions.https.onRequest(async (req, res) => {
-  //const today = new Date();
-  //const daysAgo = new Date(today.getTime() - (10 * 24 * 60 * 60 * 1000));
+  let daysago
+  if (req.query.daysago===undefined){
+    // 災害
+    daysago = 3
+  }else{
+    daysago = req.query.daysago
+  }
+  const today = new Date();
+  const endat = new Date(today.getTime() - (daysago * 24 * 60 * 60 * 1000));
   const query = await admin.firestore()
     .collection("tweets")
     .where("place_country", "==", "日本")
     .where("category", "==", "crisis")
     .where("classification", "==", "selfdefense")
     .orderBy("tweeted_at", "desc")
-    //.endAt(daysAgo)
+    .endAt(endat)
     .limit(500)
     .get()
   if(query.empty){
@@ -157,7 +181,6 @@ exports.geohash = functions.https.onRequest(async (req, res) => {
 const runtimeOpt = {
   timeoutSeconds: 540
 }
-
 
 // 消防出動情報を収集するバッチ処理
 import { Dispatch } from './dispatch'
