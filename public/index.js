@@ -1,3 +1,21 @@
+// ツイートボタン
+// @ts-ignore
+window.twttr = (function (d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0], 
+    // @ts-ignore
+    t = window.twttr || {};
+    if (d.getElementById(id))
+        return t;
+    js = d.createElement(s);
+    js.id = id;
+    js.src = "https://platform.twitter.com/widgets.js";
+    fjs.parentNode.insertBefore(js, fjs);
+    t._e = [];
+    t.ready = function (f) {
+        t._e.push(f);
+    };
+    return t;
+}(document, "script", "twitter-wjs"));
 /**
  * Leafletを初期化するクラス
  */
@@ -27,9 +45,15 @@ class LeafletInitializer {
                 "国土地理院淡色地図": this.layer
             };
         };
-        this.renderLayerControl = () => {
+        this.renderControls = () => {
             // @ts-ignore
-            this.layerControl = L.control.groupedLayers(this.baseLayerData, this.overlayLayerData, { collapsed: false, position: 'bottomright' }).addTo(this.map);
+            this.layerControl = L.control.groupedLayers(this.baseLayerData, this.overlayLayerData, { collapsed: true, position: 'bottomright' }).addTo(this.map);
+            // @ts-ignore
+            this.locatorControl = L.control.locate({
+                locateOptions: {
+                    maxZoom: 10
+                }
+            }).addTo(this.map);
         };
         // 都道府県の境界線の描画
         this.renderPref = async () => {
@@ -62,11 +86,13 @@ class LeafletInitializer {
         this.ready = new Promise(async (resolve) => {
             // Leafletの初期化
             this.map = L.map('map');
+            this.map.on('overlayadd', (event) => { console.log('overlayadd: ', event); });
+            this.map.on('overlayremove', (event) => { console.log('overlayremove: ', event); });
             // 初期座標とズームを指定
             this.map.setView([36.56028, 139.19333], 7);
             this.createPane();
             this.renderBaseLayer();
-            this.renderLayerControl();
+            this.renderControls();
             await this.renderPref();
             await this.renderCity();
             resolve();
@@ -565,6 +591,8 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
     reliefTileLayer.addOverlay(leaflet);
     const rainTileLayer = new RainTileLayer();
     rainTileLayer.addOverlay(leaflet);
+    const element = document.getElementsByClassName('leaflet-control-layers')[0];
+    element.classList.add('leaflet-control-layers-expanded');
     let category = "";
     switch (location.hash) {
         case "#drug":
@@ -596,28 +624,13 @@ const renderLeafLetPromise = new Promise(async (resolve) => {
     await fireDeptMarkers.ready;
     fireDeptMarkers.addOverlay(leaflet);
     fireDeptMarkers.show(leaflet);
+    setTimeout(() => {
+        element.classList.remove('leaflet-control-layers-expanded');
+    }, 2000);
     resolve();
 });
 window.addEventListener("load", async function () {
     console.log("load");
     await renderLeafLetPromise;
 }, false);
-// ツイートボタン
-// @ts-ignore
-window.twttr = (function (d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0], 
-    // @ts-ignore
-    t = window.twttr || {};
-    if (d.getElementById(id))
-        return t;
-    js = d.createElement(s);
-    js.id = id;
-    js.src = "https://platform.twitter.com/widgets.js";
-    fjs.parentNode.insertBefore(js, fjs);
-    t._e = [];
-    t.ready = function (f) {
-        t._e.push(f);
-    };
-    return t;
-}(document, "script", "twitter-wjs"));
 //# sourceMappingURL=index.js.map

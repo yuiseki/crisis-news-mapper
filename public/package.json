@@ -1,26 +1,22 @@
 {
   "name": "crisis-news-mapper-web",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "build": "tsc",
+    "serve": "npm run clean && npm run build && firebase serve --only hosting",
+    "start": "npm run serve",
     "deploy": "firebase deploy --only hosting",
     "logs": "firebase hosting:log"
   },
-  "author": "yuiseki",
-  "license": "ISC",
+  "main": "index.js",
   "devDependencies": {
     "tslint": "^5.20.0",
-    "typescript": "^3.6.4"
-  },
-  "private": true,
-  "dependencies": {
+    "typescript": "^3.6.4",
     "@types/geojson": "^7946.0.7",
     "@types/leaflet": "^1.5.4",
     "@types/leaflet-markercluster": "^1.0.3",
     "@types/proj4": "^2.5.0",
     "twitter-d": "^0.4.0"
-  }
+  },
+  "private": true
 }
