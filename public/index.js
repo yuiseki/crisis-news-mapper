@@ -65,8 +65,12 @@ class LeafletInitializer {
             this.map.createPane("pane690").style.zIndex = "690";
         };
         this.renderControls = () => {
+            // スポンサー募集ボタン
+            this.sponsorControl = new SponsorControl({
+                position: 'bottomleft'
+            }).addTo(this.map);
             // ズームインズームアウトするやつ
-            L.control.zoom({
+            this.zoomControl = L.control.zoom({
                 position: 'bottomright'
             }).addTo(this.map);
             // 現在地に移動するやつ
@@ -142,6 +146,47 @@ class LeafletInitializer {
             await this.renderCity();
             resolve();
         });
+    }
+}
+/**
+ * スポンサー募集ボタン
+ */
+class SponsorControl extends L.Control {
+    constructor(options) {
+        super(options);
+        this.onAdd = (map) => {
+            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+            container.innerHTML = '💸';
+            container.style.fontSize = 'xx-large';
+            container.style.textAlign = 'center';
+            container.style.display = 'table-cell';
+            container.style.verticalAlign = 'middle';
+            container.style.backgroundColor = 'white';
+            container.style.cursor = 'pointer';
+            container.style.width = '40px';
+            container.style.height = '40px';
+            const content = `
+    <div style="text-align: center;margin: auto;">
+    <h1>運営費支援のお願い</h1>
+    <p>毎月3000円ほどかかっているので一年間で36000円くらいの出費になる予測です。オタスケ……</p>
+    <h2>kyashによる支援</h2>
+    <p><a href="kyash://qr/u/4235924052635520477">kyash://qr/u/4235924052635520477</a></p>
+    <p><img width="200" height="200" src="/img/kyash_qr_yuiseki.png"></p>
+    <h2>polcaによ支援</h2>
+    <p><a href="https://polca.jp/projects/gRNhd5LhkQ6">https://polca.jp/projects/gRNhd5LhkQ6</a></p>
+    <p><img width="200" height="200" src="/img/polca_qr.png"></p>
+    </div>
+    `;
+            container.onclick = function () {
+                map.openModal({
+                    content: content,
+                    closeTitle: '✕',
+                    zIndex: 10000,
+                    transitionDuration: 0,
+                });
+            };
+            return container;
+        };
     }
 }
 /**
