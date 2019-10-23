@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>災害情報地図 by yuiseki</title>
+    <meta name="description" content="災害情報地図">
 
     <!-- favicon -->
     <link rel="shortcut icon" type="image/png" href="/favicon.ico">
-    <link rel="apple-touch-icon" sizes="400x400" href="/map_family_shinken.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/map_family_shinken.png">
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="災害情報地図">
     <!-- Firebase関連jsの読み込み -->
     <!-- TODO: firebaseのバージョン上がったら書き換える -->
     <script defer src="/__/firebase/7.2.0/firebase-app.js"></script>
@@ -45,6 +51,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/esri-leaflet-geocoder/2.2.14/esri-leaflet-geocoder.js"></script>
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/esri-leaflet-geocoder/2.2.14/esri-leaflet-geocoder.css" rel="stylesheet" >
 
+    <!-- モーダルダイアログを表示するやつ -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-modal@0.1.5/dist/Leaflet.Modal.js"></script>
     <link  href="https://cdn.jsdelivr.net/npm/leaflet-modal@0.1.5/dist/leaflet.modal.css" rel="stylesheet" >
 
