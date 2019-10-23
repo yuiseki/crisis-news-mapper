@@ -1,728 +1,233 @@
-// ツイートボタン
-// @ts-ignore
-window.twttr = (function (d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0], 
-    // @ts-ignore
-    t = window.twttr || {};
-    if (d.getElementById(id))
-        return t;
-    js = d.createElement(s);
-    js.id = id;
-    js.src = "https://platform.twitter.com/widgets.js";
-    fjs.parentNode.insertBefore(js, fjs);
-    t._e = [];
-    t.ready = function (f) {
-        t._e.push(f);
-    };
-    return t;
-}(document, "script", "twitter-wjs"));
-/**
- * Leafletを初期化するクラス
- */
-class LeafletInitializer {
-    constructor() {
-        this.baseLayerData = null;
-        this.overlayLayerData = null;
-        this.setView = () => {
-            const lat = localStorage.getItem('leaflet-center-lat');
-            const lng = localStorage.getItem('leaflet-center-lng');
-            const zoom = localStorage.getItem('leaflet-zoom');
-            if (lat !== undefined && lat !== null
-                && lng !== undefined && lng !== null
-                && zoom !== undefined && zoom !== null) {
-                const center = [Number(lat), Number(lng)];
-                this.map.panTo(center);
-                this.map.setZoom(zoom);
-            }
-            else {
-                // 初期座標とズームを指定
-                this.map.setView([36.56028, 139.19333], 7);
-            }
-        };
-        this.onMoveEnd = (event) => {
-            const center = this.map.getCenter();
-            const lat = center.lat;
-            const lng = center.lng;
-            localStorage.setItem('leaflet-center-lat', lat);
-            localStorage.setItem('leaflet-center-lng', lng);
-        };
-        this.onZoomEnd = (event) => {
-            localStorage.setItem('leaflet-zoom', this.map.getZoom());
-        };
-        /**
-         * マーカーの重なる順番を指定するために使うやつを初期化しておく
-         * https://leafletjs.com/reference-1.0.0.html#map-pane
-         */
-        this.createPane = () => {
-            this.map.createPane("pane610").style.zIndex = "610";
-            this.map.createPane("pane620").style.zIndex = "620";
-            this.map.createPane("pane630").style.zIndex = "630";
-            this.map.createPane("pane640").style.zIndex = "640";
-            this.map.createPane("pane650").style.zIndex = "650";
-            this.map.createPane("pane660").style.zIndex = "660";
-            this.map.createPane("pane670").style.zIndex = "670";
-            this.map.createPane("pane680").style.zIndex = "680";
-            this.map.createPane("pane690").style.zIndex = "690";
-        };
-        this.renderControls = () => {
-            // スポンサー募集ボタン
-            this.sponsorControl = new SponsorControl({
-                position: 'bottomleft'
-            }).addTo(this.map);
-            // ズームインズームアウトするやつ
-            this.zoomControl = L.control.zoom({
-                position: 'bottomright'
-            }).addTo(this.map);
-            // 現在地に移動するやつ
-            // @ts-ignore
-            this.locatorControl = L.control.locate({
-                icon: 'fa fa-map-marker-alt',
-                position: 'bottomright',
-                locateOptions: {
-                    maxZoom: 10
-                }
-            }).addTo(this.map);
-            // 地名で検索するやつ
-            // @ts-ignore
-            this.searchControl = L.esri.Geocoding.geosearch({
-                position: 'bottomright',
-                placeholder: '地名で検索'
-            }).addTo(this.map);
-            // レイヤーの表示非表示を切り替えるやつ
-            // @ts-ignore
-            this.layerControl = L.control.groupedLayers(this.baseLayerData, this.overlayLayerData, {
-                collapsed: true,
-                position: 'bottomright'
-            }).addTo(this.map);
-        };
-        this.renderBaseLayer = () => {
-            this.layer = new PaleTileLayer();
-            this.layer.addTo(this.map);
-            this.baseLayerData = {
-                "国土地理院淡色地図": this.layer
-            };
-        };
-        // 都道府県の境界線の描画
-        this.renderPref = async () => {
-            const japanGeoJsonRes = await fetch("/geojson/japan.geojson");
-            const japanGeoJsonJson = await japanGeoJsonRes.json();
-            const japanGeoJson = L.geoJSON(japanGeoJsonJson, {
-                style: {
-                    weight: 5
-                },
-                onEachFeature: function (feature, layer) {
-                }
-            });
-            japanGeoJson.addTo(this.map);
-        };
-        // 市区町村の境界線の描画
-        this.renderCity = async () => {
-            const japanCitiesGeoJsonRes = await fetch("/geojson/japan_cities.geojson");
-            const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json();
-            const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {
-                style: {
-                    weight: 2,
-                    opacity: 0.3
-                },
-                onEachFeature: function (feature, layer) {
-                    layer.bindTooltip(feature.properties.cityname_k);
-                }
-            });
-            japanCitiesGeoJson.addTo(this.map);
-        };
-        this.ready = new Promise(async (resolve) => {
-            // Leafletの初期化
-            this.map = L.map('map', { zoomControl: false });
-            // TODO: overlayadd時にデータを読み込む
-            this.map.on('overlayadd', (event) => { console.log('overlayadd: ', event); });
-            this.map.on('overlayremove', (event) => { console.log('overlayremove: ', event); });
-            this.map.on('moveend', this.onMoveEnd);
-            this.map.on('zoomend', this.onZoomEnd);
-            this.setView();
-            this.createPane();
-            this.renderBaseLayer();
-            this.renderControls();
-            await this.renderPref();
-            await this.renderCity();
-            resolve();
-        });
-    }
-}
-/**
- * スポンサー募集ボタン
- */
-class SponsorControl extends L.Control {
-    constructor(options) {
-        super(options);
-        this.onAdd = (map) => {
-            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-            container.innerHTML = '💸';
-            container.style.fontSize = 'xx-large';
-            container.style.textAlign = 'center';
-            container.style.display = 'table-cell';
-            container.style.verticalAlign = 'middle';
-            container.style.backgroundColor = 'white';
-            container.style.cursor = 'pointer';
-            container.style.width = '40px';
-            container.style.height = '40px';
-            const content = `
-    <div style="text-align: center;margin: auto;">
-    <h1>運営費支援のお願い</h1>
-    <p>毎月3000円ほどかかっているので一年間で36000円くらいの出費になる予測です。オタスケ……</p>
-    <h2>kyashによる支援</h2>
-    <p><a href="kyash://qr/u/4235924052635520477">kyash://qr/u/4235924052635520477</a></p>
-    <p><img width="200" height="200" src="/img/kyash_qr_yuiseki.png"></p>
-    <h2>polcaによ支援</h2>
-    <p><a href="https://polca.jp/projects/gRNhd5LhkQ6">https://polca.jp/projects/gRNhd5LhkQ6</a></p>
-    <p><img width="200" height="200" src="/img/polca_qr.png"></p>
-    </div>
-    `;
-            container.onclick = function () {
-                map.openModal({
-                    content: content,
-                    closeTitle: '✕',
-                    zIndex: 10000,
-                    transitionDuration: 0,
-                });
-            };
-            return container;
-        };
-    }
-}
-/**
- * 国土地理院淡色地図タイル
- */
-class PaleTileLayer extends L.TileLayer {
-    constructor() {
-        super(PaleTileLayer.urlTemplate, PaleTileLayer.options);
-    }
-    addOverlay(leaflet) {
-        leaflet.layerControl.addOverlay(this, PaleTileLayer.displayName, "基本");
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this);
-    }
-    hide(leaflet) {
-        leaflet.map.removeLayer(this);
-    }
-}
-PaleTileLayer.displayName = '国土地理院淡色地図';
-PaleTileLayer.urlTemplate = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
-PaleTileLayer.options = {
-    id: 'CyberJapanPaleTile',
-    attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#pale">国土地理院淡色地図</a>',
-    minZoom: 5,
-    maxZoom: 18,
-    opacity: 1,
-};
-/**
- * 国土地理院色別標高図タイル
- */
-class ReliefTileLayer extends L.TileLayer {
-    constructor() {
-        super(ReliefTileLayer.urlTemplate, ReliefTileLayer.options);
-    }
-    addOverlay(leaflet) {
-        leaflet.layerControl.addOverlay(this, ReliefTileLayer.displayName, "基本");
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this);
-    }
-    hide(leaflet) {
-        leaflet.map.removeLayer(this);
-    }
-}
-ReliefTileLayer.displayName = '国土地理院色別標高図';
-ReliefTileLayer.urlTemplate = 'https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png';
-ReliefTileLayer.options = {
-    id: 'CyberJapanReliefTile',
-    attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#relief">国土地理院色別標高図</a>',
-    minZoom: 5,
-    maxZoom: 15,
-    opacity: 0.4,
-};
-/**
- * YOLP 雨雲レーダータイル
- */
-class RainTileLayer extends L.TileLayer {
-    constructor() {
-        super(RainTileLayer.urlTemplate, RainTileLayer.options);
-        this.getTileUrl = (coords) => {
-            //雨雲リクエスト日付の作成
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            let monthStr = String(month);
-            if (month < 10)
-                monthStr = '0' + String(month);
-            const day = now.getDate();
-            let dayStr = String(day);
-            if (day < 10)
-                dayStr = '0' + String(day);
-            const hours = now.getHours();
-            let hoursStr = String(hours);
-            if (hours < 10)
-                hoursStr = '0' + String(hours);
-            let minutes = now.getMinutes();
-            minutes *= 0.1;
-            minutes = Math.floor(minutes);
-            minutes *= 10;
-            let minutesStr = String(minutes);
-            if (minutes < 10)
-                minutesStr = '0' + String(minutes);
-            const dateStr = "" + String(year) + monthStr + dayStr + hoursStr + minutesStr;
-            // @ts-ignore
-            return L.Util.template(this._url, L.extend({
-                d: dateStr,
-                x: coords.x,
-                y: Math.pow(2, this._getZoomForUrl() - 1) - 1 - coords.y,
-                z: this._getZoomForUrl() + 1
-            }, this.options));
-        };
-    }
-    addOverlay(leaflet) {
-        leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, "基本");
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this);
-    }
-    hide(leaflet) {
-        leaflet.map.removeLayer(this);
-    }
-}
-RainTileLayer.displayName = "YOLP 雨雲レーダー";
-RainTileLayer.urlTemplate = 'http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}';
-RainTileLayer.options = {
-    id: 'YOLPRainRadar',
-    attribution: '<a href="https://developer.yahoo.co.jp/webapi/map/">Yahoo! Open Local Platform</a>',
-    minZoom: null,
-    maxZoom: 18,
-    opacity: 0.7,
-};
-/**
- * GeoJsonを表現する基底クラス
- */
-class GeoJson {
-    /**
-     * コンストラクタ
-     * await geojson.ready すると geojson を読み込む
-     * @param displayName geojsonの表示名
-     * @param url jsonのURL
-     * @param icon 表示に使いたいアイコン
-     */
-    constructor(displayName, url, icon) {
-        this.geojson = null;
-        /**
-         * jsonがGeoJSONではないとき、変換処理をする必要があるときに上書きする
-         */
-        this.toGeoJson = (json) => {
-            return json;
-        };
-        /**
-         * coordinatesが[lat, lng]形式ではないときに上書きする
-         */
-        this.pointToLayer = (feature, coordinates) => {
-            return L.marker(coordinates, { icon: this.icon });
-        };
-        this.onEachFeature = (feature, layer) => {
-        };
-        this.displayName = displayName;
-        this.url = url;
-        this.icon = icon;
-        this.ready = new Promise(async (resolve) => {
-            const res = await fetch(this.url);
-            let json = await res.json();
-            json = this.toGeoJson(json);
-            this.geojson = L.geoJSON(json, {
-                pointToLayer: this.pointToLayer,
-                onEachFeature: this.onEachFeature
-            });
-            resolve();
-        });
-    }
-    addOverlay(leaflet, groupName) {
-        leaflet.layerControl.addOverlay(this.geojson, this.displayName, groupName);
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this.geojson);
-    }
-    hide(leaflet) {
-        leaflet.map.removeLayer(this.geojson);
-    }
-}
-/**
- * 水害情報GeoJson
- * http://crs.bosai.go.jp/DynamicCRS/index.html?appid=9424c7b32d784b60a9b70d59ff32ac96
- * ここからデータを拝借している
- * コツ
- * Chrome developer tools の Network タブで `query` で filter してそれっぽいデータを探す
- * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=pbf&where=1%3D1&returnGeometry=true&spatialRel=esriSpatialRelIntersects&outFields=*&maxRecordCountFactor=4&outSR=102100&resultOffset=0&resultRecordCount=8000&cacheHint=true&quantizationParameters=%7B%22mode%22%3A%22view%22%2C%22originPosition%22%3A%22upperLeft%22%2C%22tolerance%22%3A1.0583354500042303%2C%22extent%22%3A%7B%22xmin%22%3A15203799.647455202%2C%22ymin%22%3A4108790.7298450815%2C%22xmax%22%3A15716437.813743742%2C%22ymax%22%3A4655115.429990286%2C%22spatialReference%22%3A%7B%22wkid%22%3A102100%2C%22latestWkid%22%3A3857%7D%7D%7D
- *   - 余計なパラメーターを全部削る
- *   - `f=pbf` を `f=json` にする
- *   - `outSR=xxxx` を `outSR=4326` にする
- * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=true&outSR=4326&outFields=*&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&cacheHint=true
- * こうしないとarcgisToGeoJSONでGeoJSONに変換できる座標を持ったJSONにならない
- */
-class FloodArcGisJson extends GeoJson {
-    constructor() {
-        super(FloodArcGisJson.displayName, FloodArcGisJson.url, FloodArcGisJson.icon);
-        this.toGeoJson = (arcgisjson) => {
-            // @ts-ignore
-            return ArcgisToGeojsonUtils.arcgisToGeoJSON(arcgisjson);
-        };
-        this.onEachFeature = (feature, layer) => {
-            layer.bindPopup(feature.properties['name']);
-        };
-    }
-}
-FloodArcGisJson.displayName = "水害情報";
-FloodArcGisJson.url = "/geojson/2019_typhoon19_flood.arcgisjson";
-FloodArcGisJson.icon = L.icon({
-    iconUrl: '/img/flood.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-/**
- * 災害ボランティアセンターGeoJson
- */
-class VolunteerGeoJson extends GeoJson {
-    constructor() {
-        super(VolunteerGeoJson.displayName, VolunteerGeoJson.url, VolunteerGeoJson.icon);
-        this.pointToLayer = (feature, coordinates) => {
-            let lat = feature.properties['緯度_十進数_'];
-            let long = feature.properties['経度_十進数_'];
-            // @ts-ignore
-            return L.marker([lat, long], { icon: VolunteerGeoJson.icon });
-        };
-        this.onEachFeature = (feature, layer) => {
-            let content = '<b>' + feature.properties['都道府県名'] + feature.properties['市町村名'] + '</b><br />';
-            content = content + feature.properties['災害ボランティアセンター名'] + '<br />';
-            if (feature.properties['詳細情報URL']) {
-                content = content + '<a href="' + feature.properties['詳細情報URL'] + '">ウェブサイト</a><br />';
-            }
-            if (feature.properties['電話番号']) {
-                content = content + '電話番号: ' + feature.properties['電話番号'];
-            }
-            layer.bindPopup(content);
-        };
-    }
-}
-VolunteerGeoJson.displayName = "災害ボランティアセンター";
-VolunteerGeoJson.url = "/geojson/2019_typhoon19_volunteer.geojson";
-VolunteerGeoJson.icon = L.icon({
-    iconUrl: '/img/volunteer.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-/**
- *  lat, longプロパティを持つjsonを読み込んで描画する基底クラス
- */
-class Markers {
-    constructor(displayName, url, icon) {
-        this.markers = [];
-        this.layerGroup = null;
-        /**
-         * 描画したくないマーカーの条件があるときに上書きする
-         */
-        this.shouldIgnore = (element) => {
-            return false;
-        };
-        /**
-         * 条件に応じてアイコンを切り替えたいときに上書きする
-         */
-        this.getIcon = (element) => {
-            return this.icon;
-        };
-        /**
-         * マーカーのポップアップに指定するHTMLを構築するために上書きする
-         */
-        this.getContent = (element) => {
-            return null;
-        };
-        this.forEach = (element) => {
-            if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {
-                return;
-            }
-            if (this.shouldIgnore(element)) {
-                return;
-            }
-            const icon = this.getIcon(element);
-            let marker;
-            if (icon === null) {
-                marker = L.marker([element.lat, element.long]);
-            }
-            else {
-                marker = L.marker([element.lat, element.long], { icon: icon });
-            }
-            const content = this.getContent(element);
-            marker.bindPopup(content);
-            this.pushTo(element, marker);
-        };
-        this.displayName = displayName;
-        this.url = url;
-        this.icon = icon;
-        this.ready = new Promise(async (resolve) => {
-            const res = await fetch(this.url);
-            let json = await res.json();
-            json.forEach(this.forEach);
-            resolve();
-        });
-    }
-    /**
-     * 条件に応じて複数のカテゴリに分類して表示したいときに上書きする
-     * addOverlayも上書きする必要がある
-     * @param element
-     * @param marker
-     */
-    pushTo(element, marker) {
-        this.markers.push(marker);
-    }
-    addOverlay(leaflet, groupName) {
-        this.layerGroup = L.layerGroup(this.markers);
-        leaflet.layerControl.addOverlay(this.layerGroup, this.displayName, groupName);
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this.layerGroup);
-    }
-    hide(leaflet) {
-        leaflet.map.removeLayer(this.layerGroup);
-    }
-}
-class SelfDefenseMarkers extends Markers {
-    constructor() {
-        super(SelfDefenseMarkers.displayName, SelfDefenseMarkers.url, SelfDefenseMarkers.selfDefenseIcon);
-        this.shouldIgnore = (element) => {
-            return element.text.startsWith("RT");
-        };
-        this.getIcon = (element) => {
-            if (element.text.indexOf('給水') !== -1) {
-                return SelfDefenseMarkers.waterTruckIcon;
-            }
-            else {
-                return SelfDefenseMarkers.selfDefenseIcon;
-            }
-        };
-        this.getContent = (element) => {
-            const tweeted_at = new Date(element.tweeted_at._seconds * 1000);
-            var content = "<h3><img width=20 height=20 src='" + element.icon_url + "' />" + element.display_name + "</h3>";
-            content = content + "<p>";
-            content = content + "<a href='https://twitter.com/" + element.screen_name + "/status/" + element.tweet_id_str + "'>";
-            content = content + element.text;
-            content = content + "</a>";
-            content = content + " (" + tweeted_at.toLocaleString() + ")";
-            content = content + "</p>";
-            if (element.photos.length > 0) {
-                content = content + "<img width=150 height=100 src='" + element.photos[0] + "' />";
-            }
-            return content;
-        };
-    }
-}
-SelfDefenseMarkers.displayName = "自衛隊災害派遣";
-SelfDefenseMarkers.url = "/selfdefense";
-SelfDefenseMarkers.selfDefenseIcon = L.icon({
-    iconUrl: '/img/selfdefense.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-SelfDefenseMarkers.waterTruckIcon = L.icon({
-    iconUrl: '/img/water_truck.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-class FireDeptMarkers extends Markers {
-    constructor() {
-        super(null, FireDeptMarkers.url, null);
-        this.fireDeptDispatchCrisis = [];
-        this.fireDeptDispatchFire = [];
-        this.fireDeptDispatchRescue = [];
-        this.fireDeptDispatchOther = [];
-        this.fireDeptDispatchCrisisLayerGroup = null;
-        this.fireDeptDispatchFireLayerGroup = null;
-        this.fireDeptDispatchRescueLayerGroup = null;
-        this.fireDeptDispatchOtherLayerGroup = null;
-        this.getContent = (element) => {
-            let created_at = new Date(element.created_at._seconds * 1000);
-            let content = "<b>" + element.division + "</b>:" + element.detail + '<br /> (' + created_at.toLocaleString() + ')';
-            return content;
-        };
-        this.getIcon = (element) => {
-            let icon;
-            switch (element.category) {
-                case "crisis":
-                    icon = FireDeptMarkers.firetruckIcon;
-                    break;
-                case "fire":
-                    icon = FireDeptMarkers.fireIcon;
-                    break;
-                case "rescue":
-                    icon = FireDeptMarkers.ambulanceIcon;
-                    break;
-                case "caution":
-                    icon = FireDeptMarkers.cautionIcon;
-                    break;
-                case "survey":
-                    icon = FireDeptMarkers.cautionIcon;
-                    break;
-                case "support":
-                    FireDeptMarkers.cautionIcon;
-                    break;
-            }
-            return icon;
-        };
-        this.pushTo = (element, marker) => {
-            switch (element.category) {
-                case "crisis":
-                    this.fireDeptDispatchCrisis.push(marker);
-                    break;
-                case "fire":
-                    this.fireDeptDispatchFire.push(marker);
-                    break;
-                case "rescue":
-                    this.fireDeptDispatchRescue.push(marker);
-                    break;
-                case "caution":
-                    this.fireDeptDispatchOther.push(marker);
-                    break;
-                case "survey":
-                    this.fireDeptDispatchOther.push(marker);
-                    break;
-                case "support":
-                    this.fireDeptDispatchOther.push(marker);
-                    break;
-            }
-        };
-    }
-    addOverlay(leaflet) {
-        this.fireDeptDispatchCrisisLayerGroup = L.layerGroup(this.fireDeptDispatchCrisis);
-        this.fireDeptDispatchFireLayerGroup = L.layerGroup(this.fireDeptDispatchFire);
-        this.fireDeptDispatchRescueLayerGroup = L.layerGroup(this.fireDeptDispatchRescue);
-        this.fireDeptDispatchOtherLayerGroup = L.layerGroup(this.fireDeptDispatchOther);
-        leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, "消防災害出動情報", "消防署");
-        leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, "消防火災出動情報", "消防署");
-        leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, "消防救急出動情報", "消防署");
-        leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, "消防その他出動情報", "消防署");
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup);
-    }
-}
-FireDeptMarkers.url = "/firedept";
-FireDeptMarkers.firetruckIcon = L.icon({
-    iconUrl: '/img/firetruck_fast.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-FireDeptMarkers.ambulanceIcon = L.icon({
-    iconUrl: '/img/ambulance_fast.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-FireDeptMarkers.fireIcon = L.icon({
-    iconUrl: '/img/fire_icon.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-FireDeptMarkers.cautionIcon = L.icon({
-    iconUrl: '/img/caution.png',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
-});
-class NewsMarkers extends Markers {
-    constructor(category) {
-        super(NewsMarkers.displayName, NewsMarkers.url + category, null);
-        this.clusterGroup = null;
-        this.shouldIgnore = (element) => {
-            return (element.og_title === undefined || element.og_title === null
-                || element.og_desc === undefined || element.og_desc === null);
-        };
-        this.getContent = (element) => {
-            let content = "<h3 title='" + element.category + "'>" + element.og_title + "</h3><p>";
-            if (element.og_url) {
-                content = content + "<a href='" + element.og_url + "'>";
-            }
-            content = content + element.og_desc;
-            if (element.og_url) {
-                content = content + "</a>";
-            }
-            content = content + "</p>";
-            if (element.og_image) {
-                content = content + "<img width=150 height=100 src='" + element.og_image + "' />";
-            }
-            return content;
-        };
-        this.addOverlay = (leaflet) => {
-            // @ts-ignore
-            const newsClusterGroup = L.markerClusterGroup.layerSupport({ clusterPane: 'pane690' });
-            const newsLayerGroup = L.layerGroup(this.markers);
-            newsClusterGroup.addTo(leaflet.map);
-            newsClusterGroup.checkIn(newsLayerGroup);
-            this.layerGroup = newsLayerGroup;
-            this.clusterGroup = newsClusterGroup;
-            leaflet.layerControl.addOverlay(this.layerGroup, NewsMarkers.displayName, "情報");
-        };
-    }
-    show(leaflet) {
-        leaflet.map.addLayer(this.layerGroup);
-    }
-}
-NewsMarkers.displayName = "災害関連ニュース";
-NewsMarkers.url = "/news";
-const renderLeafLetPromise = new Promise(async (resolve) => {
-    const leaflet = new LeafletInitializer();
-    await leaflet.ready;
-    const reliefTileLayer = new ReliefTileLayer();
-    reliefTileLayer.addOverlay(leaflet);
-    const rainTileLayer = new RainTileLayer();
-    rainTileLayer.addOverlay(leaflet);
-    const element = document.getElementsByClassName('leaflet-control-layers')[0];
-    element.classList.add('leaflet-control-layers-expanded');
-    let category = "";
-    switch (location.hash) {
-        case "#drug":
-            category = "?category=drug";
-            break;
-        case "#children":
-            category = "?category=children";
-            break;
-        default:
-            category = "?category=crisis";
-    }
-    const newsLayer = new NewsMarkers(category);
-    await newsLayer.ready;
-    newsLayer.addOverlay(leaflet);
-    newsLayer.show(leaflet);
-    const floodArcGisJson = new FloodArcGisJson();
-    await floodArcGisJson.ready;
-    floodArcGisJson.addOverlay(leaflet, "情報");
-    floodArcGisJson.show(leaflet);
-    const volunteerGeoJson = new VolunteerGeoJson();
-    await volunteerGeoJson.ready;
-    volunteerGeoJson.addOverlay(leaflet, "情報");
-    volunteerGeoJson.show(leaflet);
-    const selfDefenseMarkers = new SelfDefenseMarkers();
-    await selfDefenseMarkers.ready;
-    selfDefenseMarkers.addOverlay(leaflet, "自衛隊");
-    selfDefenseMarkers.show(leaflet);
-    const fireDeptMarkers = new FireDeptMarkers();
-    await fireDeptMarkers.ready;
-    fireDeptMarkers.addOverlay(leaflet);
-    fireDeptMarkers.show(leaflet);
-    setTimeout(() => {
-        element.classList.remove('leaflet-control-layers-expanded');
-    }, 2000);
-    resolve();
-});
-window.addEventListener("load", async function () {
-    console.log("load");
-    await renderLeafLetPromise;
-}, false);
-//# sourceMappingURL=index.js.map
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.ts");
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./src/control/SponsorControl.ts":
+/*!***************************************!*\
+  !*** ./src/control/SponsorControl.ts ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n/**\n * スポンサー募集ボタン\n */\nclass SponsorControl extends L.Control {\n    constructor(options) {\n        super(options);\n        this.onAdd = (map) => {\n            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');\n            container.innerHTML = '💸';\n            container.style.fontSize = 'xx-large';\n            container.style.textAlign = 'center';\n            container.style.display = 'table-cell';\n            container.style.verticalAlign = 'middle';\n            container.style.backgroundColor = 'white';\n            container.style.cursor = 'pointer';\n            container.style.width = '40px';\n            container.style.height = '40px';\n            const content = `\n      <div style=\"text-align: center;margin: auto;\">\n      <h1>運営費支援のお願い</h1>\n      <p>毎月3000円ほどかかっているので一年間で36000円くらいの出費になる予測です。オタスケ……</p>\n      <h2>kyashによる支援</h2>\n      <p><a href=\"kyash://qr/u/4235924052635520477\">kyash://qr/u/4235924052635520477</a></p>\n      <p><img width=\"200\" height=\"200\" src=\"/img/kyash_qr_yuiseki.png\"></p>\n      <h2>polcaによ支援</h2>\n      <p><a href=\"https://polca.jp/projects/gRNhd5LhkQ6\">https://polca.jp/projects/gRNhd5LhkQ6</a></p>\n      <p><img width=\"200\" height=\"200\" src=\"/img/polca_qr.png\"></p>\n      </div>\n      `;\n            container.onclick = function () {\n                map.openModal({\n                    content: content,\n                    closeTitle: '✕',\n                    zIndex: 10000,\n                    transitionDuration: 0,\n                });\n            };\n            return container;\n        };\n    }\n}\nexports.default = SponsorControl;\n\n\n//# sourceURL=webpack:///./src/control/SponsorControl.ts?");
+
+/***/ }),
+
+/***/ "./src/geojson/FloodArcGisJson.ts":
+/*!****************************************!*\
+  !*** ./src/geojson/FloodArcGisJson.ts ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\nconst GeoJson_1 = __webpack_require__(/*! ./GeoJson */ \"./src/geojson/GeoJson.ts\");\n/**\n * 水害情報GeoJson\n * http://crs.bosai.go.jp/DynamicCRS/index.html?appid=9424c7b32d784b60a9b70d59ff32ac96\n * ここからデータを拝借している\n * コツ\n * Chrome developer tools の Network タブで `query` で filter してそれっぽいデータを探す\n * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=pbf&where=1%3D1&returnGeometry=true&spatialRel=esriSpatialRelIntersects&outFields=*&maxRecordCountFactor=4&outSR=102100&resultOffset=0&resultRecordCount=8000&cacheHint=true&quantizationParameters=%7B%22mode%22%3A%22view%22%2C%22originPosition%22%3A%22upperLeft%22%2C%22tolerance%22%3A1.0583354500042303%2C%22extent%22%3A%7B%22xmin%22%3A15203799.647455202%2C%22ymin%22%3A4108790.7298450815%2C%22xmax%22%3A15716437.813743742%2C%22ymax%22%3A4655115.429990286%2C%22spatialReference%22%3A%7B%22wkid%22%3A102100%2C%22latestWkid%22%3A3857%7D%7D%7D\n *   - 余計なパラメーターを全部削る\n *   - `f=pbf` を `f=json` にする\n *   - `outSR=xxxx` を `outSR=4326` にする\n * https://services8.arcgis.com/rGc6Kyg1ETR5TWY9/arcgis/rest/services/river19/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=true&outSR=4326&outFields=*&maxRecordCountFactor=4&resultOffset=0&resultRecordCount=8000&cacheHint=true\n * こうしないとarcgisToGeoJSONでGeoJSONに変換できる座標を持ったJSONにならない\n */\nclass FloodArcGisJson extends GeoJson_1.default {\n    constructor() {\n        super(FloodArcGisJson.displayName, FloodArcGisJson.url, FloodArcGisJson.icon);\n        this.toGeoJson = (arcgisjson) => {\n            // @ts-ignore\n            return ArcgisToGeojsonUtils.arcgisToGeoJSON(arcgisjson);\n        };\n        this.onEachFeature = (feature, layer) => {\n            layer.bindPopup(feature.properties['name']);\n        };\n    }\n}\nexports.default = FloodArcGisJson;\nFloodArcGisJson.displayName = \"水害情報\";\nFloodArcGisJson.url = \"/geojson/2019_typhoon19_flood.arcgisjson\";\nFloodArcGisJson.icon = L.icon({\n    iconUrl: '/img/flood.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\n\n\n//# sourceURL=webpack:///./src/geojson/FloodArcGisJson.ts?");
+
+/***/ }),
+
+/***/ "./src/geojson/GeoJson.ts":
+/*!********************************!*\
+  !*** ./src/geojson/GeoJson.ts ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n/**\n * GeoJsonを表現する基底クラス\n */\nclass GeoJson {\n    /**\n     * コンストラクタ\n     * await geojson.ready すると geojson\b を読み込む\n     * @param displayName geojsonの表示名\n     * @param url jsonのURL\n     * @param icon 表示に使いたいアイコン\n     */\n    constructor(displayName, url, icon) {\n        this.geojson = null;\n        /**\n         * jsonがGeoJSONではないとき、変換処理をする必要があるときに上書きする\n         */\n        this.toGeoJson = (json) => {\n            return json;\n        };\n        /**\n         * coordinatesが[lat, lng]形式ではないときに上書きする\n         */\n        this.pointToLayer = (feature, coordinates) => {\n            return L.marker(coordinates, { icon: this.icon });\n        };\n        this.onEachFeature = (feature, layer) => {\n        };\n        this.displayName = displayName;\n        this.url = url;\n        this.icon = icon;\n        this.ready = new Promise(async (resolve) => {\n            const res = await fetch(this.url);\n            let json = await res.json();\n            json = this.toGeoJson(json);\n            this.geojson = L.geoJSON(json, {\n                pointToLayer: this.pointToLayer,\n                onEachFeature: this.onEachFeature\n            });\n            resolve();\n        });\n    }\n    addOverlay(leaflet, groupName) {\n        leaflet.layerControl.addOverlay(this.geojson, this.displayName, groupName);\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this.geojson);\n    }\n    hide(leaflet) {\n        leaflet.map.removeLayer(this.geojson);\n    }\n}\nexports.default = GeoJson;\n\n\n//# sourceURL=webpack:///./src/geojson/GeoJson.ts?");
+
+/***/ }),
+
+/***/ "./src/geojson/VolunteerGeoJson.ts":
+/*!*****************************************!*\
+  !*** ./src/geojson/VolunteerGeoJson.ts ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\nconst GeoJson_1 = __webpack_require__(/*! ./GeoJson */ \"./src/geojson/GeoJson.ts\");\n/**\n * 災害ボランティアセンターGeoJson\n */\nclass VolunteerGeoJson extends GeoJson_1.default {\n    constructor() {\n        super(VolunteerGeoJson.displayName, VolunteerGeoJson.url, VolunteerGeoJson.icon);\n        this.pointToLayer = (feature, coordinates) => {\n            let lat = feature.properties['緯度_十進数_'];\n            let long = feature.properties['経度_十進数_'];\n            // @ts-ignore\n            return L.marker([lat, long], { icon: VolunteerGeoJson.icon });\n        };\n        this.onEachFeature = (feature, layer) => {\n            let content = '<b>' + feature.properties['都道府県名'] + feature.properties['市町村名'] + '</b><br />';\n            content = content + feature.properties['災害ボランティアセンター名'] + '<br />';\n            if (feature.properties['詳細情報URL']) {\n                content = content + '<a href=\"' + feature.properties['詳細情報URL'] + '\">ウェブサイト</a><br />';\n            }\n            if (feature.properties['電話番号']) {\n                content = content + '電話番号: ' + feature.properties['電話番号'];\n            }\n            layer.bindPopup(content);\n        };\n    }\n}\nexports.default = VolunteerGeoJson;\nVolunteerGeoJson.displayName = \"災害ボランティアセンター\";\nVolunteerGeoJson.url = \"/geojson/2019_typhoon19_volunteer.geojson\";\nVolunteerGeoJson.icon = L.icon({\n    iconUrl: '/img/volunteer.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\n\n\n//# sourceURL=webpack:///./src/geojson/VolunteerGeoJson.ts?");
+
+/***/ }),
+
+/***/ "./src/index.ts":
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n// control\nconst SponsorControl_1 = __webpack_require__(/*! ./control/SponsorControl */ \"./src/control/SponsorControl.ts\");\n// tile\nconst PaleTileLayer_1 = __webpack_require__(/*! ./tile/PaleTileLayer */ \"./src/tile/PaleTileLayer.ts\");\nconst ReliefTileLayer_1 = __webpack_require__(/*! ./tile/ReliefTileLayer */ \"./src/tile/ReliefTileLayer.ts\");\nconst RainTileLayer_1 = __webpack_require__(/*! ./tile/RainTileLayer */ \"./src/tile/RainTileLayer.ts\");\n// geojson\nconst FloodArcGisJson_1 = __webpack_require__(/*! ./geojson/FloodArcGisJson */ \"./src/geojson/FloodArcGisJson.ts\");\nconst VolunteerGeoJson_1 = __webpack_require__(/*! ./geojson/VolunteerGeoJson */ \"./src/geojson/VolunteerGeoJson.ts\");\n// marker\nconst NewsMarkers_1 = __webpack_require__(/*! ./marker/NewsMarkers */ \"./src/marker/NewsMarkers.ts\");\nconst SelfDefenseMarkers_1 = __webpack_require__(/*! ./marker/SelfDefenseMarkers */ \"./src/marker/SelfDefenseMarkers.ts\");\nconst FireDeptMarkers_1 = __webpack_require__(/*! ./marker/FireDeptMarkers */ \"./src/marker/FireDeptMarkers.ts\");\n// ツイートボタン\n// @ts-ignore\nwindow.twttr = (function (d, s, id) {\n    var js, fjs = d.getElementsByTagName(s)[0], \n    // @ts-ignore\n    t = window.twttr || {};\n    if (d.getElementById(id))\n        return t;\n    js = d.createElement(s);\n    js.id = id;\n    js.src = \"https://platform.twitter.com/widgets.js\";\n    fjs.parentNode.insertBefore(js, fjs);\n    t._e = [];\n    t.ready = function (f) {\n        t._e.push(f);\n    };\n    return t;\n}(document, \"script\", \"twitter-wjs\"));\n/**\n * Leafletを初期化するクラス\n */\nclass LeafletInitializer {\n    constructor() {\n        this.baseLayerData = null;\n        this.overlayLayerData = null;\n        this.setView = () => {\n            const lat = localStorage.getItem('leaflet-center-lat');\n            const lng = localStorage.getItem('leaflet-center-lng');\n            const zoom = localStorage.getItem('leaflet-zoom');\n            if (lat !== undefined && lat !== null\n                && lng !== undefined && lng !== null\n                && zoom !== undefined && zoom !== null) {\n                const center = [Number(lat), Number(lng)];\n                this.map.panTo(center);\n                this.map.setZoom(zoom);\n            }\n            else {\n                // 初期座標とズームを指定\n                this.map.setView([36.56028, 139.19333], 7);\n            }\n        };\n        this.onMoveEnd = (event) => {\n            const center = this.map.getCenter();\n            const lat = center.lat;\n            const lng = center.lng;\n            localStorage.setItem('leaflet-center-lat', lat);\n            localStorage.setItem('leaflet-center-lng', lng);\n        };\n        this.onZoomEnd = (event) => {\n            localStorage.setItem('leaflet-zoom', this.map.getZoom());\n        };\n        /**\n         * マーカーの重なる順番を指定するために使うやつを初期化しておく\n         * https://leafletjs.com/reference-1.0.0.html#map-pane\n         */\n        this.createPane = () => {\n            this.map.createPane(\"pane610\").style.zIndex = \"610\";\n            this.map.createPane(\"pane620\").style.zIndex = \"620\";\n            this.map.createPane(\"pane630\").style.zIndex = \"630\";\n            this.map.createPane(\"pane640\").style.zIndex = \"640\";\n            this.map.createPane(\"pane650\").style.zIndex = \"650\";\n            this.map.createPane(\"pane660\").style.zIndex = \"660\";\n            this.map.createPane(\"pane670\").style.zIndex = \"670\";\n            this.map.createPane(\"pane680\").style.zIndex = \"680\";\n            this.map.createPane(\"pane690\").style.zIndex = \"690\";\n        };\n        this.renderControls = () => {\n            // スポンサー募集ボタン\n            this.sponsorControl = new SponsorControl_1.default({\n                position: 'bottomleft'\n            }).addTo(this.map);\n            // ズームインズームアウトするやつ\n            this.zoomControl = L.control.zoom({\n                position: 'bottomright'\n            }).addTo(this.map);\n            // 現在地に移動するやつ\n            // @ts-ignore\n            this.locatorControl = L.control.locate({\n                icon: 'fa fa-map-marker-alt',\n                position: 'bottomright',\n                locateOptions: {\n                    maxZoom: 10\n                }\n            }).addTo(this.map);\n            // 地名で検索するやつ\n            // @ts-ignore\n            this.searchControl = L.esri.Geocoding.geosearch({\n                position: 'bottomright',\n                placeholder: '地名で検索'\n            }).addTo(this.map);\n            // レイヤーの表示非表示を切り替えるやつ\n            // @ts-ignore\n            this.layerControl = L.control.groupedLayers(this.baseLayerData, this.overlayLayerData, {\n                collapsed: true,\n                position: 'bottomright'\n            }).addTo(this.map);\n        };\n        this.renderBaseLayer = () => {\n            this.layer = new PaleTileLayer_1.default();\n            this.layer.addTo(this.map);\n            this.baseLayerData = {\n                \"国土地理院淡色地図\": this.layer\n            };\n        };\n        // 都道府県の境界線の描画\n        this.renderPref = async () => {\n            const japanGeoJsonRes = await fetch(\"/geojson/japan.geojson\");\n            const japanGeoJsonJson = await japanGeoJsonRes.json();\n            const japanGeoJson = L.geoJSON(japanGeoJsonJson, {\n                style: {\n                    weight: 5\n                },\n                onEachFeature: function (feature, layer) {\n                }\n            });\n            japanGeoJson.addTo(this.map);\n        };\n        // 市区町村の境界線の描画\n        this.renderCity = async () => {\n            const japanCitiesGeoJsonRes = await fetch(\"/geojson/japan_cities.geojson\");\n            const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json();\n            const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {\n                style: {\n                    weight: 2,\n                    opacity: 0.3\n                },\n                onEachFeature: function (feature, layer) {\n                    layer.bindTooltip(feature.properties.cityname_k);\n                }\n            });\n            japanCitiesGeoJson.addTo(this.map);\n        };\n        this.ready = new Promise(async (resolve) => {\n            // Leafletの初期化\n            this.map = L.map('map', { zoomControl: false });\n            // TODO: overlayadd時にデータを読み込む\n            this.map.on('overlayadd', (event) => { console.log('overlayadd: ', event); });\n            this.map.on('overlayremove', (event) => { console.log('overlayremove: ', event); });\n            this.map.on('moveend', this.onMoveEnd);\n            this.map.on('zoomend', this.onZoomEnd);\n            this.setView();\n            this.createPane();\n            this.renderBaseLayer();\n            this.renderControls();\n            await this.renderPref();\n            await this.renderCity();\n            resolve();\n        });\n    }\n}\nconst renderLeafLetPromise = new Promise(async (resolve) => {\n    const leaflet = new LeafletInitializer();\n    await leaflet.ready;\n    const reliefTileLayer = new ReliefTileLayer_1.default();\n    reliefTileLayer.addOverlay(leaflet);\n    const rainTileLayer = new RainTileLayer_1.default();\n    rainTileLayer.addOverlay(leaflet);\n    const element = document.getElementsByClassName('leaflet-control-layers')[0];\n    element.classList.add('leaflet-control-layers-expanded');\n    let category = \"\";\n    switch (location.hash) {\n        case \"#drug\":\n            category = \"?category=drug\";\n            break;\n        case \"#children\":\n            category = \"?category=children\";\n            break;\n        default:\n            category = \"?category=crisis\";\n    }\n    const newsLayer = new NewsMarkers_1.default(category);\n    await newsLayer.ready;\n    newsLayer.addOverlay(leaflet);\n    newsLayer.show(leaflet);\n    const floodArcGisJson = new FloodArcGisJson_1.default();\n    await floodArcGisJson.ready;\n    floodArcGisJson.addOverlay(leaflet, \"情報\");\n    floodArcGisJson.show(leaflet);\n    const volunteerGeoJson = new VolunteerGeoJson_1.default();\n    await volunteerGeoJson.ready;\n    volunteerGeoJson.addOverlay(leaflet, \"情報\");\n    volunteerGeoJson.show(leaflet);\n    const selfDefenseMarkers = new SelfDefenseMarkers_1.default();\n    await selfDefenseMarkers.ready;\n    selfDefenseMarkers.addOverlay(leaflet, \"自衛隊\");\n    selfDefenseMarkers.show(leaflet);\n    const fireDeptMarkers = new FireDeptMarkers_1.default();\n    await fireDeptMarkers.ready;\n    fireDeptMarkers.addOverlay(leaflet);\n    fireDeptMarkers.show(leaflet);\n    setTimeout(() => {\n        element.classList.remove('leaflet-control-layers-expanded');\n    }, 2000);\n    resolve();\n});\nwindow.addEventListener(\"load\", async function () {\n    console.log(\"load\");\n    await renderLeafLetPromise;\n}, false);\n\n\n//# sourceURL=webpack:///./src/index.ts?");
+
+/***/ }),
+
+/***/ "./src/marker/FireDeptMarkers.ts":
+/*!***************************************!*\
+  !*** ./src/marker/FireDeptMarkers.ts ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\nconst Markers_1 = __webpack_require__(/*! ./Markers */ \"./src/marker/Markers.ts\");\nclass FireDeptMarkers extends Markers_1.default {\n    constructor() {\n        super(null, FireDeptMarkers.url, null);\n        this.fireDeptDispatchCrisis = [];\n        this.fireDeptDispatchFire = [];\n        this.fireDeptDispatchRescue = [];\n        this.fireDeptDispatchOther = [];\n        this.fireDeptDispatchCrisisLayerGroup = null;\n        this.fireDeptDispatchFireLayerGroup = null;\n        this.fireDeptDispatchRescueLayerGroup = null;\n        this.fireDeptDispatchOtherLayerGroup = null;\n        this.getContent = (element) => {\n            let created_at = new Date(element.created_at._seconds * 1000);\n            let content = \"<b>\" + element.division + \"</b>:\" + element.detail + '<br /> (' + created_at.toLocaleString() + ')';\n            return content;\n        };\n        this.getIcon = (element) => {\n            let icon;\n            switch (element.category) {\n                case \"crisis\":\n                    icon = FireDeptMarkers.firetruckIcon;\n                    break;\n                case \"fire\":\n                    icon = FireDeptMarkers.fireIcon;\n                    break;\n                case \"rescue\":\n                    icon = FireDeptMarkers.ambulanceIcon;\n                    break;\n                case \"caution\":\n                    icon = FireDeptMarkers.cautionIcon;\n                    break;\n                case \"survey\":\n                    icon = FireDeptMarkers.cautionIcon;\n                    break;\n                case \"support\":\n                    FireDeptMarkers.cautionIcon;\n                    break;\n            }\n            return icon;\n        };\n        this.pushTo = (element, marker) => {\n            switch (element.category) {\n                case \"crisis\":\n                    this.fireDeptDispatchCrisis.push(marker);\n                    break;\n                case \"fire\":\n                    this.fireDeptDispatchFire.push(marker);\n                    break;\n                case \"rescue\":\n                    this.fireDeptDispatchRescue.push(marker);\n                    break;\n                case \"caution\":\n                    this.fireDeptDispatchOther.push(marker);\n                    break;\n                case \"survey\":\n                    this.fireDeptDispatchOther.push(marker);\n                    break;\n                case \"support\":\n                    this.fireDeptDispatchOther.push(marker);\n                    break;\n            }\n        };\n    }\n    addOverlay(leaflet) {\n        this.fireDeptDispatchCrisisLayerGroup = L.layerGroup(this.fireDeptDispatchCrisis);\n        this.fireDeptDispatchFireLayerGroup = L.layerGroup(this.fireDeptDispatchFire);\n        this.fireDeptDispatchRescueLayerGroup = L.layerGroup(this.fireDeptDispatchRescue);\n        this.fireDeptDispatchOtherLayerGroup = L.layerGroup(this.fireDeptDispatchOther);\n        leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, \"消防災害出動情報\", \"消防署\");\n        leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, \"消防火災出動情報\", \"消防署\");\n        leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, \"消防救急出動情報\", \"消防署\");\n        leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, \"消防その他出動情報\", \"消防署\");\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup);\n    }\n}\nexports.default = FireDeptMarkers;\nFireDeptMarkers.url = \"/firedept\";\nFireDeptMarkers.firetruckIcon = L.icon({\n    iconUrl: '/img/firetruck_fast.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\nFireDeptMarkers.ambulanceIcon = L.icon({\n    iconUrl: '/img/ambulance_fast.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\nFireDeptMarkers.fireIcon = L.icon({\n    iconUrl: '/img/fire_icon.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\nFireDeptMarkers.cautionIcon = L.icon({\n    iconUrl: '/img/caution.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\n\n\n//# sourceURL=webpack:///./src/marker/FireDeptMarkers.ts?");
+
+/***/ }),
+
+/***/ "./src/marker/Markers.ts":
+/*!*******************************!*\
+  !*** ./src/marker/Markers.ts ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n/**\n *  lat, longプロパティを持つjsonを読み込んで描画する基底クラス\n */\nclass Markers {\n    constructor(displayName, url, icon) {\n        this.markers = [];\n        this.layerGroup = null;\n        /**\n         * 描画したくないマーカーの条件があるときに上書きする\n         */\n        this.shouldIgnore = (element) => {\n            return false;\n        };\n        /**\n         * 条件に応じてアイコンを切り替えたいときに上書きする\n         */\n        this.getIcon = (element) => {\n            return this.icon;\n        };\n        /**\n         * マーカーのポップアップに指定するHTMLを構築するために上書きする\n         */\n        this.getContent = (element) => {\n            return null;\n        };\n        this.forEach = (element) => {\n            if (element.lat === undefined || element.lat === null || element.long === undefined || element.long === null) {\n                return;\n            }\n            if (this.shouldIgnore(element)) {\n                return;\n            }\n            const icon = this.getIcon(element);\n            let marker;\n            if (icon === null) {\n                marker = L.marker([element.lat, element.long]);\n            }\n            else {\n                marker = L.marker([element.lat, element.long], { icon: icon });\n            }\n            const content = this.getContent(element);\n            marker.bindPopup(content);\n            this.pushTo(element, marker);\n        };\n        this.displayName = displayName;\n        this.url = url;\n        this.icon = icon;\n        this.ready = new Promise(async (resolve) => {\n            const res = await fetch(this.url);\n            let json = await res.json();\n            json.forEach(this.forEach);\n            resolve();\n        });\n    }\n    /**\n     * 条件に応じて複数のカテゴリに分類して表示したいときに上書きする\n     * addOverlayも上書きする必要がある\n     * @param element\n     * @param marker\n     */\n    pushTo(element, marker) {\n        this.markers.push(marker);\n    }\n    addOverlay(leaflet, groupName) {\n        this.layerGroup = L.layerGroup(this.markers);\n        leaflet.layerControl.addOverlay(this.layerGroup, this.displayName, groupName);\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this.layerGroup);\n    }\n    hide(leaflet) {\n        leaflet.map.removeLayer(this.layerGroup);\n    }\n}\nexports.default = Markers;\n\n\n//# sourceURL=webpack:///./src/marker/Markers.ts?");
+
+/***/ }),
+
+/***/ "./src/marker/NewsMarkers.ts":
+/*!***********************************!*\
+  !*** ./src/marker/NewsMarkers.ts ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\nconst Markers_1 = __webpack_require__(/*! ./Markers */ \"./src/marker/Markers.ts\");\nclass NewsMarkers extends Markers_1.default {\n    constructor(category) {\n        super(NewsMarkers.displayName, NewsMarkers.url + category, null);\n        this.clusterGroup = null;\n        this.shouldIgnore = (element) => {\n            return (element.og_title === undefined || element.og_title === null\n                || element.og_desc === undefined || element.og_desc === null);\n        };\n        this.getContent = (element) => {\n            let content = \"<h3 title='\" + element.category + \"'>\" + element.og_title + \"</h3><p>\";\n            if (element.og_url) {\n                content = content + \"<a href='\" + element.og_url + \"'>\";\n            }\n            content = content + element.og_desc;\n            if (element.og_url) {\n                content = content + \"</a>\";\n            }\n            content = content + \"</p>\";\n            if (element.og_image) {\n                content = content + \"<img width=150 height=100 src='\" + element.og_image + \"' />\";\n            }\n            return content;\n        };\n        this.addOverlay = (leaflet) => {\n            // @ts-ignore\n            const newsClusterGroup = L.markerClusterGroup.layerSupport({ clusterPane: 'pane690' });\n            const newsLayerGroup = L.layerGroup(this.markers);\n            newsClusterGroup.addTo(leaflet.map);\n            newsClusterGroup.checkIn(newsLayerGroup);\n            this.layerGroup = newsLayerGroup;\n            this.clusterGroup = newsClusterGroup;\n            leaflet.layerControl.addOverlay(this.layerGroup, NewsMarkers.displayName, \"情報\");\n        };\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this.layerGroup);\n    }\n}\nexports.default = NewsMarkers;\nNewsMarkers.displayName = \"災害関連ニュース\";\nNewsMarkers.url = \"/news\";\n\n\n//# sourceURL=webpack:///./src/marker/NewsMarkers.ts?");
+
+/***/ }),
+
+/***/ "./src/marker/SelfDefenseMarkers.ts":
+/*!******************************************!*\
+  !*** ./src/marker/SelfDefenseMarkers.ts ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\nconst Markers_1 = __webpack_require__(/*! ./Markers */ \"./src/marker/Markers.ts\");\nclass SelfDefenseMarkers extends Markers_1.default {\n    constructor() {\n        super(SelfDefenseMarkers.displayName, SelfDefenseMarkers.url, SelfDefenseMarkers.selfDefenseIcon);\n        this.shouldIgnore = (element) => {\n            return element.text.startsWith(\"RT\");\n        };\n        this.getIcon = (element) => {\n            if (element.text.indexOf('給水') !== -1) {\n                return SelfDefenseMarkers.waterTruckIcon;\n            }\n            else {\n                return SelfDefenseMarkers.selfDefenseIcon;\n            }\n        };\n        this.getContent = (element) => {\n            const tweeted_at = new Date(element.tweeted_at._seconds * 1000);\n            var content = \"<h3><img width=20 height=20 src='\" + element.icon_url + \"' />\" + element.display_name + \"</h3>\";\n            content = content + \"<p>\";\n            content = content + \"<a href='https://twitter.com/\" + element.screen_name + \"/status/\" + element.tweet_id_str + \"'>\";\n            content = content + element.text;\n            content = content + \"</a>\";\n            content = content + \" (\" + tweeted_at.toLocaleString() + \")\";\n            content = content + \"</p>\";\n            if (element.photos.length > 0) {\n                content = content + \"<img width=150 height=100 src='\" + element.photos[0] + \"' />\";\n            }\n            return content;\n        };\n    }\n}\nexports.default = SelfDefenseMarkers;\nSelfDefenseMarkers.displayName = \"自衛隊災害派遣\";\nSelfDefenseMarkers.url = \"/selfdefense\";\nSelfDefenseMarkers.selfDefenseIcon = L.icon({\n    iconUrl: '/img/selfdefense.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\nSelfDefenseMarkers.waterTruckIcon = L.icon({\n    iconUrl: '/img/water_truck.png',\n    iconSize: [20, 20],\n    iconAnchor: [10, 10],\n    popupAnchor: [0, -10]\n});\n\n\n//# sourceURL=webpack:///./src/marker/SelfDefenseMarkers.ts?");
+
+/***/ }),
+
+/***/ "./src/tile/PaleTileLayer.ts":
+/*!***********************************!*\
+  !*** ./src/tile/PaleTileLayer.ts ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n/**\n * 国土地理院淡色地図タイル\n */\nclass PaleTileLayer extends L.TileLayer {\n    constructor() {\n        super(PaleTileLayer.urlTemplate, PaleTileLayer.options);\n    }\n    addOverlay(leaflet) {\n        leaflet.layerControl.addOverlay(this, PaleTileLayer.displayName, \"基本\");\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this);\n    }\n    hide(leaflet) {\n        leaflet.map.removeLayer(this);\n    }\n}\nexports.default = PaleTileLayer;\nPaleTileLayer.displayName = '国土地理院淡色地図';\nPaleTileLayer.urlTemplate = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';\nPaleTileLayer.options = {\n    id: 'CyberJapanPaleTile',\n    attribution: '<a href=\"https://maps.gsi.go.jp/development/ichiran.html#pale\">国土地理院淡色地図</a>',\n    minZoom: 5,\n    maxZoom: 18,\n    opacity: 1,\n};\n\n\n//# sourceURL=webpack:///./src/tile/PaleTileLayer.ts?");
+
+/***/ }),
+
+/***/ "./src/tile/RainTileLayer.ts":
+/*!***********************************!*\
+  !*** ./src/tile/RainTileLayer.ts ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n/**\n * YOLP 雨雲レーダータイル\n */\nclass RainTileLayer extends L.TileLayer {\n    constructor() {\n        super(RainTileLayer.urlTemplate, RainTileLayer.options);\n        this.getTileUrl = (coords) => {\n            //雨雲リクエスト日付の作成\n            const now = new Date();\n            const year = now.getFullYear();\n            const month = now.getMonth() + 1;\n            let monthStr = String(month);\n            if (month < 10)\n                monthStr = '0' + String(month);\n            const day = now.getDate();\n            let dayStr = String(day);\n            if (day < 10)\n                dayStr = '0' + String(day);\n            const hours = now.getHours();\n            let hoursStr = String(hours);\n            if (hours < 10)\n                hoursStr = '0' + String(hours);\n            let minutes = now.getMinutes();\n            minutes *= 0.1;\n            minutes = Math.floor(minutes);\n            minutes *= 10;\n            let minutesStr = String(minutes);\n            if (minutes < 10)\n                minutesStr = '0' + String(minutes);\n            const dateStr = \"\" + String(year) + monthStr + dayStr + hoursStr + minutesStr;\n            // @ts-ignore\n            return L.Util.template(this._url, L.extend({\n                d: dateStr,\n                x: coords.x,\n                y: Math.pow(2, this._getZoomForUrl() - 1) - 1 - coords.y,\n                z: this._getZoomForUrl() + 1\n            }, this.options));\n        };\n    }\n    addOverlay(leaflet) {\n        leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, \"基本\");\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this);\n    }\n    hide(leaflet) {\n        leaflet.map.removeLayer(this);\n    }\n}\nexports.default = RainTileLayer;\nRainTileLayer.displayName = \"YOLP 雨雲レーダー\";\nRainTileLayer.urlTemplate = 'http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}';\nRainTileLayer.options = {\n    id: 'YOLPRainRadar',\n    attribution: '<a href=\"https://developer.yahoo.co.jp/webapi/map/\">Yahoo! Open Local Platform</a>',\n    minZoom: null,\n    maxZoom: 18,\n    opacity: 0.7,\n};\n\n\n//# sourceURL=webpack:///./src/tile/RainTileLayer.ts?");
+
+/***/ }),
+
+/***/ "./src/tile/ReliefTileLayer.ts":
+/*!*************************************!*\
+  !*** ./src/tile/ReliefTileLayer.ts ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\nObject.defineProperty(exports, \"__esModule\", { value: true });\n/**\n * 国土地理院色別標高図タイル\n */\nclass ReliefTileLayer extends L.TileLayer {\n    constructor() {\n        super(ReliefTileLayer.urlTemplate, ReliefTileLayer.options);\n    }\n    addOverlay(leaflet) {\n        leaflet.layerControl.addOverlay(this, ReliefTileLayer.displayName, \"基本\");\n    }\n    show(leaflet) {\n        leaflet.map.addLayer(this);\n    }\n    hide(leaflet) {\n        leaflet.map.removeLayer(this);\n    }\n}\nexports.default = ReliefTileLayer;\nReliefTileLayer.displayName = '国土地理院色別標高図';\nReliefTileLayer.urlTemplate = 'https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png';\nReliefTileLayer.options = {\n    id: 'CyberJapanReliefTile',\n    attribution: '<a href=\"https://maps.gsi.go.jp/development/ichiran.html#relief\">国土地理院色別標高図</a>',\n    minZoom: 5,\n    maxZoom: 15,\n    opacity: 0.4,\n};\n\n\n//# sourceURL=webpack:///./src/tile/ReliefTileLayer.ts?");
+
+/***/ })
+
+/******/ });

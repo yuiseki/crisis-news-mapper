@@ -2,7 +2,7 @@
   "name": "crisis-news-mapper-web",
   "scripts": {
     "lint": "tslint --project tsconfig.json",
-    "build": "tsc",
+    "build": "webpack",
     "serve": "npm run clean && npm run build && firebase serve --only hosting",
     "start": "npm run serve",
     "deploy": "firebase deploy --only hosting",
@@ -10,13 +10,16 @@
   },
   "main": "index.js",
   "devDependencies": {
-    "tslint": "^5.20.0",
-    "typescript": "^3.6.4",
     "@types/geojson": "^7946.0.7",
     "@types/leaflet": "^1.5.4",
     "@types/leaflet-markercluster": "^1.0.3",
     "@types/proj4": "^2.5.0",
-    "twitter-d": "^0.4.0"
+    "ts-loader": "^6.2.1",
+    "tslint": "^5.20.0",
+    "twitter-d": "^0.4.0",
+    "typescript": "^3.6.4",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9"
   },
   "private": true
 }

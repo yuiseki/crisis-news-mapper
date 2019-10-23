@@ -93,6 +93,7 @@ def twintAccountPubSub(event, context):
             # タイムライン取得だけだとアイコンが取得できないのでユーザー情報を取得する
             c = twint.Config()
             c.Username = screen_name
+            # Store_object = True にしないと twint.output の中身が空
             c.Store_object = True
             c.Hide_output = True
             twint.run.Lookup(c)
