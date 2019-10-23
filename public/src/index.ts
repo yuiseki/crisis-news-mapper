@@ -77,6 +77,7 @@ class LeafletInitializer {
     // 現在地に移動するやつ
     // @ts-ignore
     this.locatorControl = L.control.locate({
+      icon: 'fa fa-map-marker-alt',
       position: 'bottomright',
       locateOptions: {
         maxZoom: 10
