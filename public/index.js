@@ -46,6 +46,10 @@ class LeafletInitializer {
             };
         };
         this.renderControls = () => {
+            // ズームインズームアウトするやつ
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(this.map);
             // 現在地に移動するやつ
             // @ts-ignore
             this.locatorControl = L.control.locate({
@@ -55,9 +59,11 @@ class LeafletInitializer {
                     maxZoom: 10
                 }
             }).addTo(this.map);
-            // ズームインズームアウトするやつ
-            L.control.zoom({
-                position: 'bottomright'
+            // 地名で検索するやつ
+            // @ts-ignore
+            this.searchControl = L.esri.Geocoding.geosearch({
+                position: 'bottomright',
+                placeholder: '地名で検索'
             }).addTo(this.map);
             // レイヤーの表示非表示を切り替えるやつ
             // @ts-ignore
