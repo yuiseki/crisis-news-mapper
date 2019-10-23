@@ -1,3 +1,4 @@
+
 // ツイートボタン
 // @ts-ignore
 window.twttr = (function(d, s, id) {
@@ -37,10 +38,12 @@ class LeafletInitializer {
     this.ready = new Promise(async resolve => {
       // Leafletの初期化
       this.map = L.map('map', { zoomControl: false });
-      this.map.on('overlayadd',    (event)=>{console.log('overlayadd: ', event)});
+      // TODO: overlayadd時にデータを読み込む
+      this.map.on('overlayadd',    (event)=>{console.log('overlayadd: ',    event)});
       this.map.on('overlayremove', (event)=>{console.log('overlayremove: ', event)});
-      // 初期座標とズームを指定
-      this.map.setView([36.56028, 139.19333], 7);
+      this.map.on('moveend',       this.onMoveEnd)
+      this.map.on('zoomend',       this.onZoomEnd)
+      this.setView()
       this.createPane()
       this.renderBaseLayer()
       this.renderControls()
@@ -50,11 +53,39 @@ class LeafletInitializer {
     });
   }
 
+  private setView = () => {
+    const lat = localStorage.getItem('leaflet-center-lat')
+    const lng = localStorage.getItem('leaflet-center-lng')
+    const zoom = localStorage.getItem('leaflet-zoom')
+    if(lat!==undefined && lat!==null 
+      && lng!==undefined && lng!==null 
+      && zoom!==undefined && zoom!==null){
+        const center = [Number(lat), Number(lng)]
+        this.map.panTo(center)
+        this.map.setZoom(zoom)
+    }else{
+      // 初期座標とズームを指定
+      this.map.setView([36.56028, 139.19333], 7);
+    }
+  }
+
+  private onMoveEnd = (event) => {
+    const center = this.map.getCenter()
+    const lat = center.lat
+    const lng = center.lng
+    localStorage.setItem('leaflet-center-lat', lat)
+    localStorage.setItem('leaflet-center-lng', lng)
+  }
+
+  private onZoomEnd = (event) => {
+    localStorage.setItem('leaflet-zoom', this.map.getZoom())
+  }
+
   /**
    * マーカーの重なる順番を指定するために使うやつを初期化しておく
    * https://leafletjs.com/reference-1.0.0.html#map-pane
    */
-  public createPane = () => {
+  private createPane = () => {
     this.map.createPane("pane610").style.zIndex = "610";
     this.map.createPane("pane620").style.zIndex = "620";
     this.map.createPane("pane630").style.zIndex = "630";
@@ -66,15 +97,7 @@ class LeafletInitializer {
     this.map.createPane("pane690").style.zIndex = "690";
   }
 
-  public renderBaseLayer = () => {
-    this.layer = new PaleTileLayer()
-      this.layer.addTo(this.map)
-      this.baseLayerData = {
-        "国土地理院淡色地図": this.layer
-      }
-  }
-
-  public renderControls = () => {
+  private renderControls = () => {
     // ズームインズームアウトするやつ
     L.control.zoom({
       position: 'bottomright'
@@ -105,8 +128,16 @@ class LeafletInitializer {
     ).addTo(this.map);
   }
 
+  private renderBaseLayer = () => {
+    this.layer = new PaleTileLayer()
+      this.layer.addTo(this.map)
+      this.baseLayerData = {
+        "国土地理院淡色地図": this.layer
+      }
+  }
+
   // 都道府県の境界線の描画
-  public renderPref = async () =>{
+  private renderPref = async () =>{
     const japanGeoJsonRes = await fetch("/geojson/japan.geojson")
     const japanGeoJsonJson = await japanGeoJsonRes.json()
     const japanGeoJson = L.geoJSON(japanGeoJsonJson, {
@@ -120,7 +151,7 @@ class LeafletInitializer {
   }
 
   // 市区町村の境界線の描画
-  public renderCity = async () => {
+  private renderCity = async () => {
     const japanCitiesGeoJsonRes = await fetch("/geojson/japan_cities.geojson")
     const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json()
     const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {

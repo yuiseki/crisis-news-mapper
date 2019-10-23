@@ -18,6 +18,7 @@
         "latlng",
         "libxmljs",
         "networkidle",
+        "overlayadd",
         "predeploy",
         "promisify",
         "selfdefense",

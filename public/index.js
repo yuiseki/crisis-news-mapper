@@ -23,6 +23,32 @@ class LeafletInitializer {
     constructor() {
         this.baseLayerData = null;
         this.overlayLayerData = null;
+        this.setView = () => {
+            const lat = localStorage.getItem('leaflet-center-lat');
+            const lng = localStorage.getItem('leaflet-center-lng');
+            const zoom = localStorage.getItem('leaflet-zoom');
+            if (lat !== undefined && lat !== null
+                && lng !== undefined && lng !== null
+                && zoom !== undefined && zoom !== null) {
+                const center = [Number(lat), Number(lng)];
+                this.map.panTo(center);
+                this.map.setZoom(zoom);
+            }
+            else {
+                // 初期座標とズームを指定
+                this.map.setView([36.56028, 139.19333], 7);
+            }
+        };
+        this.onMoveEnd = (event) => {
+            const center = this.map.getCenter();
+            const lat = center.lat;
+            const lng = center.lng;
+            localStorage.setItem('leaflet-center-lat', lat);
+            localStorage.setItem('leaflet-center-lng', lng);
+        };
+        this.onZoomEnd = (event) => {
+            localStorage.setItem('leaflet-zoom', this.map.getZoom());
+        };
         /**
          * マーカーの重なる順番を指定するために使うやつを初期化しておく
          * https://leafletjs.com/reference-1.0.0.html#map-pane
@@ -37,13 +63,6 @@ class LeafletInitializer {
             this.map.createPane("pane670").style.zIndex = "670";
             this.map.createPane("pane680").style.zIndex = "680";
             this.map.createPane("pane690").style.zIndex = "690";
-        };
-        this.renderBaseLayer = () => {
-            this.layer = new PaleTileLayer();
-            this.layer.addTo(this.map);
-            this.baseLayerData = {
-                "国土地理院淡色地図": this.layer
-            };
         };
         this.renderControls = () => {
             // ズームインズームアウトするやつ
@@ -71,6 +90,13 @@ class LeafletInitializer {
                 collapsed: true,
                 position: 'bottomright'
             }).addTo(this.map);
+        };
+        this.renderBaseLayer = () => {
+            this.layer = new PaleTileLayer();
+            this.layer.addTo(this.map);
+            this.baseLayerData = {
+                "国土地理院淡色地図": this.layer
+            };
         };
         // 都道府県の境界線の描画
         this.renderPref = async () => {
@@ -103,10 +129,12 @@ class LeafletInitializer {
         this.ready = new Promise(async (resolve) => {
             // Leafletの初期化
             this.map = L.map('map', { zoomControl: false });
+            // TODO: overlayadd時にデータを読み込む
             this.map.on('overlayadd', (event) => { console.log('overlayadd: ', event); });
             this.map.on('overlayremove', (event) => { console.log('overlayremove: ', event); });
-            // 初期座標とズームを指定
-            this.map.setView([36.56028, 139.19333], 7);
+            this.map.on('moveend', this.onMoveEnd);
+            this.map.on('zoomend', this.onZoomEnd);
+            this.setView();
             this.createPane();
             this.renderBaseLayer();
             this.renderControls();
