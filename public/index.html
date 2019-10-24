@@ -70,19 +70,22 @@
         height: 100%; width: 100%;
         margin: 0; padding: 0;
       }
-      #map a#github-ribbon {
-        z-index: 1000;
-        position: absolute;
-        right: 0;
-        top: 0;
-        transform-origin: top right;
-        transform: scale(0.6);
-      }
       #map iframe#twitter-widget-0 {
         z-index: 1000;
         position: absolute !important;
         left: 64px !important;
         bottom: 10px !important;
+      }
+      .gatagata {
+        display: inline-block;
+        animation: gatagataKeyframe .2s  infinite;
+      }
+      @keyframes gatagataKeyframe {
+          0% {transform: translate(0px, 0px) rotateZ(0deg)}
+          25% {transform: translate(2px, 2px) rotateZ(1deg)}
+          50% {transform: translate(0px, 2px) rotateZ(0deg)}
+          75% {transform: translate(2px, 0px) rotateZ(-1deg)}
+          100% {transform: translate(0px, 0px) rotateZ(0deg)}
       }
     </style>
 
@@ -90,7 +93,6 @@
   <body>
 
   <div id="map">
-    <a id="github-ribbon" href="https://github.com/yuiseki/crisis-news-mapper"><img width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_orange_ff7600.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" data-recalc-dims="1"></a>
     <a class="twitter-share-button" data-size="large" href="https://twitter.com/intent/tweet">Tweet</a>
   </div>
 

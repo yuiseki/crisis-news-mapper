@@ -1,6 +1,8 @@
 
 // control
-import SponsorControl from './control/SponsorControl'
+import SponsorControl from './control/SponsorControl';
+import GithubControl from './control/GithubControl';
+import ExpandControl from './control/ExpandControl';
 // tile
 import PaleTileLayer from './tile/PaleTileLayer';
 import ReliefTileLayer from './tile/ReliefTileLayer';
@@ -42,10 +44,12 @@ class LeafletInitializer {
   layer:any
   layerGroup:any
 
+  githubControl:any
   sponsorControl:any
   layerControl:any
   searchControl:any
   locatorControl:any
+  expandControl:any
   zoomControl:any
 
   private baseLayerData = null
@@ -54,10 +58,10 @@ class LeafletInitializer {
   constructor(){
     this.ready = new Promise(async resolve => {
       // Leafletの初期化
-      this.map = L.map('map', { zoomControl: false });
+      this.map = L.map('map', { zoomControl: false })
       // TODO: overlayadd時にデータを読み込む
-      this.map.on('overlayadd',    (event)=>{console.log('overlayadd: ',    event)});
-      this.map.on('overlayremove', (event)=>{console.log('overlayremove: ', event)});
+      this.map.on('overlayadd',    (event)=>{console.log('overlayadd: ',    event)})
+      this.map.on('overlayremove', (event)=>{console.log('overlayremove: ', event)})
       this.map.on('moveend',       this.onMoveEnd)
       this.map.on('zoomend',       this.onZoomEnd)
       this.setView()
@@ -82,7 +86,7 @@ class LeafletInitializer {
         this.map.setZoom(zoom)
     }else{
       // 初期座標とズームを指定
-      this.map.setView([36.56028, 139.19333], 7);
+      this.map.setView([36.56028, 139.19333], 7)
     }
   }
 
@@ -103,15 +107,15 @@ class LeafletInitializer {
    * https://leafletjs.com/reference-1.0.0.html#map-pane
    */
   private createPane = () => {
-    this.map.createPane("pane610").style.zIndex = "610";
-    this.map.createPane("pane620").style.zIndex = "620";
-    this.map.createPane("pane630").style.zIndex = "630";
-    this.map.createPane("pane640").style.zIndex = "640";
-    this.map.createPane("pane650").style.zIndex = "650";
-    this.map.createPane("pane660").style.zIndex = "660";
-    this.map.createPane("pane670").style.zIndex = "670";
-    this.map.createPane("pane680").style.zIndex = "680";
-    this.map.createPane("pane690").style.zIndex = "690";
+    this.map.createPane("pane610").style.zIndex = "610"
+    this.map.createPane("pane620").style.zIndex = "620"
+    this.map.createPane("pane630").style.zIndex = "630"
+    this.map.createPane("pane640").style.zIndex = "640"
+    this.map.createPane("pane650").style.zIndex = "650"
+    this.map.createPane("pane660").style.zIndex = "660"
+    this.map.createPane("pane670").style.zIndex = "670"
+    this.map.createPane("pane680").style.zIndex = "680"
+    this.map.createPane("pane690").style.zIndex = "690"
   }
 
   private renderControls = () => {
@@ -119,10 +123,18 @@ class LeafletInitializer {
     this.sponsorControl = new SponsorControl({
       position: 'bottomleft'
     }).addTo(this.map)
+    // GitHubボタン
+    this.githubControl = new GithubControl({
+      position: 'bottomleft'
+    }).addTo(this.map)
     // ズームインズームアウトするやつ
     this.zoomControl = L.control.zoom({
       position: 'bottomright'
-    }).addTo(this.map);
+    }).addTo(this.map)
+    // 全体表示に戻るやつ
+    this.expandControl = new ExpandControl({
+      position: 'bottomright'
+    }).addTo(this.map)
     // 現在地に移動するやつ
     // @ts-ignore
     this.locatorControl = L.control.locate({
@@ -131,13 +143,13 @@ class LeafletInitializer {
       locateOptions: {
         maxZoom: 10
       }
-    }).addTo(this.map);
+    }).addTo(this.map)
     // 地名で検索するやつ
     // @ts-ignore
     this.searchControl = L.esri.Geocoding.geosearch({
       position: 'bottomright',
       placeholder: '地名で検索'
-    }).addTo(this.map);
+    }).addTo(this.map)
     // レイヤーの表示非表示を切り替えるやつ
     // @ts-ignore
     this.layerControl = L.control.groupedLayers(
@@ -146,7 +158,7 @@ class LeafletInitializer {
         collapsed:true,
         position: 'bottomright'
       }
-    ).addTo(this.map);
+    ).addTo(this.map)
   }
 
   private renderBaseLayer = () => {
@@ -168,7 +180,7 @@ class LeafletInitializer {
       onEachFeature: function (feature, layer) {
       }
     })
-    japanGeoJson.addTo(this.map);
+    japanGeoJson.addTo(this.map)
   }
 
   // 市区町村の境界線の描画
@@ -184,7 +196,7 @@ class LeafletInitializer {
         layer.bindTooltip(feature.properties.cityname_k);
       }
     })
-    japanCitiesGeoJson.addTo(this.map);
+    japanCitiesGeoJson.addTo(this.map)
   }
 }
 
