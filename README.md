@@ -26,7 +26,7 @@
   - Polcaのユーザー登録をする
   - Polcaにクレジットカードを登録する
   - 以下のURLを開いて支援する
-https://polca.jp/projects/gRNhd5LhkQ6
+    - https://polca.jp/projects/gRNhd5LhkQ6
 
 ### Kyashで送金する
   - Kyashのアプリをインストールする
@@ -34,7 +34,7 @@ https://polca.jp/projects/gRNhd5LhkQ6
     - https://apps.apple.com/jp/app/kyash/id1084264883?l=ja
   - Kyashのユーザー登録をする
   - Kyashにクレジットカードを登録する または コンビニでKyashのアカウントにチャージする
-  - Kyashでyuisekiを検索する または 以下のリンクをスマートフォンで開く
+  - Kyashで yuiseki を検索する または 以下のリンクをスマートフォンで開く
     - kyash://qr/u/4235924052635520477
   - 任意の額を送金する
 
