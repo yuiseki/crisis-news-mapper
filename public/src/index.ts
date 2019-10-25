@@ -86,7 +86,7 @@ class LeafletInitializer {
         this.map.setZoom(zoom)
     }else{
       // 初期座標とズームを指定
-      this.map.setView([36.56028, 139.19333], 7)
+      this.map.setView([36.56028, 139.19333], 6)
     }
   }
 
