@@ -163,7 +163,7 @@ class LeafletInitializer {
     // @ts-ignore
     this.timelineControl = L.control.timelineSlider({
       position: 'topright',
-      timelineItems: ["1日前", "2日前", "3日前", "4日前", "5日前", "6日前", "7日前", "8日前", "9日前", "10日前"],
+      timelineItems: ["1日前", "2日前", "3日前", "4日前", "5日前", "6日前", "7日前"],
       labelWidth: "50px",
       betweenLabelAndRangeSpace: "10px",
       initializeChange: false,
