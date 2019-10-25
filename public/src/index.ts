@@ -76,11 +76,25 @@ class LeafletInitializer {
   }
 
   private onOverlayAdd = async (event) => {
-    localStorage.setItem('leaflet-layers-'+event.name, 'show')
+    let layers = JSON.parse(localStorage.getItem('leaflet-layers'))
+    if(layers===null){
+      layers = []
+    }
+    if(layers.indexOf(event.name)===-1){
+      layers.push(event.name)
+    }
+    localStorage.setItem('leaflet-layers', JSON.stringify(layers))
   }
 
   private onOverlayRemove = (event) => {
-    localStorage.setItem('leaflet-layers-'+event.name, 'hide')
+    let layers = JSON.parse(localStorage.getItem('leaflet-layers'))
+    if(layers===null){
+      layers = []
+    }
+    if(layers.indexOf(event.name) > -1){
+      layers.splice(layers.indexOf(event.name), 1)
+    }
+    localStorage.setItem('leaflet-layers', JSON.stringify(layers))
   }
 
   private onMoveEnd = (event) => {
@@ -177,23 +191,47 @@ class LeafletInitializer {
       "国土地理院淡色地図": this.layer
     }
     const japanPrefsGeoJson = new JapanPrefsGeoJson()
-    await japanPrefsGeoJson.ready
-    japanPrefsGeoJson.show(this)
+    japanPrefsGeoJson.ready.then(()=>{
+      japanPrefsGeoJson.show(this)
+    })
     const japanCitiesGeoJson = new JapanCitiesGeoJson()
-    await japanCitiesGeoJson.ready
-    japanCitiesGeoJson.show(this)
+    japanCitiesGeoJson.ready.then(()=>{
+      japanCitiesGeoJson.show(this)
+    })
   }
 
   private renderOverlayLayers = async () => {
     const element = document.getElementsByClassName('leaflet-control-layers')[0]
     element.classList.add('leaflet-control-layers-expanded')
+    const layers = JSON.parse(localStorage.getItem('leaflet-layers'))
 
     const reliefTileLayer = new ReliefTileLayer()
-    reliefTileLayer.addOverlay(this)
+    reliefTileLayer.addOverlay(this, "基本")
+    if(layers.indexOf(ReliefTileLayer.displayName)>-1){
+      reliefTileLayer.show(this)
+    }
 
     const rainTileLayer = new RainTileLayer()
-    rainTileLayer.addOverlay(this)
-    rainTileLayer.show(this)
+    rainTileLayer.addOverlay(this, "基本")
+    if(layers.indexOf(RainTileLayer.displayName)>-1){
+      rainTileLayer.show(this)
+    }
+
+    const floodArcGisJson = new FloodArcGisJson()
+    floodArcGisJson.ready.then(()=>{
+      floodArcGisJson.addOverlay(this, "情報")
+      if(layers.indexOf(FloodArcGisJson.displayName)>-1){
+        floodArcGisJson.show(this)
+      }
+    })
+
+    const volunteerGeoJson = new VolunteerGeoJson()
+    volunteerGeoJson.ready.then(()=>{
+      volunteerGeoJson.addOverlay(this, "情報")
+      if(layers.indexOf(VolunteerGeoJson.displayName)>-1){
+        volunteerGeoJson.show(this)
+      }
+    })
 
     let category = ""
     switch (location.hash){
@@ -206,28 +244,33 @@ class LeafletInitializer {
       default:
         category = "?category=crisis"
     }
-    const newsLayer = new NewsMarkers(category)
-    newsLayer.addOverlay(this)
-    newsLayer.show(this)
-
-    const floodArcGisJson = new FloodArcGisJson()
-    floodArcGisJson.addOverlay(this, "情報")
-
-    const volunteerGeoJson = new VolunteerGeoJson()
-    volunteerGeoJson.addOverlay(this, "情報")
-    volunteerGeoJson.show(this)
+    const newsMarkers = new NewsMarkers(category)
+    newsMarkers.ready.then(()=>{
+      newsMarkers.addOverlay(this)
+      if(layers.indexOf(NewsMarkers.displayName)>-1){
+        newsMarkers.show(this)
+      }
+    })
 
     const selfDefenseMarkers = new SelfDefenseMarkers()
-    selfDefenseMarkers.addOverlay(this, "自衛隊")
-    selfDefenseMarkers.show(this)
+    selfDefenseMarkers.ready.then(()=>{
+      selfDefenseMarkers.addOverlay(this, "自衛隊")
+      if(layers.indexOf(SelfDefenseMarkers.displayName)>-1){
+        selfDefenseMarkers.show(this)
+      }
+    })
 
     const fireDeptMarkers = new FireDeptMarkers()
-    fireDeptMarkers.addOverlay(this)
-    fireDeptMarkers.show(this)
+    fireDeptMarkers.ready.then(()=>{
+      fireDeptMarkers.addOverlay(this)
+      if(layers.indexOf(FireDeptMarkers.displayName)>-1){
+        fireDeptMarkers.show(this)
+      }
+    })
 
     setTimeout(()=>{
       element.classList.remove('leaflet-control-layers-expanded')
-    }, 2000)
+    }, 5000)
   }
 
 }

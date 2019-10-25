@@ -9,7 +9,7 @@ export default class GeoJson {
   style:any
   pane:string
   ready:Promise<any>
-  geojson:any = L.geoJSON()
+  geojson:any
 
   /**
    * コンストラクタ
@@ -59,9 +59,7 @@ export default class GeoJson {
   }
 
   public show(leaflet){
-    this.ready.then(()=>{
-      leaflet.map.addLayer(this.geojson)
-    })
+    leaflet.map.addLayer(this.geojson)
   }
 
   public hide(leaflet){

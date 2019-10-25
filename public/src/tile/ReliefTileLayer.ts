@@ -16,8 +16,8 @@ export default class ReliefTileLayer extends L.TileLayer {
   constructor(){
     super(ReliefTileLayer.urlTemplate, ReliefTileLayer.options)
   }
-  public addOverlay(leaflet){
-    leaflet.layerControl.addOverlay(this, ReliefTileLayer.displayName, "基本")
+  public addOverlay(leaflet, groupName){
+    leaflet.layerControl.addOverlay(this, ReliefTileLayer.displayName, groupName)
   }
   public show(leaflet){
     leaflet.map.addLayer(this)

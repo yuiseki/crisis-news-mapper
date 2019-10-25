@@ -17,8 +17,8 @@ export default class RainTileLayer extends L.TileLayer {
   constructor(){
     super(RainTileLayer.urlTemplate, RainTileLayer.options)
   }
-  public addOverlay(leaflet){
-    leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, "基本")
+  public addOverlay(leaflet, groupName){
+    leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, groupName)
   }
   public show(leaflet){
     leaflet.map.addLayer(this)
