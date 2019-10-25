@@ -6,8 +6,10 @@ export default class GeoJson {
   displayName:string
   url:string
   icon:any
+  style:any
+  pane:string
   ready:Promise<any>
-  geojson:any = null
+  geojson:any = L.geoJSON()
 
   /**
    * コンストラクタ
@@ -16,15 +18,18 @@ export default class GeoJson {
    * @param url jsonのURL
    * @param icon 表示に使いたいアイコン
    */
-  constructor(displayName, url, icon){
+  constructor(displayName, url, icon, style?, pane?){
     this.displayName = displayName
     this.url = url
     this.icon = icon
+    this.style = style
+    this.pane = pane
     this.ready = new Promise(async resolve => {
       const res = await fetch(this.url)
       let json = await res.json()
       json = this.toGeoJson(json)
       this.geojson = L.geoJSON(json, {
+        style: this.style,
         pointToLayer: this.pointToLayer,
         onEachFeature: this.onEachFeature
       })
@@ -43,7 +48,7 @@ export default class GeoJson {
    * coordinatesが[lat, lng]形式ではないときに上書きする
    */
   public pointToLayer = (feature, coordinates) => {
-    return L.marker(coordinates, {icon: this.icon})
+    return L.marker(coordinates, {icon: this.icon, pane: this.pane})
   }
 
   public onEachFeature = (feature, layer) => {
@@ -54,7 +59,9 @@ export default class GeoJson {
   }
 
   public show(leaflet){
-    leaflet.map.addLayer(this.geojson)
+    this.ready.then(()=>{
+      leaflet.map.addLayer(this.geojson)
+    })
   }
 
   public hide(leaflet){

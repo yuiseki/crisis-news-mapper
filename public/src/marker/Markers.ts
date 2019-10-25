@@ -60,9 +60,9 @@ export default class Markers {
     const icon = this.getIcon(element)
     let marker
     if(icon===null){
-      marker = L.marker([element.lat, element.long]);
+      marker = L.marker([element.lat, element.long], {pane: 'pane660'});
     }else{
-      marker = L.marker([element.lat, element.long], {icon: icon});
+      marker = L.marker([element.lat, element.long], {icon: icon, pane: 'pane660'});
     }
     const content = this.getContent(element)
     marker.bindPopup(content)
@@ -75,7 +75,9 @@ export default class Markers {
   }
 
   public show(leaflet){
-    leaflet.map.addLayer(this.layerGroup)
+    this.ready.then(()=>{
+      leaflet.map.addLayer(this.layerGroup)
+    })
   }
 
   public hide(leaflet){

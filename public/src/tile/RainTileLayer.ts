@@ -11,7 +11,8 @@ export default class RainTileLayer extends L.TileLayer {
     attribution: '<a href="https://developer.yahoo.co.jp/webapi/map/">Yahoo! Open Local Platform</a>',
     minZoom: null,
     maxZoom: 18,
-    opacity: 0.7,
+    opacity: 0.5,
+    pane: 'pane650'
   }
   constructor(){
     super(RainTileLayer.urlTemplate, RainTileLayer.options)

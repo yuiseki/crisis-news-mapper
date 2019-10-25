@@ -20,10 +20,6 @@ export default class SelfDefenseMarkers extends Markers {
     super(SelfDefenseMarkers.displayName, SelfDefenseMarkers.url, SelfDefenseMarkers.selfDefenseIcon)
   }
 
-  public shouldIgnore = (element) => {
-    return element.text.startsWith("RT")
-  }
-
   public getIcon = (element) => {
     if(element.text.indexOf('給水')!==-1){
       return SelfDefenseMarkers.waterTruckIcon

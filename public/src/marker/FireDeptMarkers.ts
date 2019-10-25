@@ -2,6 +2,7 @@ import Markers from "./Markers";
 
 
 export default class FireDeptMarkers extends Markers {
+  static displayName = "消防"
   static url = "/firedept"
   static firetruckIcon = L.icon({
     iconUrl: '/img/firetruck_fast.png',
@@ -103,9 +104,12 @@ export default class FireDeptMarkers extends Markers {
     leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, "消防火災出動情報", "消防署")
     leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, "消防救急出動情報", "消防署")
     leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, "消防その他出動情報", "消防署")
+
   }
 
   public show(leaflet){
-    leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup)
+    this.ready.then(()=>{
+      leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup)
+    })
   }
 }

@@ -14,6 +14,8 @@ import VolunteerGeoJson from './geojson/VolunteerGeoJson';
 import NewsMarkers from './marker/NewsMarkers';
 import SelfDefenseMarkers from './marker/SelfDefenseMarkers';
 import FireDeptMarkers from './marker/FireDeptMarkers';
+import JapanPrefsGeoJson from './geojson/JapanPrefsGeoJson';
+import JapanCitiesGeoJson from './geojson/JapanCitiesGeoJson';
 
 // ツイートボタン
 // @ts-ignore
@@ -60,21 +62,40 @@ class LeafletInitializer {
       // Leafletの初期化
       this.map = L.map('map', { zoomControl: false })
       // TODO: overlayadd時にデータを読み込む
-      this.map.on('overlayadd',    (event)=>{console.log('overlayadd: ',    event)})
-      this.map.on('overlayremove', (event)=>{console.log('overlayremove: ', event)})
+      this.map.on('overlayadd',    this.onOverlayAdd)
+      this.map.on('overlayremove', this.onOverlayRemove)
       this.map.on('moveend',       this.onMoveEnd)
       this.map.on('zoomend',       this.onZoomEnd)
-      this.setView()
-      this.createPane()
-      this.renderBaseLayer()
+      this.initView()
+      this.initPanes()
       this.renderControls()
-      await this.renderPref()
-      await this.renderCity()
+      await this.renderBaseLayer()
+      this.renderOverlayLayers()
       resolve()
     });
   }
 
-  private setView = () => {
+  private onOverlayAdd = async (event) => {
+    localStorage.setItem('leaflet-layers-'+event.name, 'show')
+  }
+
+  private onOverlayRemove = (event) => {
+    localStorage.setItem('leaflet-layers-'+event.name, 'hide')
+  }
+
+  private onMoveEnd = (event) => {
+    const center = this.map.getCenter()
+    const lat = center.lat
+    const lng = center.lng
+    localStorage.setItem('leaflet-center-lat', lat)
+    localStorage.setItem('leaflet-center-lng', lng)
+  }
+
+  private onZoomEnd = (event) => {
+    localStorage.setItem('leaflet-zoom', this.map.getZoom())
+  }
+
+  private initView = () => {
     const lat = localStorage.getItem('leaflet-center-lat')
     const lng = localStorage.getItem('leaflet-center-lng')
     const zoom = localStorage.getItem('leaflet-zoom')
@@ -90,23 +111,11 @@ class LeafletInitializer {
     }
   }
 
-  private onMoveEnd = (event) => {
-    const center = this.map.getCenter()
-    const lat = center.lat
-    const lng = center.lng
-    localStorage.setItem('leaflet-center-lat', lat)
-    localStorage.setItem('leaflet-center-lng', lng)
-  }
-
-  private onZoomEnd = (event) => {
-    localStorage.setItem('leaflet-zoom', this.map.getZoom())
-  }
-
   /**
    * マーカーの重なる順番を指定するために使うやつを初期化しておく
    * https://leafletjs.com/reference-1.0.0.html#map-pane
    */
-  private createPane = () => {
+  private initPanes = () => {
     this.map.createPane("pane610").style.zIndex = "610"
     this.map.createPane("pane620").style.zIndex = "620"
     this.map.createPane("pane630").style.zIndex = "630"
@@ -161,43 +170,66 @@ class LeafletInitializer {
     ).addTo(this.map)
   }
 
-  private renderBaseLayer = () => {
+  private renderBaseLayer = async () => {
     this.layer = new PaleTileLayer()
-      this.layer.addTo(this.map)
-      this.baseLayerData = {
-        "国土地理院淡色地図": this.layer
-      }
+    this.layer.addTo(this.map)
+    this.baseLayerData = {
+      "国土地理院淡色地図": this.layer
+    }
+    const japanPrefsGeoJson = new JapanPrefsGeoJson()
+    await japanPrefsGeoJson.ready
+    japanPrefsGeoJson.show(this)
+    const japanCitiesGeoJson = new JapanCitiesGeoJson()
+    await japanCitiesGeoJson.ready
+    japanCitiesGeoJson.show(this)
   }
 
-  // 都道府県の境界線の描画
-  private renderPref = async () =>{
-    const japanGeoJsonRes = await fetch("/geojson/japan.geojson")
-    const japanGeoJsonJson = await japanGeoJsonRes.json()
-    const japanGeoJson = L.geoJSON(japanGeoJsonJson, {
-      style: {
-        weight: 5
-      },
-      onEachFeature: function (feature, layer) {
-      }
-    })
-    japanGeoJson.addTo(this.map)
+  private renderOverlayLayers = async () => {
+    const element = document.getElementsByClassName('leaflet-control-layers')[0]
+    element.classList.add('leaflet-control-layers-expanded')
+
+    const reliefTileLayer = new ReliefTileLayer()
+    reliefTileLayer.addOverlay(this)
+
+    const rainTileLayer = new RainTileLayer()
+    rainTileLayer.addOverlay(this)
+    rainTileLayer.show(this)
+
+    let category = ""
+    switch (location.hash){
+      case "#drug":
+        category = "?category=drug";
+        break;
+      case "#children":
+        category = "?category=children";
+        break;
+      default:
+        category = "?category=crisis"
+    }
+    const newsLayer = new NewsMarkers(category)
+    newsLayer.addOverlay(this)
+    newsLayer.show(this)
+
+    const floodArcGisJson = new FloodArcGisJson()
+    floodArcGisJson.addOverlay(this, "情報")
+
+    const volunteerGeoJson = new VolunteerGeoJson()
+    volunteerGeoJson.addOverlay(this, "情報")
+    volunteerGeoJson.show(this)
+
+    const selfDefenseMarkers = new SelfDefenseMarkers()
+    selfDefenseMarkers.addOverlay(this, "自衛隊")
+    selfDefenseMarkers.show(this)
+
+    const fireDeptMarkers = new FireDeptMarkers()
+    fireDeptMarkers.addOverlay(this)
+    fireDeptMarkers.show(this)
+
+    setTimeout(()=>{
+      element.classList.remove('leaflet-control-layers-expanded')
+    }, 2000)
   }
 
-  // 市区町村の境界線の描画
-  private renderCity = async () => {
-    const japanCitiesGeoJsonRes = await fetch("/geojson/japan_cities.geojson")
-    const japanCitiesGeoJsonJson = await japanCitiesGeoJsonRes.json()
-    const japanCitiesGeoJson = L.geoJSON(japanCitiesGeoJsonJson, {
-      style: {
-        weight: 2,
-        opacity: 0.3
-      },
-      onEachFeature: function (feature, layer) {
-        layer.bindTooltip(feature.properties.cityname_k);
-      }
-    })
-    japanCitiesGeoJson.addTo(this.map)
-  }
 }
 
 const renderLeafLetPromise = new Promise(async resolve => {
@@ -205,53 +237,9 @@ const renderLeafLetPromise = new Promise(async resolve => {
   const leaflet = new LeafletInitializer()
   await leaflet.ready
 
-  const reliefTileLayer = new ReliefTileLayer()
-  reliefTileLayer.addOverlay(leaflet)
-  const rainTileLayer = new RainTileLayer()
-  rainTileLayer.addOverlay(leaflet)
-  const element = document.getElementsByClassName('leaflet-control-layers')[0]
-  element.classList.add('leaflet-control-layers-expanded')
-
-  let category = ""
-  switch (location.hash){
-    case "#drug":
-      category = "?category=drug";
-      break;
-    case "#children":
-      category = "?category=children";
-      break;
-    default:
-      category = "?category=crisis"
-  }
-  const newsLayer = new NewsMarkers(category)
-  await newsLayer.ready
-  newsLayer.addOverlay(leaflet)
-  newsLayer.show(leaflet)
+  
 
 
-  const floodArcGisJson = new FloodArcGisJson()
-  await floodArcGisJson.ready
-  floodArcGisJson.addOverlay(leaflet, "情報")
-  floodArcGisJson.show(leaflet)
-
-  const volunteerGeoJson = new VolunteerGeoJson()
-  await volunteerGeoJson.ready
-  volunteerGeoJson.addOverlay(leaflet, "情報")
-  volunteerGeoJson.show(leaflet)
-
-  const selfDefenseMarkers = new SelfDefenseMarkers()
-  await selfDefenseMarkers.ready
-  selfDefenseMarkers.addOverlay(leaflet, "自衛隊")
-  selfDefenseMarkers.show(leaflet)
-
-  const fireDeptMarkers = new FireDeptMarkers()
-  await fireDeptMarkers.ready
-  fireDeptMarkers.addOverlay(leaflet)
-  fireDeptMarkers.show(leaflet)
-
-  setTimeout(()=>{
-    element.classList.remove('leaflet-control-layers-expanded')
-  }, 2000)
   resolve()
 })
 

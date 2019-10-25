@@ -15,7 +15,7 @@ export default class VolunteerGeoJson extends GeoJson {
   });
 
   constructor(){
-    super(VolunteerGeoJson.displayName, VolunteerGeoJson.url, VolunteerGeoJson.icon)
+    super(VolunteerGeoJson.displayName, VolunteerGeoJson.url, VolunteerGeoJson.icon, null, "pane660")
   }
 
   public pointToLayer = (feature, coordinates) => {

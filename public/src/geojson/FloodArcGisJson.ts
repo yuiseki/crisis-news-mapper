@@ -24,7 +24,7 @@ export default class FloodArcGisJson extends GeoJson {
   })
 
   constructor(){
-    super(FloodArcGisJson.displayName, FloodArcGisJson.url, FloodArcGisJson.icon)
+    super(FloodArcGisJson.displayName, FloodArcGisJson.url, FloodArcGisJson.icon, null, 'pane660')
   }
 
   public toGeoJson = (arcgisjson) => {
