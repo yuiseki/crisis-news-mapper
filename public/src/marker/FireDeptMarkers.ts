@@ -36,9 +36,10 @@ export default class FireDeptMarkers extends Markers {
   fireDeptDispatchFireLayerGroup: any = null
   fireDeptDispatchRescueLayerGroup: any = null
   fireDeptDispatchOtherLayerGroup: any = null
+  layerGroups = []
 
-  constructor(){
-    super(null, FireDeptMarkers.url, null)
+  constructor(params){
+    super(null, FireDeptMarkers.url+params, null)
   }
 
   public getContent = (element) => {
@@ -97,14 +98,17 @@ export default class FireDeptMarkers extends Markers {
 
   public addOverlay(leaflet){
     this.fireDeptDispatchCrisisLayerGroup = L.layerGroup(this.fireDeptDispatchCrisis)
+    this.layerGroups.push(this.fireDeptDispatchCrisisLayerGroup)
     this.fireDeptDispatchFireLayerGroup = L.layerGroup(this.fireDeptDispatchFire)
+    this.layerGroups.push(this.fireDeptDispatchFireLayerGroup)
     this.fireDeptDispatchRescueLayerGroup = L.layerGroup(this.fireDeptDispatchRescue)
+    this.layerGroups.push(this.fireDeptDispatchFireLayerGroup)
     this.fireDeptDispatchOtherLayerGroup = L.layerGroup(this.fireDeptDispatchOther)
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, "消防災害出動情報", "消防署")
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, "消防火災出動情報", "消防署")
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, "消防救急出動情報", "消防署")
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, "消防その他出動情報", "消防署")
-
+    this.layerGroups.push(this.fireDeptDispatchFireLayerGroup)
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, "消防災害出動", "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, "消防火災出動", "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, "消防救急出動", "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, "消防その他出動", "消防署")
   }
 
   public show(leaflet){

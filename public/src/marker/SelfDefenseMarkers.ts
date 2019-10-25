@@ -16,8 +16,8 @@ export default class SelfDefenseMarkers extends Markers {
     popupAnchor:  [0, -10]
   });
 
-  constructor(){
-    super(SelfDefenseMarkers.displayName, SelfDefenseMarkers.url, SelfDefenseMarkers.selfDefenseIcon)
+  constructor(params){
+    super(SelfDefenseMarkers.displayName, SelfDefenseMarkers.url+params, SelfDefenseMarkers.selfDefenseIcon)
   }
 
   public getIcon = (element) => {

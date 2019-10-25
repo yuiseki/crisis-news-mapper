@@ -14,7 +14,7 @@ import GeoJson from "./GeoJson"
  * こうしないとarcgisToGeoJSONでGeoJSONに変換できる座標を持ったJSONにならない
  */
 export default class FloodArcGisJson extends GeoJson {
-  static displayName = "水害情報"
+  static displayName = "水害発生箇所"
   static url = "/geojson/2019_typhoon19_flood.arcgisjson"
   static icon = L.icon({
     iconUrl: '/img/flood.png',

@@ -7,8 +7,8 @@ export default class NewsMarkers extends Markers {
   static icon
   clusterGroup:any = null
 
-  constructor(category){
-    super(NewsMarkers.displayName, NewsMarkers.url+category, null)
+  constructor(params){
+    super(NewsMarkers.displayName, NewsMarkers.url+params, null)
   }
 
   public shouldIgnore = (element) => {

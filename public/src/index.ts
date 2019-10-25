@@ -46,13 +46,18 @@ class LeafletInitializer {
   layer:any
   layerGroup:any
 
+  timelineControl:any
+
   githubControl:any
   sponsorControl:any
+
   layerControl:any
   searchControl:any
   locatorControl:any
   expandControl:any
   zoomControl:any
+
+  daysago:string = "3"
 
   private baseLayerData = null
   private overlayLayerData = null
@@ -70,31 +75,35 @@ class LeafletInitializer {
       this.initPanes()
       this.renderControls()
       await this.renderBaseLayer()
+      this.daysago = localStorage.getItem('leaflet-daysago')
       this.renderOverlayLayers()
+      this.timelineControl.rangeInput.value = Number(this.daysago);
+      const inputEvent = new Event('input');
+      this.timelineControl.rangeInput.dispatchEvent(inputEvent);
       resolve()
     });
   }
 
   private onOverlayAdd = async (event) => {
-    let layers = JSON.parse(localStorage.getItem('leaflet-layers'))
-    if(layers===null){
-      layers = []
+    let selectedLayers = JSON.parse(localStorage.getItem('leaflet-selectedLayers'))
+    if(selectedLayers===null){
+      selectedLayers = []
     }
-    if(layers.indexOf(event.name)===-1){
-      layers.push(event.name)
+    if(selectedLayers.indexOf(event.name)===-1){
+      selectedLayers.push(event.name)
     }
-    localStorage.setItem('leaflet-layers', JSON.stringify(layers))
+    localStorage.setItem('leaflet-selectedLayers', JSON.stringify(selectedLayers))
   }
 
   private onOverlayRemove = (event) => {
-    let layers = JSON.parse(localStorage.getItem('leaflet-layers'))
-    if(layers===null){
-      layers = []
+    let selectedLayers = JSON.parse(localStorage.getItem('leaflet-selectedLayers'))
+    if(selectedLayers===null){
+      selectedLayers = []
     }
-    if(layers.indexOf(event.name) > -1){
-      layers.splice(layers.indexOf(event.name), 1)
+    if(selectedLayers.indexOf(event.name) > -1){
+      selectedLayers.splice(selectedLayers.indexOf(event.name), 1)
     }
-    localStorage.setItem('leaflet-layers', JSON.stringify(layers))
+    localStorage.setItem('leaflet-selectedLayers', JSON.stringify(selectedLayers))
   }
 
   private onMoveEnd = (event) => {
@@ -107,6 +116,15 @@ class LeafletInitializer {
 
   private onZoomEnd = (event) => {
     localStorage.setItem('leaflet-zoom', this.map.getZoom())
+  }
+
+  private onChangeTimeRange = (event) => {
+    console.log(event.value)
+    if(this.daysago != String(event.value)){
+      this.daysago = String(event.value)
+      localStorage.setItem('leaflet-daysago', this.daysago)
+      location.reload()
+    }
   }
 
   private initView = () => {
@@ -142,6 +160,15 @@ class LeafletInitializer {
   }
 
   private renderControls = () => {
+    // @ts-ignore
+    this.timelineControl = L.control.timelineSlider({
+      position: 'topright',
+      timelineItems: ["1日前", "2日前", "3日前", "4日前", "5日前", "6日前", "7日前", "8日前", "9日前", "10日前"],
+      labelWidth: "50px",
+      betweenLabelAndRangeSpace: "10px",
+      initializeChange: false,
+      changeMap: this.onChangeTimeRange
+    }).addTo(this.map)
     // スポンサー募集ボタン
     this.sponsorControl = new SponsorControl({
       position: 'bottomleft'
@@ -201,76 +228,80 @@ class LeafletInitializer {
   }
 
   private renderOverlayLayers = async () => {
-    const element = document.getElementsByClassName('leaflet-control-layers')[0]
-    element.classList.add('leaflet-control-layers-expanded')
-    const layers = JSON.parse(localStorage.getItem('leaflet-layers'))
+    // 選択していたレイヤーを復元
+    let selectedLayers = JSON.parse(localStorage.getItem('leaflet-selectedLayers'))
+    if(selectedLayers===null){
+      selectedLayers = ["災害関連ニュース", "災害ボランティアセンター", "水害発生箇所", "自衛隊災害派遣", "消防災害出動"]
+    }
 
+    // 標高図
     const reliefTileLayer = new ReliefTileLayer()
     reliefTileLayer.addOverlay(this, "基本")
-    if(layers.indexOf(ReliefTileLayer.displayName)>-1){
+    if(selectedLayers.indexOf(ReliefTileLayer.displayName)>-1){
       reliefTileLayer.show(this)
     }
 
+    // 雨雲レーダー
     const rainTileLayer = new RainTileLayer()
     rainTileLayer.addOverlay(this, "基本")
-    if(layers.indexOf(RainTileLayer.displayName)>-1){
+    if(selectedLayers.indexOf(RainTileLayer.displayName)>-1){
       rainTileLayer.show(this)
     }
 
+    // 水害発生箇所
     const floodArcGisJson = new FloodArcGisJson()
     floodArcGisJson.ready.then(()=>{
       floodArcGisJson.addOverlay(this, "情報")
-      if(layers.indexOf(FloodArcGisJson.displayName)>-1){
+      if(selectedLayers.indexOf(FloodArcGisJson.displayName)>-1){
         floodArcGisJson.show(this)
       }
     })
 
+    // 災害ボランティアセンター
     const volunteerGeoJson = new VolunteerGeoJson()
     volunteerGeoJson.ready.then(()=>{
       volunteerGeoJson.addOverlay(this, "情報")
-      if(layers.indexOf(VolunteerGeoJson.displayName)>-1){
+      if(selectedLayers.indexOf(VolunteerGeoJson.displayName)>-1){
         volunteerGeoJson.show(this)
       }
     })
 
-    let category = ""
+    let params = ""
     switch (location.hash){
       case "#drug":
-        category = "?category=drug";
+        params = "?category=drug";
         break;
       case "#children":
-        category = "?category=children";
+        params = "?category=children";
         break;
       default:
-        category = "?category=crisis"
+        params = "?category=crisis"
     }
-    const newsMarkers = new NewsMarkers(category)
+    params = params+"&daysago="+this.daysago
+    const newsMarkers = new NewsMarkers(params)
     newsMarkers.ready.then(()=>{
       newsMarkers.addOverlay(this)
-      if(layers.indexOf(NewsMarkers.displayName)>-1){
+      if(selectedLayers.indexOf(NewsMarkers.displayName)>-1){
         newsMarkers.show(this)
       }
     })
 
-    const selfDefenseMarkers = new SelfDefenseMarkers()
+    const selfDefenseMarkers = new SelfDefenseMarkers("?daysago="+this.daysago)
     selfDefenseMarkers.ready.then(()=>{
       selfDefenseMarkers.addOverlay(this, "自衛隊")
-      if(layers.indexOf(SelfDefenseMarkers.displayName)>-1){
+      if(selectedLayers.indexOf(SelfDefenseMarkers.displayName)>-1){
         selfDefenseMarkers.show(this)
       }
     })
 
-    const fireDeptMarkers = new FireDeptMarkers()
+    const fireDeptMarkers = new FireDeptMarkers("?daysago="+this.daysago)
     fireDeptMarkers.ready.then(()=>{
       fireDeptMarkers.addOverlay(this)
-      if(layers.indexOf(FireDeptMarkers.displayName)>-1){
+      if(selectedLayers.indexOf(FireDeptMarkers.displayName)>-1){
         fireDeptMarkers.show(this)
       }
     })
 
-    setTimeout(()=>{
-      element.classList.remove('leaflet-control-layers-expanded')
-    }, 5000)
   }
 
 }
@@ -280,8 +311,16 @@ const renderLeafLetPromise = new Promise(async resolve => {
   const leaflet = new LeafletInitializer()
   await leaflet.ready
 
-  
-
+  // レイヤー選択ボタンを開いておく
+  let element
+  setTimeout(()=>{
+    element = document.getElementsByClassName('leaflet-control-layers')[0]
+    element.classList.add('leaflet-control-layers-expanded')
+  }, 2000)
+  // 10秒後に閉じる
+  setTimeout(()=>{
+    element.classList.remove('leaflet-control-layers-expanded')
+  }, 10000)
 
   resolve()
 })

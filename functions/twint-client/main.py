@@ -77,14 +77,13 @@ def setOrUpdateTweet(classification, user, tweet):
 def twintAccountPubSub(event, context):
     for fileinfo in filelist:
         classification = fileinfo['classification']
-        json_file = open(fileinfo['filepath'])
+        json_file = open(fileinfo['filepath'], encoding='utf-8')
         account_list = json.load(json_file)
         for account in account_list:
             screen_name = account["twitter"]
             if screen_name is None:
                 continue
-            if start_after is not None and screen_name == start_after:
-                continue
+            start_after = screen_name
             print("twint start: "+screen_name)
             # このへんを毎回空にしないと前回のループの内容が消えない
             twint.output.users_list = []
@@ -115,7 +114,7 @@ def twintAccountPubSub(event, context):
 keywordfile = 'detector_category_words.json'
 
 def twintKeywordPubSub(event, context):
-    json_file = open(keywordfile)
+    json_file = open(keywordfile, encoding='utf-8')
     category_dict = json.load(json_file)
     for category in category_dict:
         if category == "other":
@@ -123,6 +122,7 @@ def twintKeywordPubSub(event, context):
         if category == "sports":
             continue
         for keyword in category_dict[category]:
+            start_after = keyword
             twint.output.tweets_list = []
             c = twint.Config()
             c.Search = keyword+" filter:links -filter:replies -filter:retweets -filter:nativeretweets"
@@ -152,12 +152,9 @@ def twintKeywordPubSub(event, context):
 
 
 target = None
-start_after = None
 if __name__ == "__main__":
     if (len(sys.argv)>1):
         target = sys.argv[1]
-    if (len(sys.argv)>2):
-        start_after = sys.argv[2]
     if target is not None:
         if target == "account":
             twintAccountPubSub(None, None)
