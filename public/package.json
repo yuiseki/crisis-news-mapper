@@ -1,5 +1,5 @@
 {
-  "name": "crisis-news-mapper-web",
+  "name": "crisis-news-mapper-hosting",
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "build": "webpack",

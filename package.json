@@ -1,5 +1,5 @@
 {
-  "name": "firebase",
+  "name": "crisis-news-mapper",
   "scripts": {
     "setup": "cd functions && npm install && cd ../public/ && npm install",
     "build": "cd functions && npm run build && cd ../public/ && npm run build",
