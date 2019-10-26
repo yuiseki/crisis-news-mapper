@@ -378,7 +378,7 @@ export class News {
       }
       console.log("-----> News.updateAll: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
-        //.where('category', '==', null)
+        .where('category', '==', null)
         .orderBy('tweeted_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(4)
@@ -403,7 +403,7 @@ export class News {
    */
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("news")
-      //.where('category', '==', null)
+      .where('category', '==', null)
       .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()

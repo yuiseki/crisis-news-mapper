@@ -326,7 +326,7 @@ export class Twitter {
         // tslint:disable-next-line: no-parameter-reassignment
         startAfterDocRef = null
       }
-      console.log("-----> Twitter.updateAll start: "+startAfterDocRef.id)
+      console.log("-----> Twitter.updateNext start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("tweets")
         .orderBy('tweeted_at', 'desc')
         .startAfter(startAfterDocRef)
