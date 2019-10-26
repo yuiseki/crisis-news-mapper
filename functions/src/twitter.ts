@@ -265,7 +265,7 @@ export class Twitter {
       updated_at:     admin.firestore.FieldValue.serverTimestamp(),
     }
     // tweet idをキーにして保存する
-    await admin.firestore().collection('tweets').doc(tweet.id_str).set(tweetDoc)
+    await admin.firestore().collection('tweets').doc(tweet.tweet_id_str).set(tweetDoc)
     // newsコレクションも更新する
     for (const url of urls){
       const news = new News(url)
@@ -303,13 +303,17 @@ export class Twitter {
       tweeted_at:     tweeted_at,
       updated_at:     admin.firestore.FieldValue.serverTimestamp(),
     }
-    await admin.firestore().collection("tweets").doc(tweetData.tweet_id_str).update(tweetDoc)
+    await admin.firestore().collection("tweets").doc(tweetData.tweet_id_str)
+      .update(tweetDoc)
+      .catch((error)=>{
+        console.log("----------")
+        console.log(error)
+        console.log("----------")
+      })
     for (const url of tweetData.urls){
       const news = new News(url)
       await news.ready
-      if (!news.exists){
-        await news.setOrUpdateNews(null)
-      }
+      await news.setOrUpdateNews(tweetData)
     }
   }
 
@@ -321,9 +325,8 @@ export class Twitter {
       }
       console.log("-----> Twitter.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("tweets")
-        .where('classification', '==', 'massmedia')
         .where('category', '==', null)
-        .orderBy('updated_at', 'desc')
+        .orderBy('updated_at', 'asc')
         .startAfter(startAfterDocRef)
         .limit(1)
         .get()
@@ -338,9 +341,8 @@ export class Twitter {
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("tweets")
-      .where('classification', '==', 'massmedia')
       .where('category', '==', null)
-      .orderBy('updated_at', 'desc')
+      .orderBy('updated_at', 'asc')
       .limit(1)
       .get()
     await Twitter.updateAll(snapshot.docs[0])

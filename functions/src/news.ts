@@ -207,7 +207,11 @@ export class News {
 
     newData = Object.assign(newData, this.web)
 
-    newData.tweets = this.data.tweets
+    if(this.data.tweets instanceof Array){
+      newData.tweets = this.data.tweets
+    }else{
+      newData.tweets = []
+    }
     newData.tweeted_at = await this.getTweetedAtAsync()
 
     const detector = await this.getDetectorAsync()
@@ -256,7 +260,7 @@ export class News {
     await admin.firestore().collection('news').doc(this.enurl).update({
       // MEMO: admin.firestore()だとダメ！！！
       // 言及ツイートに追加
-      tweets: admin.firestore.FieldValue.arrayUnion(tweet.id_str),
+      tweets: admin.firestore.FieldValue.arrayUnion(tweet.tweet_id_str),
       // 最終言及日時を更新
       tweeted_at: new Date(Date.parse(tweet.created_at)),
     }).catch((error)=> {
@@ -273,17 +277,21 @@ export class News {
     console.log("-----> setOrUpdateNews: "+this.url)
     console.log("-----> setOrUpdateNews: "+this.enurl)
     const param = await this.getNewsDocParamAsync()
+    if (param.tweets===undefined){
+      param.tweets = [tweet.tweet_id_str]
+      param.tweeted_at = new Date(Date.parse(tweet.created_at))
+    }
     if (this.exists){
       await admin.firestore().collection('news').doc(this.enurl)
         .update(param)
-        .catch((error)=> {
+        .catch((error) => {
           console.log("----------")
           console.log(error)
           console.log("----------")
         })
     }else{
       if(tweet!==null){
-        param.tweets = [tweet.id_str]
+        param.tweets = [tweet.tweet_id_str]
         param.tweeted_at = new Date(Date.parse(tweet.created_at))
       }else{
         param.tweets = []
@@ -291,7 +299,7 @@ export class News {
       }
       await admin.firestore().collection('news').doc(this.enurl)
         .set(param)
-        .catch((error)=> {
+        .catch((error) => {
           console.log("----------")
           console.log(error)
           console.log("----------")
@@ -313,6 +321,11 @@ export class News {
     newsData.long = detector.location.long
     newsData.geohash = detector.geohash
     newsData.updated_at = admin.firestore.FieldValue.serverTimestamp()
+    const tweeted_at = newsData.tweeted_at
+    if (tweeted_at instanceof String){
+      // @ts-ignore
+      newsData.tweeted_at = new Date(Date.parse(tweeted_at))
+    }
     if(newsData.url.startsWith('https://twitter.com/')){
       newsData.classification = "twitter"
       newsData.category = "twitter"
@@ -322,7 +335,13 @@ export class News {
         newsData.classification = "massmedia"
       }
     }
-    await admin.firestore().collection("news").doc(docRef.id).update(newsData)
+    await admin.firestore().collection("news").doc(docRef.id)
+      .update(newsData)
+      .catch((error)=>{
+        console.log("----------")
+        console.log(error)
+        console.log("----------")
+      })
   }
 
 
@@ -335,7 +354,6 @@ export class News {
       }
       console.log("----> News.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
-        .where('place_country', '==', '日本')
         .where('category', '==', 'crisis')
         .orderBy('updated_at', 'desc')
         .startAfter(startAfterDocRef)
@@ -352,7 +370,6 @@ export class News {
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("news")
-      .where('place_country', '==', '日本')
       .where('category', '==', 'crisis')
       .orderBy('updated_at', 'desc')
       .limit(1)
