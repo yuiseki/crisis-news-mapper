@@ -89,16 +89,17 @@ firebase login
 
 ----------
 
-## 依存関係をインストール
+## 依存関係をインストールしてビルド
 ```
 npm run setup
+npm run build
 ```
 
 ----------
 
 ## 開発環境で起動
 ```
-npm run start
+npm start
 ```
 
 ----------
