@@ -51,10 +51,11 @@ Firebaseでサポートされているのは
 
 ### Linux の場合
 ```
-apt install nodejs
-npm install n
-n install 10.16.3
-apt remove nodejs
+sudo apt install nodejs
+sudo apt install npm
+sudo npm install n -g
+sudo n install 10.16.3
+sudo apt remove nodejs
 ```
 
 ### Windows10 の場合
@@ -68,7 +69,7 @@ choco install nodejs-lts
 ## `firebase-tools` をセットアップする
 ### Linux/Windowsの場合
 ```
-npm install -g firebase-tools
+sudo npm install firebase-tools -g
 firebase login
 ```
 
@@ -86,6 +87,8 @@ firebase login
     - `$env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\yuise\crisis-news-mapper\key.json"`
   - macOS の場合
     - `export GOOGLE_APPLICATION_CREDENTIALS="/Users/yuiseki/src/github.com/yuiseki/crisis-news-mapper/key.json"`
+  - Linux の場合
+    - `export GOOGLE_APPLICATION_CREDENTIALS="/home/yuiseki/src/github.com/yuiseki/crisis-news-mapper/key.json"`
 
 ----------
 

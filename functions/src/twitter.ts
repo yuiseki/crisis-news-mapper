@@ -330,7 +330,7 @@ export class Twitter {
       const snapshot = await admin.firestore().collection("tweets")
         .orderBy('tweeted_at', 'desc')
         .startAfter(startAfterDocRef)
-        .limit(4)
+        .limit(16)
         .get()
       if (snapshot.empty) {
         reject('No matching documents!')
@@ -339,9 +339,21 @@ export class Twitter {
           Twitter.updateAsync(snapshot.docs[0]),
           Twitter.updateAsync(snapshot.docs[1]),
           Twitter.updateAsync(snapshot.docs[2]),
-          Twitter.updateAsync(snapshot.docs[3])
+          Twitter.updateAsync(snapshot.docs[3]),
+          Twitter.updateAsync(snapshot.docs[4]),
+          Twitter.updateAsync(snapshot.docs[5]),
+          Twitter.updateAsync(snapshot.docs[6]),
+          Twitter.updateAsync(snapshot.docs[7]),
+          Twitter.updateAsync(snapshot.docs[8]),
+          Twitter.updateAsync(snapshot.docs[9]),
+          Twitter.updateAsync(snapshot.docs[10]),
+          Twitter.updateAsync(snapshot.docs[11]),
+          Twitter.updateAsync(snapshot.docs[12]),
+          Twitter.updateAsync(snapshot.docs[13]),
+          Twitter.updateAsync(snapshot.docs[14]),
+          Twitter.updateAsync(snapshot.docs[15])
         ])
-        await Twitter.updateNext(snapshot.docs[3])
+        await Twitter.updateNext(snapshot.docs[15])
       }
     })
   }

@@ -174,7 +174,7 @@ export class News {
       if(tweetRef.exists){
         const tweet = tweetRef.data()
         tweeted_at = tweet.tweeted_at
-        if (tweet.tweeted_at instanceof String){
+        if (typeof tweet.tweeted_at === "string"){
           tweeted_at = new Date(Date.parse(tweet.tweeted_at))
         }
       }else{
@@ -266,7 +266,7 @@ export class News {
       // 言及ツイートに追加
       tweets: admin.firestore.FieldValue.arrayUnion(tweet.tweet_id_str),
       // 最終言及日時を更新
-      tweeted_at: new Date(Date.parse(tweet.created_at)),
+      tweeted_at: tweet.tweeted_at,
     }).catch((error)=> {
       console.log("----------")
       console.log(error)
@@ -283,7 +283,7 @@ export class News {
     const param = await this.getNewsDocParamAsync()
     if (param.tweets===undefined){
       param.tweets = [tweet.tweet_id_str]
-      param.tweeted_at = new Date(Date.parse(tweet.created_at))
+      param.tweeted_at = tweet.tweeted_at
     }
     if (this.exists){
       await admin.firestore().collection('news').doc(this.enurl)
@@ -296,7 +296,7 @@ export class News {
     }else{
       if(tweet!==null){
         param.tweets = [tweet.tweet_id_str]
-        param.tweeted_at = new Date(Date.parse(tweet.created_at))
+        param.tweeted_at = tweet.tweeted_at
       }else{
         param.tweets = []
         param.tweeted_at = new Date()
@@ -336,7 +336,7 @@ export class News {
     newsData.geohash = detector.geohash
     newsData.updated_at = admin.firestore.FieldValue.serverTimestamp()
     const tweeted_at = newsData.tweeted_at
-    if (tweeted_at instanceof String){
+    if (typeof tweeted_at === "string"){
       // @ts-ignore
       newsData.tweeted_at = new Date(Date.parse(tweeted_at))
     }
@@ -358,7 +358,7 @@ export class News {
   }
 
   /**
-   * startAfterで次の１件を取り出すことができるので
+   * startAfterであとに続くドキュメントを取り出すことができるので
    * 再帰的に呼び出すことで全件処理になる
    */
   public static updateAll = async(startAfterDocRef) => {
@@ -369,16 +369,21 @@ export class News {
       }
       console.log("-----> News.updateAll: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
-        .where('category', '==', null)
-        .orderBy('updated_at', 'desc')
+        //.where('category', '==', null)
+        .orderBy('tweeted_at', 'desc')
         .startAfter(startAfterDocRef)
-        .limit(1)
+        .limit(4)
         .get()
       if (snapshot.empty) {
         reject('No matching documents!')
       }else{
-        await News.updateAsync(snapshot.docs[0])
-        await News.updateAll(snapshot.docs[0])
+        await Promise.all([
+          News.updateAsync(snapshot.docs[0]),
+          News.updateAsync(snapshot.docs[1]),
+          News.updateAsync(snapshot.docs[2]),
+          News.updateAsync(snapshot.docs[3])
+        ])
+        await News.updateAll(snapshot.docs[3])
       }
     })
   }
@@ -389,8 +394,8 @@ export class News {
    */
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("news")
-      .where('category', '==', null)
-      .orderBy('updated_at', 'desc')
+      //.where('category', '==', null)
+      .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()
     await News.updateAsync(snapshot.docs[0])
