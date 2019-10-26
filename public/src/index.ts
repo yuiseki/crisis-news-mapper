@@ -76,6 +76,9 @@ class LeafletInitializer {
       this.renderControls()
       await this.renderBaseLayer()
       this.daysago = localStorage.getItem('leaflet-daysago')
+      if(this.daysago===null){
+        this.daysago = "3"
+      }
       this.renderOverlayLayers()
       this.timelineControl.rangeInput.value = Number(this.daysago);
       const inputEvent = new Event('input');
