@@ -2,7 +2,7 @@ import Markers from "./Markers";
 
 
 export default class FireDeptMarkers extends Markers {
-  static displayName = "消防"
+  static displayName = "消防災害出動"
   static url = "/firedept"
   static firetruckIcon = L.icon({
     iconUrl: '/img/firetruck_fast.png',

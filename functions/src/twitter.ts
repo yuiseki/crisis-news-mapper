@@ -285,8 +285,8 @@ export class Twitter {
     const detector = new Detector(text)
     await detector.ready
     let tweeted_at = tweetData.tweeted_at
-    if (tweetData.tweeted_at instanceof String){
-      tweeted_at = new Date(tweetData.tweeted_at)
+    if (typeof tweetData.tweeted_at === "string"){
+      tweeted_at = new Date(Date.parse(tweetData.tweeted_at))
     }
     const tweetDoc = {
       category:       detector.category,
@@ -317,7 +317,10 @@ export class Twitter {
     }
   }
 
-  public static updateAll = async(startAfterDocRef) => {
+  /**
+   * CPUコア数だけ並列実行したい
+   */
+  public static updateNext = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
       if(startAfterDocRef===null || startAfterDocRef===undefined){
         // tslint:disable-next-line: no-parameter-reassignment
@@ -325,27 +328,31 @@ export class Twitter {
       }
       console.log("-----> Twitter.updateAll start: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("tweets")
-        .where('category', '==', null)
-        .orderBy('updated_at', 'asc')
+        .orderBy('tweeted_at', 'desc')
         .startAfter(startAfterDocRef)
-        .limit(1)
+        .limit(4)
         .get()
       if (snapshot.empty) {
         reject('No matching documents!')
       }else{
-        await Twitter.updateAsync(snapshot.docs[0])
-        await Twitter.updateAll(snapshot.docs[0])
+        await Promise.all([
+          Twitter.updateAsync(snapshot.docs[0]),
+          Twitter.updateAsync(snapshot.docs[1]),
+          Twitter.updateAsync(snapshot.docs[2]),
+          Twitter.updateAsync(snapshot.docs[3])
+        ])
+        await Twitter.updateNext(snapshot.docs[3])
       }
     })
   }
 
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("tweets")
-      .where('category', '==', null)
-      .orderBy('updated_at', 'asc')
+      .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()
-    await Twitter.updateAll(snapshot.docs[0])
+    await Twitter.updateAsync(snapshot.docs[0])
+    await Twitter.updateNext(snapshot.docs[0])
   }
 
 }

@@ -22,8 +22,12 @@ export class News {
    * @return {string} HTTP response body
    */
   public static fetchAsync = async(url:string):Promise<string> => {
+    const opts = {
+      url: url,
+      timeout: 2000
+    }
     return new Promise( resolve => {
-      request(url, async (error, response, body) => {
+      request(opts, async (error, response, body) => {
           if (error) {
             resolve(null)
           }else{
@@ -297,6 +301,7 @@ export class News {
         param.tweets = []
         param.tweeted_at = new Date()
       }
+      param.created_at = new Date()
       await admin.firestore().collection('news').doc(this.enurl)
         .set(param)
         .catch((error) => {
@@ -309,7 +314,16 @@ export class News {
 
   public static updateAsync = async(docRef) => {
     const newsData = docRef.data()
-    if(newsData.title===null || newsData.og_title===null || newsData.og_desc===null){return}
+    console.log('-----> News.updateAsync: '+newsData.url)
+    if(newsData.title===null || newsData.og_title===null || newsData.og_desc===null){
+      const html = await News.fetchAsync(newsData.url)
+      const web = await News.parseAsync(html)
+      newsData.title = web.title
+      newsData.og_title = web.og_title
+      newsData.og_desc = web.og_desc
+      newsData.og_url = web.og_url
+      newsData.og_image = web.og_image
+    }
     const text = newsData.title+newsData.og_title+newsData.og_desc
     const detector = new Detector(text)
     await detector.ready
@@ -336,25 +350,26 @@ export class News {
       }
     }
     await admin.firestore().collection("news").doc(docRef.id)
-      .update(newsData)
-      .catch((error)=>{
+      .update(newsData).catch((error)=>{
         console.log("----------")
         console.log(error)
         console.log("----------")
       })
   }
 
-
-
+  /**
+   * startAfterで次の１件を取り出すことができるので
+   * 再帰的に呼び出すことで全件処理になる
+   */
   public static updateAll = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
       if(startAfterDocRef===null || startAfterDocRef===undefined){
         // tslint:disable-next-line: no-parameter-reassignment
-        startAfterDocRef = null
+        return
       }
-      console.log("----> News.updateAll start: "+startAfterDocRef.id)
+      console.log("-----> News.updateAll: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
-        .where('category', '==', 'crisis')
+        .where('category', '==', null)
         .orderBy('updated_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(1)
@@ -368,12 +383,48 @@ export class News {
     })
   }
 
+  /**
+   * 処理済みのNewsはcategoryがnullではない
+   * categoryがnullのNewsを１件取り出す
+   */
   public static startUpdateAll = async(context) => {
     const snapshot = await admin.firestore().collection("news")
-      .where('category', '==', 'crisis')
+      .where('category', '==', null)
       .orderBy('updated_at', 'desc')
       .limit(1)
       .get()
+    await News.updateAsync(snapshot.docs[0])
     await News.updateAll(snapshot.docs[0])
+  }
+
+  public static reindexUnknown = async(startAfterDocRef) => {
+    return new Promise(async (resolve, reject)=>{
+      if(startAfterDocRef===null || startAfterDocRef===undefined){
+        // tslint:disable-next-line: no-parameter-reassignment
+        return
+      }
+      console.log("-----> News.updateAll: "+startAfterDocRef.id)
+      const snapshot = await admin.firestore().collection("news")
+        .where('category', '==', 'unknown')
+        .orderBy('updated_at', 'desc')
+        .startAfter(startAfterDocRef)
+        .limit(1)
+        .get()
+      if (snapshot.empty) {
+        reject('No matching documents!')
+      }else{
+        await News.updateAsync(snapshot.docs[0])
+        await News.reindexUnknown(snapshot.docs[0])
+      }
+    })
+  }
+
+  public static startReindexUnknown = async(context) => {
+    const snapshot = await admin.firestore().collection("news")
+      .where('category', '==', 'unknown')
+      .orderBy('updated_at', 'desc')
+      .limit(1)
+      .get()
+    await News.reindexUnknown(snapshot.docs[0])
   }
 }

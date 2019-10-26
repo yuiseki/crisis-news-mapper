@@ -23,7 +23,6 @@ filelist = [
 ]
 
 def setOrUpdateTweet(classification, user, tweet):
-    print(".", end="")
     avatar = None
     if user is not None:
         avatar = user.avatar
@@ -110,8 +109,39 @@ def twintAccountPubSub(event, context):
             for tweet in tweets:
                 setOrUpdateTweet(classification, user, tweet)
 
-keywordfile = 'detector_category_words.json'
+def searchTwitter(query):
+    twint.output.tweets_list = []
+    c = twint.Config()
+    c.Search = query+" filter:links -filter:replies -filter:retweets -filter:nativeretweets"
+    c.Format = 'twint search: '+query+' - {username} - {id}'
+    c.Limit = 200
+    c.Store_object = True
+    twint.run.Search(c)
+    tweets = twint.output.tweets_list
+    for tweet in tweets:
+        if tweet.tweet.startswith('RT'):
+            continue
+        if len(tweet.urls) == 0:
+            continue
+        twint.output.users_list = []
+        c = twint.Config()
+        c.Username = tweet.username
+        c.Store_object = True
+        c.Hide_output = True
+        twint.run.Lookup(c)
+        user = None
+        if len(twint.output.users_list) > 0:
+            user = twint.output.users_list[0]
+        setOrUpdateTweet(None, user, tweet)
 
+def twintDomainPubSub(event, context):
+    json_file = open('mass_media_japan.json', encoding='utf-8')
+    json_list = json.load(json_file)
+    for item in json_list:
+        query = item["query"]
+        searchTwitter(query)
+
+keywordfile = 'detector_category_words.json'
 def twintKeywordPubSub(event, context):
     json_file = open(keywordfile, encoding='utf-8')
     category_dict = json.load(json_file)
@@ -121,34 +151,7 @@ def twintKeywordPubSub(event, context):
         if category == "sports":
             continue
         for keyword in category_dict[category]:
-            start_after = keyword
-            twint.output.tweets_list = []
-            c = twint.Config()
-            c.Search = keyword+" filter:links -filter:replies -filter:retweets -filter:nativeretweets"
-            c.Format = 'twint search: '+category+'/'+keyword+' - {username} - {id}'
-            c.Limit = 20
-            c.Store_object = True
-            twint.run.Search(c)
-            tweets = twint.output.tweets_list
-            print(".", end="")
-            for tweet in tweets:
-                print(".", end="")
-                if tweet.tweet.startswith('RT'):
-                    continue
-                if len(tweet.urls) == 0:
-                    continue
-                twint.output.users_list = []
-                c = twint.Config()
-                c.Username = tweet.username
-                c.Store_object = True
-                c.Hide_output = True
-                twint.run.Lookup(c)
-                user = None
-                if len(twint.output.users_list) > 0:
-                    user = twint.output.users_list[0]
-                setOrUpdateTweet(None, user, tweet)
-            print(".")
-
+            searchTwitter(keyword)
 
 target = None
 if __name__ == "__main__":
@@ -157,5 +160,7 @@ if __name__ == "__main__":
     if target is not None:
         if target == "account":
             twintAccountPubSub(None, None)
+        if target == "domain":
+            twintDomainPubSub(None, None)
         if target == "keyword":
             twintKeywordPubSub(None, None)

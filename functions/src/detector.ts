@@ -14,14 +14,14 @@ const categoryList = require('../data/yuiseki.net/detector_category_words.json')
 export class Detector {
   ready:Promise<any>
   text:string
-  category:string
-  country:string
-  pref:string
-  city:string
-  river:string
-  mountain:string
-  station:string
-  airport:string
+  category:string = "unknown"
+  country:string = null
+  pref:string = null 
+  city:string = null
+  river:string = null
+  mountain:string = null
+  station:string = null
+  airport:string = null
   location:any
   geohash:string
   
