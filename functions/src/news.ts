@@ -173,9 +173,10 @@ export class News {
       const tweetRef = await admin.firestore().collection('tweets').doc(tweet_id).get()
       if(tweetRef.exists){
         const tweet = tweetRef.data()
-        tweeted_at = tweet.tweeted_at
         if (typeof tweet.tweeted_at === "string"){
           tweeted_at = new Date(Date.parse(tweet.tweeted_at))
+        }else{
+          tweeted_at = tweet.tweeted_at
         }
       }else{
         tweeted_at = null
@@ -261,12 +262,18 @@ export class News {
   }
 
   public updateByLastTweet = async(tweet) => {
+    // 最終言及日時を更新
+    let tweeted_at
+    if(typeof tweet.tweeted_at === "string"){
+      tweeted_at =  new Date(Date.parse(tweet.tweeted_at)),
+    }else{
+      tweeted_at = tweet.tweeted_at,
+    }
     await admin.firestore().collection('news').doc(this.enurl).update({
       // MEMO: admin.firestore()だとダメ！！！
       // 言及ツイートに追加
       tweets: admin.firestore.FieldValue.arrayUnion(tweet.tweet_id_str),
-      // 最終言及日時を更新
-      tweeted_at: tweet.tweeted_at,
+      tweeted_at: tweeted_at
     }).catch((error)=> {
       console.log("----------")
       console.log(error)
@@ -281,10 +288,6 @@ export class News {
     console.log("-----> setOrUpdateNews: "+this.url)
     console.log("-----> setOrUpdateNews: "+this.enurl)
     const param = await this.getNewsDocParamAsync()
-    if (param.tweets===undefined){
-      param.tweets = [tweet.tweet_id_str]
-      param.tweeted_at = tweet.tweeted_at
-    }
     if (this.exists){
       await admin.firestore().collection('news').doc(this.enurl)
         .update(param)
@@ -295,11 +298,17 @@ export class News {
         })
     }else{
       if(tweet!==null){
-        param.tweets = [tweet.tweet_id_str]
-        param.tweeted_at = tweet.tweeted_at
+        if(param.tweets!==undefined || param.tweets!==null || param.tweets.length===0){
+          param.tweets = [tweet.tweet_id_str]
+        }
+        if (typeof tweet.tweeted_at === "string"){
+          param.tweeted_at = new Date(Date.parse(tweet.tweeted_at))
+        }else{
+          param.tweeted_at = tweet.tweeted_at
+        }
       }else{
         param.tweets = []
-        param.tweeted_at = new Date()
+        param.tweeted_at = null
       }
       param.created_at = new Date()
       await admin.firestore().collection('news').doc(this.enurl)
@@ -402,6 +411,8 @@ export class News {
     await News.updateAll(snapshot.docs[0])
   }
 
+
+
   public static reindexUnknown = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
       if(startAfterDocRef===null || startAfterDocRef===undefined){
@@ -411,7 +422,7 @@ export class News {
       console.log("-----> News.updateAll: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
         .where('category', '==', 'unknown')
-        .orderBy('updated_at', 'desc')
+        .orderBy('tweeted_at', 'desc')
         .startAfter(startAfterDocRef)
         .limit(1)
         .get()
@@ -427,7 +438,7 @@ export class News {
   public static startReindexUnknown = async(context) => {
     const snapshot = await admin.firestore().collection("news")
       .where('category', '==', 'unknown')
-      .orderBy('updated_at', 'desc')
+      .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()
     await News.reindexUnknown(snapshot.docs[0])
