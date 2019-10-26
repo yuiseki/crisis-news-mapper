@@ -9,6 +9,7 @@
     - 災害ボランティアセンター
     - etc...
 
+----------
 
 # このプロジェクトに協力する方法
 
@@ -17,6 +18,7 @@
   - 以下のURLを開き、緑色の [New issue] ボタンを押す
     - https://github.com/yuiseki/crisis-news-mapper/issues
 
+----------
 
 ## 運営費を支援したい場合
 ### Polcaで支援する
@@ -38,8 +40,7 @@
     - kyash://qr/u/4235924052635520477
   - 任意の額を送金する
 
-
-
+----------
 
 # このプロジェクトを開発する方法
 
@@ -62,6 +63,8 @@ choco uninstall nodejs nodejs.install
 choco install nodejs-lts
 ```
 
+----------
+
 ## `firebase-tools` をセットアップする
 ### Linux/Windowsの場合
 ```
@@ -75,6 +78,8 @@ curl -sL firebase.tools | bash
 firebase login
 ```
 
+----------
+
 ## GOOGLE_APPLICATION_CREDENTIALS環境変数をセットする
   - `news-mapper/key.json` というファイルが必要
   - Windows 10 の場合
@@ -82,22 +87,28 @@ firebase login
   - macOS の場合
     - `export GOOGLE_APPLICATION_CREDENTIALS="/Users/yuiseki/src/github.com/yuiseki/crisis-news-mapper/key.json"`
 
+----------
 
 ## 依存関係をインストール
 ```
 npm run setup
 ```
 
+----------
+
 ## 開発環境で起動
 ```
 npm run start
 ```
 
+----------
+
 ## ブラウザで確認
   - http://localhost:5000/
 
+----------
+
 ## テストの実行
 ```
-cd functions
-npm test
+npm run test
 ```
