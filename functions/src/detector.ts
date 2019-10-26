@@ -184,8 +184,8 @@ export class Detector {
         }
       }
     }
-    if(this.category===undefined){
-      this.category = null
+    if(this.category===undefined || this.category===null){
+      this.category = "unknown"
     }
   }
 
