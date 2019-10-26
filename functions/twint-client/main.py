@@ -114,7 +114,7 @@ def searchTwitter(query):
     c = twint.Config()
     c.Search = query+" filter:links -filter:replies -filter:retweets -filter:nativeretweets"
     c.Format = 'twint search: '+query+' - {username} - {id}'
-    c.Limit = 200
+    c.Limit = 100
     c.Store_object = True
     twint.run.Search(c)
     tweets = twint.output.tweets_list
