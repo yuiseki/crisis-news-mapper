@@ -265,9 +265,9 @@ export class News {
     // 最終言及日時を更新
     let tweeted_at
     if(typeof tweet.tweeted_at === "string"){
-      tweeted_at =  new Date(Date.parse(tweet.tweeted_at)),
+      tweeted_at =  new Date(Date.parse(tweet.tweeted_at))
     }else{
-      tweeted_at = tweet.tweeted_at,
+      tweeted_at = tweet.tweeted_at
     }
     await admin.firestore().collection('news').doc(this.enurl).update({
       // MEMO: admin.firestore()だとダメ！！！
