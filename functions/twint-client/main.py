@@ -9,16 +9,16 @@ db = firestore.Client()
 
 filelist = [
     {
+        'filepath': 'mass_media_japan.json',
+        'classification': 'massmedia'
+    },
+    {
         'filepath': 'self_defense.json',
         'classification': 'selfdefense'
     },
     {
         'filepath': 'government_japan.json',
         'classification': 'government'
-    },
-    {
-        'filepath': 'mass_media_japan.json',
-        'classification': 'massmedia'
     }
 ]
 
@@ -85,7 +85,7 @@ def twintAccountPubSub(event, context):
                 continue
             start_after = screen_name
             print("twint start: "+screen_name)
-            # このへんを毎回空にしないと前回のループの内容が消えない
+            # このへんを毎回空にしないと twint.output の前回のループの内容が消えない
             twint.output.users_list = []
             twint.output.tweets_list = []
             # https://github.com/twintproject/twint/wiki/Configuration
@@ -108,7 +108,6 @@ def twintAccountPubSub(event, context):
             twint.run.Search(c)
             tweets = twint.output.tweets_list
             for tweet in tweets:
-                print('twint classification: '+classification)
                 setOrUpdateTweet(classification, user, tweet)
 
 keywordfile = 'detector_category_words.json'
