@@ -21,26 +21,51 @@ filelist = [
         'classification': 'government'
     }
 ]
+keywordfile = 'detector_category_words.json'
+
 
 def setOrUpdateTweet(classification, user, tweet):
-    avatar = None
+    """
+    tweetをfirestoreに保存するメソッド
+    """
+    # https://github.com/twintproject/twint/blob/master/twint/user.py
+    icon_url = None
+    bio = None
+    location = None
+    following = None
+    followers = None
     if user is not None:
-        avatar = user.avatar
+        icon_url = user.avatar
+        bio = user.bio
+        location = user.location
+        following = user.following
+        followers = user.followers
     # https://github.com/twintproject/twint/blob/master/twint/tweet.py
     params = {
         'tweet_id_str':   tweet.id_str,
         'user_id_str':    tweet.user_id_str,
+        'user_bio':       bio,
+        'user_location':  location,
+        'user_following': following,
+        'user_followers': followers,
         'is_protected':   False,
         'is_retweet':     tweet.retweet,
+        'rt_screen_name': tweet.user_rt,
+        'rt_id_str':      tweet.retweet_id,
         'screen_name':    tweet.username,
         'display_name':   tweet.name,
-        'icon_url':       avatar,
+        'tweet_url':      tweet.link,
+        'icon_url':       icon_url,
         'tweeted_at':     datetime.datetime.fromtimestamp(tweet.datetime/1000.0),
         'text':           tweet.tweet,
         'hashtags':       tweet.hashtags,
+        'hashtags_count': len(tweet.hashtags),
         'cashtags':       tweet.cashtags,
+        'cashtags_count': len(tweet.cashtags),
         'urls':           tweet.urls,
+        'urls_count':     len(tweet.urls),
         'photos':         tweet.photos,
+        'photos_count':   len(tweet.photos),
         'videos':         [],
         'replies_count':  tweet.replies_count,
         'rt_count':       tweet.retweets_count,
@@ -52,10 +77,8 @@ def setOrUpdateTweet(classification, user, tweet):
     # 追加または更新
     docRef = db.collection('tweets').document(tweet.id_str).get()
     if docRef.exists:
-        #print('twint update: '+' - '+tweet.username+' - '+tweet.id_str)
         docs = db.collection('tweets').document(tweet.id_str).update(params)
     else:
-        #print('twint set: '+' - '+tweet.username+' - '+tweet.id_str)
         detectorParams = {
             'category':       None,
             'place_country':  None,
@@ -68,12 +91,91 @@ def setOrUpdateTweet(classification, user, tweet):
             'lat':            None,
             'long':           None,
             'geohash':        None,
+            'created_at':     firestore.SERVER_TIMESTAMP,
         }
         finalParams = dict(params)
         finalParams.update(detectorParams)
         docs = db.collection('tweets').document(tweet.id_str).set(finalParams)
 
+
+def twintSearchTimeline(classification, screen_name, limit):
+    """
+    screen_nameを指定してタイムラインを取得しfirestoreに保存するメソッド
+    """
+    print("twint account: "+screen_name)
+    # このへんを毎回空にしないと twint.output の前回のループの内容が消えない
+    twint.output.users_list = []
+    twint.output.tweets_list = []
+    # https://github.com/twintproject/twint/wiki/Configuration
+    # タイムライン取得だけだとアイコンが取得できないので
+    # ユーザー情報を取得する
+    c = twint.Config()
+    # Store_object = True にしないと twint.output の中身が空
+    c.Store_object = True
+    # 標準出力にログ出力しない
+    c.Hide_output = True
+    c.Username = screen_name
+    twint.run.Lookup(c)
+    user = None
+    if len(twint.output.users_list) > 0:
+        user = twint.output.users_list[0]
+    # タイムラインを取得する
+    c = twint.Config()
+    c.Store_object = True
+    # 標準出力へのログ出力のフォーマット
+    c.Format = 'twint account: '+classification+' - {username} - {id}'
+    # retweetを含める
+    c.Retweets = True
+    c.Limit = limit
+    c.Username = screen_name
+    twint.run.Profile(c)
+    tweets = twint.output.tweets_list
+    for tweet in tweets:
+        setOrUpdateTweet(classification, user, tweet)
+
+
+def twintSearchKeyword(classification, query, limit):
+    """
+    キーワードを指定してTwitter検索を実行しfirestoreに保存するメソッド
+    """
+    twint.output.tweets_list = []
+    c = twint.Config()
+    c.Store_object = True
+    c.Format = 'twint search: '+classification+' - '+query+' - {username} - {id}'
+    # recent or popular
+    c.Popular_tweets = True
+    # RTを除外
+    Filter_retweets = True
+    # リンクを含むツイートのみ
+    #c.Links = 'include'
+    c.Limit = limit
+    c.Search = query
+    twint.run.Search(c)
+    tweets = twint.output.tweets_list
+    for tweet in tweets:
+        if tweet.tweet.startswith('RT'):
+            continue
+        if len(tweet.urls) == 0:
+            continue
+        # アイコン取得
+        twint.output.users_list = []
+        c = twint.Config()
+        c.Store_object = True
+        c.Hide_output = True
+        c.Username = tweet.username
+        twint.run.Lookup(c)
+        user = None
+        if len(twint.output.users_list) > 0:
+            user = twint.output.users_list[0]
+        setOrUpdateTweet(classification, user, tweet)
+
+
 def twintAccountPubSub(event, context):
+    """
+    cloud function: twintAccountPubSub
+    mass_media_japan.json, self_defense.json, government_japan.json
+    各ファイルにリストされている全Twitterアカウントのタイムラインを取得する目的
+    """
     for fileinfo in filelist:
         classification = fileinfo['classification']
         json_file = open(fileinfo['filepath'], encoding='utf-8')
@@ -82,85 +184,71 @@ def twintAccountPubSub(event, context):
             screen_name = account["twitter"]
             if screen_name is None:
                 continue
-            start_after = screen_name
-            print("twint start: "+screen_name)
-            # このへんを毎回空にしないと twint.output の前回のループの内容が消えない
-            twint.output.users_list = []
-            twint.output.tweets_list = []
-            # https://github.com/twintproject/twint/wiki/Configuration
-            # タイムライン取得だけだとアイコンが取得できないのでユーザー情報を取得する
-            c = twint.Config()
-            c.Username = screen_name
-            # Store_object = True にしないと twint.output の中身が空
-            c.Store_object = True
-            c.Hide_output = True
-            twint.run.Lookup(c)
-            user = None
-            if len(twint.output.users_list) > 0:
-                user = twint.output.users_list[0]
-            # タイムラインを取得する
-            c = twint.Config()
-            c.Username = screen_name
-            c.Format = 'twint account: '+classification+' - {username} - {id}'
-            c.Limit = 20
-            c.Store_object = True
-            twint.run.Search(c)
-            tweets = twint.output.tweets_list
-            for tweet in tweets:
-                setOrUpdateTweet(classification, user, tweet)
+            twintSearchTimeline(classification, screen_name, 20)
 
-def searchTwitter(query):
-    twint.output.tweets_list = []
-    c = twint.Config()
-    c.Search = query+" filter:links -filter:replies -filter:retweets -filter:nativeretweets"
-    c.Format = 'twint search: '+query+' - {username} - {id}'
-    c.Limit = 100
-    c.Store_object = True
-    twint.run.Search(c)
-    tweets = twint.output.tweets_list
-    for tweet in tweets:
-        if tweet.tweet.startswith('RT'):
-            continue
-        if len(tweet.urls) == 0:
-            continue
-        twint.output.users_list = []
-        c = twint.Config()
-        c.Username = tweet.username
-        c.Store_object = True
-        c.Hide_output = True
-        twint.run.Lookup(c)
-        user = None
-        if len(twint.output.users_list) > 0:
-            user = twint.output.users_list[0]
-        setOrUpdateTweet(None, user, tweet)
 
 def twintDomainPubSub(event, context):
+    """
+    cloud function: twintDomainPubSub
+    mass_media_japan.json 内の全ドメインで検索する
+    ニュース記事に言及しているツイートを集める目的
+    """
     json_file = open('mass_media_japan.json', encoding='utf-8')
     json_list = json.load(json_file)
     for item in json_list:
         query = item["query"]
-        searchTwitter(query)
+        twintSearchKeyword("massmedia", None, query, 100)
 
-keywordfile = 'detector_category_words.json'
+
+skip_category = [
+    "support",
+    "survey",
+    "caution",
+    "rescue",
+    "fire",
+    "other",
+    "politics",
+    "sports",
+    "nationwide"
+]
 def twintKeywordPubSub(event, context):
+    """
+    cloud function: twintKeywordPubSub
+    detector_category_words.json 内の全キーワードで検索する
+    各カテゴリのツイートを集めるのが目的
+    """
     json_file = open(keywordfile, encoding='utf-8')
     category_dict = json.load(json_file)
     for category in category_dict:
-        if category == "other":
-            continue
-        if category == "sports":
+        if category in skip_category:
             continue
         for keyword in category_dict[category]:
-            searchTwitter(keyword)
+            twintSearchKeyword("keyword", keyword, 100)
 
-target = None
+
+targetType = None
+optionalArg = None
+extraArg = None
 if __name__ == "__main__":
-    if (len(sys.argv)>1):
-        target = sys.argv[1]
-    if target is not None:
-        if target == "account":
-            twintAccountPubSub(None, None)
-        if target == "domain":
+    if (len(sys.argv) >= 2):
+        targetType = sys.argv[1]
+    if (len(sys.argv) >= 3):
+        optionalArg = sys.argv[2]
+    if (len(sys.argv) >= 4):
+        extraArg = sys.argv[3]
+    if targetType is not None:
+        if targetType == "domain":
             twintDomainPubSub(None, None)
-        if target == "keyword":
-            twintKeywordPubSub(None, None)
+        if targetType == "account":
+            if optionalArg is None:
+                twintAccountPubSub(None, None)
+            else:
+                twintSearchTimeline("timeline", optionalArg, 1000)
+        if targetType == "keyword":
+            if optionalArg is None:
+                twintKeywordPubSub(None, None)
+            else:
+                if extraArg is None:
+                    twintSearchKeyword(None, optionalArg, 2000)
+                else:
+                    twintSearchKeyword(extraArg, optionalArg, 2000)

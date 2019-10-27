@@ -1,5 +1,8 @@
 # pip3 install -r requirements.txt
 requests
 python-firebase
+firebase-admin
 google-cloud-firestore
+google-cloud-storage
 twint
+autopep8
