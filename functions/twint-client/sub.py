@@ -25,6 +25,9 @@ def fetchAndUpload(tweet, photo_url):
   if bucket.get_blob(filename) is None:
     time.sleep(0.5)
     response = requests.get(photo_url)
+    # 謎だけどたまにこういうやつがいるので無視
+    if not 'content-type' in response.headers:
+      return
     content_type = response.headers['content-type']
     print(content_type)
     # 謎だけどたまにこういうやつがいるので無視
@@ -50,15 +53,13 @@ def fetchAndUpload(tweet, photo_url):
 def saveRetweetedPhotosOf(screen_name):
   query = db.collection('tweets').where(
     'rt_screen_name', '==', screen_name).order_by(
-    'tweeted_at', direction=firestore.Query.DESCENDING).limit(100)
+    'tweeted_at', direction=firestore.Query.DESCENDING).limit(1000)
   for doc in query.stream():
     tweet = doc.to_dict()
     if 'is_retweet' in tweet and not tweet['is_retweet']:
       continue
     tweet_url = tweet['tweet_url']
-    print(u'url: {}'.format(tweet_url))
     for photo_url in tweet['photos']:
-      print(u'photo: {}'.format(photo_url))
       fetchAndUpload(tweet, photo_url)
 
 

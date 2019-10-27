@@ -278,7 +278,7 @@ if __name__ == "__main__":
             if optionalArg is None:
                 twintAccountPubSub(None, None)
             else:
-                twintSearchTimeline("timeline", optionalArg, 1000)
+                twintSearchTimeline("timeline", optionalArg, 500)
         if targetMethod == "category":
             if optionalArg is not None:
                 twintCategorySearch(optionalArg)
