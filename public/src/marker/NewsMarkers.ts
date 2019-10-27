@@ -1,14 +1,17 @@
+
 import Markers from "./Markers"
 
-
 export default class NewsMarkers extends Markers {
-  static displayName = "災害関連ニュース" 
-  static url = "/news"
-  static icon
+  static icon = L.icon({
+    iconUrl: '/img/news_icon.png',
+    iconSize:     [30, 30],
+    iconAnchor:   [15, 15],
+    popupAnchor:  [0, -15]
+  })
   clusterGroup:any = null
 
-  constructor(params){
-    super(NewsMarkers.displayName, NewsMarkers.url+params, null)
+  constructor(displayName, url){
+    super(displayName, url, NewsMarkers.icon)
   }
 
   public shouldIgnore = (element) => {
@@ -40,7 +43,7 @@ export default class NewsMarkers extends Markers {
     newsClusterGroup.checkIn(newsLayerGroup)
     this.layerGroup = newsLayerGroup
     this.clusterGroup = newsClusterGroup
-    leaflet.layerControl.addOverlay(this.layerGroup, NewsMarkers.displayName, "情報")
+    leaflet.layerControl.addOverlay(this.layerGroup, this.displayName, "ニュース")
   }
 
   public show(leaflet){
@@ -49,3 +52,4 @@ export default class NewsMarkers extends Markers {
     })
   }
 }
+

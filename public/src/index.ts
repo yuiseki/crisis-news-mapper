@@ -11,7 +11,12 @@ import RainTileLayer from './tile/RainTileLayer';
 import FloodArcGisJson from './geojson/FloodArcGisJson';
 import VolunteerGeoJson from './geojson/VolunteerGeoJson';
 // marker
-import NewsMarkers from './marker/NewsMarkers';
+import CrisisNewsMarkers from './marker/CrisisNewsMarkers';
+import AccidentNewsMarkers from './marker/AccidentNewsMarkers';
+import IncidentNewsMarkers from './marker/IncidentNewsMarkers';
+import ChildrenNewsMarkers from './marker/ChildrenNewsMarkers';
+import DrugNewsMarkers from './marker/DrugNewsMarkers';
+
 import SelfDefenseMarkers from './marker/SelfDefenseMarkers';
 import FireDeptMarkers from './marker/FireDeptMarkers';
 import JapanPrefsGeoJson from './geojson/JapanPrefsGeoJson';
@@ -122,7 +127,6 @@ class LeafletInitializer {
   }
 
   private onChangeTimeRange = (event) => {
-    console.log(event.value)
     if(this.daysago != String(event.value)){
       this.daysago = String(event.value)
       localStorage.setItem('leaflet-daysago', this.daysago)
@@ -209,7 +213,9 @@ class LeafletInitializer {
       this.baseLayerData, this.overlayLayerData,
       {
         collapsed:true,
-        position: 'bottomright'
+        position: 'bottomright',
+        exclusiveGroups: ["ニュース"],
+        groupCheckboxes: false
       }
     ).addTo(this.map)
   }
@@ -269,26 +275,7 @@ class LeafletInitializer {
       }
     })
 
-    let params = ""
-    switch (location.hash){
-      case "#drug":
-        params = "?category=drug";
-        break;
-      case "#children":
-        params = "?category=children";
-        break;
-      default:
-        params = "?category=crisis"
-    }
-    params = params+"&daysago="+this.daysago
-    const newsMarkers = new NewsMarkers(params)
-    newsMarkers.ready.then(()=>{
-      newsMarkers.addOverlay(this)
-      if(selectedLayers.indexOf(NewsMarkers.displayName)>-1){
-        newsMarkers.show(this)
-      }
-    })
-
+    // 自衛隊災害派遣
     const selfDefenseMarkers = new SelfDefenseMarkers("?daysago="+this.daysago)
     selfDefenseMarkers.ready.then(()=>{
       selfDefenseMarkers.addOverlay(this, "自衛隊")
@@ -297,6 +284,7 @@ class LeafletInitializer {
       }
     })
 
+    // 消防災害出動
     const fireDeptMarkers = new FireDeptMarkers("?daysago="+this.daysago)
     fireDeptMarkers.ready.then(()=>{
       fireDeptMarkers.addOverlay(this)
@@ -305,15 +293,54 @@ class LeafletInitializer {
       }
     })
 
+    // 災害ニュース
+    const crisisNewsMarkers = new CrisisNewsMarkers("&daysago="+this.daysago)
+    crisisNewsMarkers.ready.then(()=>{
+      crisisNewsMarkers.addOverlay(this)
+      if(selectedLayers.indexOf(CrisisNewsMarkers.displayName)>-1){
+        crisisNewsMarkers.show(this)
+      }
+    })
+    // 事故ニュース
+    const accidentNewsMarkers = new AccidentNewsMarkers("&daysago="+this.daysago)
+    accidentNewsMarkers.ready.then(()=>{
+      accidentNewsMarkers.addOverlay(this)
+      if(selectedLayers.indexOf(AccidentNewsMarkers.displayName)>-1){
+        accidentNewsMarkers.show(this)
+      }
+    })
+    // 事件ニュース
+    const incidentNewsMarkers = new IncidentNewsMarkers("&daysago="+this.daysago)
+    incidentNewsMarkers.ready.then(()=>{
+      incidentNewsMarkers.addOverlay(this)
+      if(selectedLayers.indexOf(IncidentNewsMarkers.displayName)>-1){
+        incidentNewsMarkers.show(this)
+      }
+    })
+    // 虐待ニュース
+    const childrenNewsMarkers = new ChildrenNewsMarkers("&daysago="+this.daysago)
+    childrenNewsMarkers.ready.then(()=>{
+      childrenNewsMarkers.addOverlay(this)
+      if(selectedLayers.indexOf(ChildrenNewsMarkers.displayName)>-1){
+        childrenNewsMarkers.show(this)
+      }
+    })
+    // 薬物ニュース
+    const drugNewsMarkers = new DrugNewsMarkers("&daysago="+this.daysago)
+    drugNewsMarkers.ready.then(()=>{
+      drugNewsMarkers.addOverlay(this)
+      if(selectedLayers.indexOf(DrugNewsMarkers.displayName)>-1){
+        drugNewsMarkers.show(this)
+      }
+    })
+
   }
 
 }
 
 const renderLeafLetPromise = new Promise(async resolve => {
-
   const leaflet = new LeafletInitializer()
   await leaflet.ready
-
   // レイヤー選択ボタンを開いておく
   let element
   setTimeout(()=>{
@@ -324,7 +351,6 @@ const renderLeafLetPromise = new Promise(async resolve => {
   setTimeout(()=>{
     element.classList.remove('leaflet-control-layers-expanded')
   }, 10000)
-
   resolve()
 })
 

@@ -9,25 +9,25 @@ export default class FireDeptMarkers extends Markers {
     iconSize:     [20, 20],
     iconAnchor:   [10, 10],
     popupAnchor:  [0, -10]
-  });
+  })
   static ambulanceIcon = L.icon({
     iconUrl: '/img/ambulance_fast.png',
     iconSize:     [20, 20],
     iconAnchor:   [10, 10],
     popupAnchor:  [0, -10]
-  });
+  })
   static fireIcon = L.icon({
     iconUrl: '/img/fire_icon.png',
     iconSize:     [20, 20],
     iconAnchor:   [10, 10],
     popupAnchor:  [0, -10]
-  });
+  })
   static cautionIcon = L.icon({
     iconUrl: '/img/caution.png',
     iconSize:     [20, 20],
     iconAnchor:   [10, 10],
     popupAnchor:  [0, -10]
-  });
+  })
   fireDeptDispatchCrisis = []
   fireDeptDispatchFire = []
   fireDeptDispatchRescue = []
