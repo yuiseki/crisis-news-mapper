@@ -236,23 +236,17 @@ def twintCategorySearch(category):
 def printUsage():
     print("""
 python main.py domain
-    search domains lsited in mass_media_japan.json
-
+    search all domains listed in mass_media_japan.json
 python main.py account
     retrieve timeline of all accounts listed in mass_media_japan.json, self_defense.json, government_japan.json
-
 python main.py account screen_name
     retrieve timeline of specific account
-
 python main.py category category_name
     search specific category listed in detector_category_words.json
-
 python main.py keyword
     search all keywords listed in detector_category_words.json
-
 python main.py keyword keyword_string
     search specific keyword
-
 python main.py keyword keyword_string classification_string
     search specific keyword and classified by classification_string
 """)
