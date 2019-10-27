@@ -18,7 +18,6 @@
   - 以下のURLを開き、緑色の [New issue] ボタンを押す
     - https://github.com/yuiseki/crisis-news-mapper/issues
 
-----------
 
 ## 運営費を支援したい場合
 ### Polcaで支援する
@@ -44,6 +43,7 @@
 
 # このプロジェクトを開発する方法
 
+
 ## nodejs 10.16.3 をセットアップする
 Firebaseでサポートされているのは
 `nodejs v8系` または `nodejs v10系` なので、
@@ -64,7 +64,6 @@ choco uninstall nodejs nodejs.install
 choco install nodejs-lts
 ```
 
-----------
 
 ## `firebase-tools` をセットアップする
 ### Linux/Windowsの場合
@@ -79,7 +78,6 @@ curl -sL firebase.tools | bash
 firebase login
 ```
 
-----------
 
 ## GOOGLE_APPLICATION_CREDENTIALS環境変数をセットする
   - `news-mapper/key.json` というファイルが必要
@@ -90,7 +88,6 @@ firebase login
   - Linux の場合
     - `export GOOGLE_APPLICATION_CREDENTIALS="/home/yuiseki/src/github.com/yuiseki/crisis-news-mapper/key.json"`
 
-----------
 
 ## 依存関係をインストールしてビルド
 ```
@@ -98,19 +95,16 @@ npm run setup
 npm run build
 ```
 
-----------
 
 ## 開発環境で起動
 ```
 npm start
 ```
 
-----------
 
 ## ブラウザで確認
   - http://localhost:5000/
 
-----------
 
 ## テストの実行
 ```

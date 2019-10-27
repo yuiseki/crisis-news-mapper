@@ -240,10 +240,10 @@ python main.py domain
     search all domains listed in mass_media_japan.json
 python main.py account
     twintAccountPubSub(None, None)
-    retrieve timeline of all accounts listed in mass_media_japan.json, self_defense.json, government_japan.json
+    retrieve tweets of all accounts listed in mass_media_japan.json, self_defense.json, government_japan.json
 python main.py account screen_name
     twintSearchTimeline("timeline", screen_name, 1000)
-    retrieve timeline of specific account
+    retrieve tweets of specific account
 python main.py category category_name
     twintCategorySearch(category_name)
     search specific category listed in detector_category_words.json
