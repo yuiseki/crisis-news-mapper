@@ -1,8 +1,3 @@
-
-
-/**
- * YOLP 雨雲レーダータイル
- */
 export default class RainTileLayer extends L.TileLayer {
   static displayName = "YOLP 雨雲レーダー"
   static urlTemplate = 'http://weather.map.c.yimg.jp/weather?x={x}&y={y}&z={z}&size=256&date={d}'
@@ -14,18 +9,23 @@ export default class RainTileLayer extends L.TileLayer {
     opacity: 0.5,
     pane: 'pane650'
   }
+
   constructor(){
     super(RainTileLayer.urlTemplate, RainTileLayer.options)
   }
+
   public addOverlay(leaflet, groupName){
     leaflet.layerControl.addOverlay(this, RainTileLayer.displayName, groupName)
   }
+
   public show(leaflet){
     leaflet.map.addLayer(this)
   }
+
   public hide(leaflet){
     leaflet.map.removeLayer(this)
   }
+
   public getTileUrl = (coords) => {
     //雨雲リクエスト日付の作成
     const now = new Date();

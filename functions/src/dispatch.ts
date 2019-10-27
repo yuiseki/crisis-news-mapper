@@ -8,14 +8,14 @@ export class Dispatch{
 
   public static crawlDispatch = async (context) => {
     console.log("----> crawlDispatch start")
-    await Dispatch.fetchAndSaveFireDeptDispatchAsync()
+    await Dispatch.crawlFireDept()
     console.log("----> crawlDispatch finish")
   }
 
   /**
    * 消防出動情報のjsonを取得して保存する非同期メソッド
    */
-  public static fetchAndSaveFireDeptDispatchAsync = async () => {
+  public static crawlFireDept = async () => {
     const json = await Dispatch.fetchFireDeptDispatchJsonAsync()
     const dispatches = await Dispatch.convertFireDeptDispatchJsonAsync(json)
     for (const dispatch of dispatches){

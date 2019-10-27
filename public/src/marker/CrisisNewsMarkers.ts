@@ -7,7 +7,6 @@ export default class CrisisNewsMarkers extends NewsMarkers {
   constructor(params){
     super(CrisisNewsMarkers.displayName, CrisisNewsMarkers.url+params)
   }
-
 }
 
 

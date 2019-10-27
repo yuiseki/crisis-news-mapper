@@ -1,6 +1,5 @@
 import Markers from "./Markers";
 
-
 export default class FireDeptMarkers extends Markers {
   static displayName = "消防災害出動"
   static url = "/firedept"

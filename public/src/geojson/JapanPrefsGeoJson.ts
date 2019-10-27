@@ -16,5 +16,4 @@ export default class JapanPrefsGeoJson extends GeoJson {
       JapanPrefsGeoJson.style
       )
   }
-
 }

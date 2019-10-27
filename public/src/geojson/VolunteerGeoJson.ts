@@ -1,9 +1,5 @@
 import GeoJson from "./GeoJson";
 
-
-/**
- * 災害ボランティアセンターGeoJson
- */
 export default class VolunteerGeoJson extends GeoJson {
   static displayName = "災害ボランティアセンター"
   static url = "/geojson/2019_typhoon19_volunteer.geojson"

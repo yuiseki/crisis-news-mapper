@@ -21,5 +21,4 @@ export default class JapanCitiesGeoJson extends GeoJson {
   public onEachFeature = (feature, layer) => {
     layer.bindTooltip(feature.properties.cityname_k);
   }
-
 }

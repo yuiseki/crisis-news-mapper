@@ -1,4 +1,3 @@
-
 import Markers from "./Markers"
 
 export default class NewsMarkers extends Markers {

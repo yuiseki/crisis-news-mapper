@@ -35,5 +35,4 @@ export default class FloodArcGisJson extends GeoJson {
   public onEachFeature = (feature, layer) => {
     layer.bindPopup(feature.properties['name']);
   }
-
 }

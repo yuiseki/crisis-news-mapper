@@ -240,7 +240,7 @@ class LeafletInitializer {
     // 選択していたレイヤーを復元
     let selectedLayers = JSON.parse(localStorage.getItem('leaflet-selectedLayers'))
     if(selectedLayers===null){
-      selectedLayers = ["災害関連ニュース", "災害ボランティアセンター", "水害発生箇所", "自衛隊災害派遣", "消防災害出動"]
+      selectedLayers = ["災害関連ニュース", "災害ボランティアセンター", "水害発生箇所", "自衛隊災害派遣", "消防災害出動", "消防火災出動", "消防救急出動"]
     }
 
     // 標高図
