@@ -9,12 +9,12 @@ db = firestore.Client()
 
 filelist = [
     {
-        'filepath': 'mass_media_japan.json',
-        'classification': 'massmedia'
-    },
-    {
         'filepath': 'self_defense.json',
         'classification': 'selfdefense'
+    },
+    {
+        'filepath': 'mass_media_japan.json',
+        'classification': 'massmedia'
     },
     {
         'filepath': 'government_japan.json',
@@ -197,7 +197,7 @@ def twintDomainPubSub(event, context):
     json_list = json.load(json_file)
     for item in json_list:
         query = item["query"]
-        twintSearchKeyword("massmedia", None, query, 100)
+        twintSearchKeyword("massmedia", query, 100)
 
 
 skip_category = [
@@ -225,6 +225,7 @@ def twintKeywordPubSub(event, context):
         for keyword in category_dict[category]:
             twintSearchKeyword("keyword", keyword, 100)
 
+
 def twintCategorySearch(category):
     json_file = open(keywordfile, encoding='utf-8')
     category_dict = json.load(json_file)
@@ -232,11 +233,36 @@ def twintCategorySearch(category):
         for keyword in category_dict[category]:
             twintSearchKeyword(category, keyword, 2000)
 
+def printUsage():
+    print("""
+python main.py domain
+    search domains lsited in mass_media_japan.json
+
+python main.py account
+    retrieve timeline of all accounts listed in mass_media_japan.json, self_defense.json, government_japan.json
+
+python main.py account screen_name
+    retrieve timeline of specific account
+
+python main.py category category_name
+    search specific category listed in detector_category_words.json
+
+python main.py keyword
+    search all keywords listed in detector_category_words.json
+
+python main.py keyword keyword_string
+    search specific keyword
+
+python main.py keyword keyword_string classification_string
+    search specific keyword and classified by classification_string
+""")
 
 targetMethod = None
 optionalArg = None
 extraArg = None
 if __name__ == "__main__":
+    if (len(sys.argv) == 1):
+        printUsage()
     if (len(sys.argv) >= 2):
         targetMethod = sys.argv[1]
     if (len(sys.argv) >= 3):
