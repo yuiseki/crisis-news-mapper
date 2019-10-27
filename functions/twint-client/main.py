@@ -233,6 +233,7 @@ def twintCategorySearch(category):
         for keyword in category_dict[category]:
             twintSearchKeyword(category, keyword, 2000)
 
+
 def printUsage():
     print("""
 python main.py domain
