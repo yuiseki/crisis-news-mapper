@@ -225,26 +225,36 @@ def twintKeywordPubSub(event, context):
         for keyword in category_dict[category]:
             twintSearchKeyword("keyword", keyword, 100)
 
+def twintCategorySearch(category):
+    json_file = open(keywordfile, encoding='utf-8')
+    category_dict = json.load(json_file)
+    if category in category_dict:
+        for keyword in category_dict[category]:
+            twintSearchKeyword(category, keyword, 2000)
 
-targetType = None
+
+targetMethod = None
 optionalArg = None
 extraArg = None
 if __name__ == "__main__":
     if (len(sys.argv) >= 2):
-        targetType = sys.argv[1]
+        targetMethod = sys.argv[1]
     if (len(sys.argv) >= 3):
         optionalArg = sys.argv[2]
     if (len(sys.argv) >= 4):
         extraArg = sys.argv[3]
-    if targetType is not None:
-        if targetType == "domain":
+    if targetMethod is not None:
+        if targetMethod == "domain":
             twintDomainPubSub(None, None)
-        if targetType == "account":
+        if targetMethod == "account":
             if optionalArg is None:
                 twintAccountPubSub(None, None)
             else:
                 twintSearchTimeline("timeline", optionalArg, 1000)
-        if targetType == "keyword":
+        if targetMethod == "category":
+            if optionalArg is not None:
+                twintCategorySearch(optionalArg)
+        if targetMethod == "keyword":
             if optionalArg is None:
                 twintKeywordPubSub(None, None)
             else:
