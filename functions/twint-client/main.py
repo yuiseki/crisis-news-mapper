@@ -236,18 +236,25 @@ def twintCategorySearch(category):
 def printUsage():
     print("""
 python main.py domain
+    twintDomainPubSub(None, None)
     search all domains listed in mass_media_japan.json
 python main.py account
+    twintAccountPubSub(None, None)
     retrieve timeline of all accounts listed in mass_media_japan.json, self_defense.json, government_japan.json
 python main.py account screen_name
+    twintSearchTimeline("timeline", screen_name, 1000)
     retrieve timeline of specific account
 python main.py category category_name
+    twintCategorySearch(category_name)
     search specific category listed in detector_category_words.json
 python main.py keyword
+    twintKeywordPubSub(None, None)
     search all keywords listed in detector_category_words.json
 python main.py keyword keyword_string
+    twintSearchKeyword(None, keyword_string, 2000)
     search specific keyword
 python main.py keyword keyword_string classification_string
+    twintSearchKeyword(classification_string, keyword_string, 2000)
     search specific keyword and classified by classification_string
 """)
 
