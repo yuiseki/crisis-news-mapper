@@ -20,6 +20,7 @@ export default class NewsMarkers extends Markers {
   }
 
   public getContent = (element) => {
+    const tweeted_at = new Date(element.tweeted_at._seconds*1000)
     let content = "<h3 title='"+element.category+"'>"+element.og_title+"</h3><p>";
     if (element.og_url){
       content = content + "<a href='"+element.og_url+"'>";
@@ -28,6 +29,7 @@ export default class NewsMarkers extends Markers {
     if (element.og_url){
       content = content + "</a>"
     }
+    content = content + " (" + tweeted_at.toLocaleString() + ")"
     content = content + "</p>"
     if (element.og_image){
       content = content + "<img width=150 height=100 src='"+element.og_image+"' />";
