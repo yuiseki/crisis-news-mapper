@@ -91,7 +91,7 @@ users = []
 def detectDisoder(classification):
   json_file = open('./detector_disorder_words.json', encoding='utf-8')
   disorders = json.load(json_file)
-  query = db.collection('tweets').where('classification', '==', classification).limit(100000)
+  query = db.collection('tweets').where('classification', '==', classification)
   count = 0
   for doc in query.stream():
     count = count + 1
@@ -125,9 +125,9 @@ if __name__ == "__main__":
   if (len(sys.argv) >= 3):
     targetArg = sys.argv[2]
   if targetMethod is not None:
-    if targetMethod == "disorder":
+    if targetMethod == "disorder" and targetArg is not None:
       detectDisoder(targetArg)
-    if targetMethod == "archive":
+    if targetMethod == "archive" and targetArg is not None:
       importArchivedTweets(targetArg)
-    if targetMethod == "rt" and targetArg is not None:
+    if targetMethod == "save_rt" and targetArg is not None:
       saveRetweetedPhotosOf(targetArg)

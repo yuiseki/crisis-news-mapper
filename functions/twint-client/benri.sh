@@ -2,7 +2,7 @@
 cp -r ../data/yuiseki.net/*.json .
 
 python3 main.py account yuiseki
-python3 sub.py rt yuiseki
+python3 sub.py save_rt yuiseki
 
 python3 main.py category crisis only_link
 python3 main.py category incident only_link
