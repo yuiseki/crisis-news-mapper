@@ -86,16 +86,35 @@ def importArchivedTweets(filename):
         fetchAndUpload(param, photo_url)
 
 
-def detectDisoder():
-  disorders = open('./detector_disorder_words.json', encoding='utf-8')
-  query = db.collection('tweets').where('classification', '==', 'feminism').limit(100000)
+disorderCounter = {}
+users = []
+def detectDisoder(classification):
+  json_file = open('./detector_disorder_words.json', encoding='utf-8')
+  disorders = json.load(json_file)
+  query = db.collection('tweets').where('classification', '==', classification).limit(100000)
+  count = 0
   for doc in query.stream():
+    count = count + 1
     tweet = doc.to_dict()
+    if not 'user_bio' in tweet:
+      continue
     user_bio = tweet['user_bio']
+    screen_name = tweet['screen_name']
     display_name = tweet['display_name']
+    if not screen_name in users:
+      users.append(screen_name)
     for disoder in disorders:
       if disoder in user_bio or disoder in display_name:
-        print(u'screen_name: {}, disoder: {}'.format(tweet['screen_name'], disoder))
+        if screen_name in disorderCounter and disoder not in disorderCounter[screen_name]:
+          disorderCounter[screen_name] = disorderCounter[screen_name]+', '+disoder
+        else:
+          disorderCounter[screen_name] = disoder
+  print('classification: '+classification)
+  print('all: '+str(count)+' tweets')
+  print('all: '+str(len(users))+' users')
+  print('disorders: '+str(len(disorderCounter))+' users')
+  print(str(len(disorderCounter)/len(users))+'%')
+  print(disorderCounter)
 
 
 targetMethod = None
@@ -107,7 +126,7 @@ if __name__ == "__main__":
     targetArg = sys.argv[2]
   if targetMethod is not None:
     if targetMethod == "disorder":
-      detectDisoder()
+      detectDisoder(targetArg)
     if targetMethod == "archive":
       importArchivedTweets(targetArg)
     if targetMethod == "rt" and targetArg is not None:
