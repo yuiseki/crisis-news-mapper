@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>News Viewer</title>
+
+    <!-- favicon -->
+    <link rel="shortcut icon" type="image/png" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/map_family_shinken.png">
+
+    <!-- 外部jsライブラリの読み込み -->
+    <script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+    <script  src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <link   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" rel="stylesheet" >
+    <!-- Bootstrapの読み込み -->
+    <link   href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <script  src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <nav role="tablist" class="nav nav-pills nav-fill" id="news-tab">
+        <a role="tab" data-toggle="tab" aria-controls="crisis"   class="nav-item nav-link" href="#crisis">災害</a>
+        <a role="tab" data-toggle="tab" aria-controls="accident" class="nav-item nav-link" href="#accident">事故</a>
+        <a role="tab" data-toggle="tab" aria-controls="incident" class="nav-item nav-link" href="#incident">事件</a>
+        <a role="tab" data-toggle="tab" aria-controls="children" class="nav-item nav-link" href="#children">虐待</a>
+        <a role="tab" data-toggle="tab" aria-controls="drug"     class="nav-item nav-link" href="#drug">薬物</a>
+        <a role="tab" data-toggle="tab" aria-controls="feminism" class="nav-item nav-link" href="#feminism">フェミ</a>
+      </nav>
+      <div class="tab-content" id="news-tab-content">
+        <div role="tabpanel" id="crisis"   aria-labelledby="crisis-tab"   class="tab-pane fade">crisis</div>
+        <div role="tabpanel" id="accident" aria-labelledby="accident-tab" class="tab-pane fade">accident</div>
+        <div role="tabpanel" id="incident" aria-labelledby="incident-tab" class="tab-pane fade">incident</div>
+        <div role="tabpanel" id="children" aria-labelledby="children-tab" class="tab-pane fade">children</div>
+        <div role="tabpanel" id="drug"     aria-labelledby="drug-tab"     class="tab-pane fade">drug</div>
+        <div role="tabpanel" id="feminism" aria-labelledby="feminism-tab" class="tab-pane fade">feminism</div>
+      </div>
+    </div>
+    <script src="news.js"></script>
+  </body>
+</html>

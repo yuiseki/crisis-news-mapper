@@ -38,5 +38,5 @@
         "utmlatlng",
         "yuiseki"
     ],
-    "python.pythonPath": "C:\\Python37\\python.exe"
+    "python.pythonPath": "/usr/bin/python3"
 }

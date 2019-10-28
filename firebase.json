@@ -37,8 +37,8 @@
         "function": "geohash"
       },
       {
-        "source": "/data.html",
-        "destination": "/data.html"
+        "source": "/news.html",
+        "destination": "/news.html"
       },
       {
         "source": "**",
