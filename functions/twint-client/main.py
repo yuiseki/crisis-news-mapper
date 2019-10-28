@@ -134,7 +134,7 @@ def twintSearchTimeline(classification, screen_name, limit):
         setOrUpdateTweet(classification, user, tweet)
 
 
-def twintSearchKeyword(classification, query, limit):
+def twintSearchKeyword(classification, query, limit, onlyLink):
     """
     キーワードを指定してTwitter検索を実行しfirestoreに保存するメソッド
     """
@@ -147,7 +147,8 @@ def twintSearchKeyword(classification, query, limit):
     # RTを除外
     Filter_retweets = True
     # リンクを含むツイートのみ
-    #c.Links = 'include'
+    if onlyLink:
+        c.Links = 'include'
     c.Limit = limit
     c.Search = query
     twint.run.Search(c)
@@ -197,15 +198,15 @@ def twintDomainPubSub(event, context):
     json_list = json.load(json_file)
     for item in json_list:
         query = item["query"]
-        twintSearchKeyword("massmedia", query, 100)
+        twintSearchKeyword("massmedia", query, 100, True)
 
 
 skip_category = [
+    "japan",
     "support",
     "survey",
     "caution",
     "rescue",
-    "fire",
     "other",
     "politics",
     "sports",
@@ -223,39 +224,49 @@ def twintKeywordPubSub(event, context):
         if category in skip_category:
             continue
         for keyword in category_dict[category]:
-            twintSearchKeyword("keyword", keyword, 100)
+            twintSearchKeyword("keyword", keyword, 100, True)
 
 
-def twintCategorySearch(category):
+def twintSearchCategory(category, limit, onlyLink):
     json_file = open(keywordfile, encoding='utf-8')
     category_dict = json.load(json_file)
     if category in category_dict:
         for keyword in category_dict[category]:
-            twintSearchKeyword(category, keyword, 2000)
+            twintSearchKeyword(category, keyword, limit, onlyLink)
 
 
 def printUsage():
     print("""
 python main.py domain
     twintDomainPubSub(None, None)
-    search all domains listed in mass_media_japan.json
+    search all domain query listed in mass_media_japan.json
+
 python main.py account
     twintAccountPubSub(None, None)
-    retrieve tweets of all accounts listed in mass_media_japan.json, self_defense.json, government_japan.json
+    retrieve tweets of all accounts listed in self_defense.json, mass_media_japan.json, government_japan.json
+
 python main.py account screen_name
-    twintSearchTimeline("timeline", screen_name, 1000)
+    twintSearchTimeline("timeline", screen_name, limit=500)
     retrieve tweets of specific account
+
 python main.py category category_name
-    twintCategorySearch(category_name)
-    search specific category listed in detector_category_words.json
+    twintSearchCategory(category_name, limit=2000, onlyLink=False)
+    search tweets of specific category listed in detector_category_words.json
+
+python main.py category category_name only_link
+    twintSearchCategory(category_name, limit=2000, onlyLink=True)
+    search tweets contain link of specific category listed in detector_category_words.json
+
 python main.py keyword
     twintKeywordPubSub(None, None)
     search all keywords listed in detector_category_words.json
+
 python main.py keyword keyword_string
-    twintSearchKeyword(None, keyword_string, 2000)
+    twintSearchKeyword(None, keyword_string, limit=2000, onlyLink=False)
     search specific keyword
+
 python main.py keyword keyword_string classification_string
-    twintSearchKeyword(classification_string, keyword_string, 2000)
+    twintSearchKeyword(classification_string, keyword_string, limit=2000, onlyLink=False)
     search specific keyword and classified by classification_string
 """)
 
@@ -280,13 +291,16 @@ if __name__ == "__main__":
             else:
                 twintSearchTimeline("timeline", optionalArg, 500)
         if targetMethod == "category":
+            extraArgBool = False
+            if extraArg is not None:
+                extraArgBool = True
             if optionalArg is not None:
-                twintCategorySearch(optionalArg)
+                twintSearchCategory(optionalArg, 100, extraArgBool)
         if targetMethod == "keyword":
             if optionalArg is None:
                 twintKeywordPubSub(None, None)
             else:
                 if extraArg is None:
-                    twintSearchKeyword(None, optionalArg, 2000)
+                    twintSearchKeyword(None, optionalArg, 2000, False)
                 else:
-                    twintSearchKeyword(extraArg, optionalArg, 2000)
+                    twintSearchKeyword(extraArg, optionalArg, 2000, False)
