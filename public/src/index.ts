@@ -288,8 +288,17 @@ class LeafletInitializer {
     const fireDeptMarkers = new FireDeptMarkers("?daysago="+this.daysago)
     fireDeptMarkers.ready.then(()=>{
       fireDeptMarkers.addOverlay(this)
-      if(selectedLayers.indexOf(FireDeptMarkers.displayName)>-1){
-        fireDeptMarkers.show(this)
+      if(selectedLayers.indexOf(FireDeptMarkers.crisisDisplayName)>-1){
+        fireDeptMarkers.showCrisis(this)
+      }
+      if(selectedLayers.indexOf(FireDeptMarkers.fireDisplayName)>-1){
+        fireDeptMarkers.showFire(this)
+      }
+      if(selectedLayers.indexOf(FireDeptMarkers.rescueDisplayName)>-1){
+        fireDeptMarkers.showRescue(this)
+      }
+      if(selectedLayers.indexOf(FireDeptMarkers.otherDisplayName)>-1){
+        fireDeptMarkers.showOther(this)
       }
     })
 

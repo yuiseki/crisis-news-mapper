@@ -48,9 +48,7 @@ export default class NewsMarkers extends Markers {
   }
 
   public show(leaflet){
-    this.ready.then(()=>{
-      leaflet.map.addLayer(this.layerGroup)
-    })
+    leaflet.map.addLayer(this.layerGroup)
   }
 }
 

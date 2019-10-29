@@ -5,7 +5,8 @@ export default class JapanPrefsGeoJson extends GeoJson {
   static url = "/geojson/japan.geojson"
   static icon = null
   static style = {
-    weight: 5
+    weight: 5,
+    opacity: 0.5
   }
 
   constructor(){

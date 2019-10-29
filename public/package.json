@@ -11,6 +11,7 @@
   "main": "index.js",
   "devDependencies": {
     "@types/geojson": "^7946.0.7",
+    "@types/jquery": "^3.3.31",
     "@types/leaflet": "^1.5.4",
     "@types/leaflet-markercluster": "^1.0.3",
     "@types/proj4": "^2.5.0",
@@ -21,8 +22,5 @@
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9"
   },
-  "private": true,
-  "dependencies": {
-    "@types/jquery": "^3.3.31"
-  }
+  "private": true
 }

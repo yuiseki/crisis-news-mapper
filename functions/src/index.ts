@@ -201,8 +201,12 @@ import { Dispatch } from './dispatch'
 exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Dispatch.crawlFireDept)
 
 // マスコミRSSからニュース記事を収集するバッチ処理
-import { Feed } from './feed'
-exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Feed.crawlMediaFeeds)
+import { MassMediaFeed } from './MassMediaFeed'
+exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
+
+// 天気予報・気象警報を収集するバッチ処理
+import { WeatherFeed } from './WeatherFeed'
+exports.crawlWeatherFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 1 hours').onRun(WeatherFeed.crawlFeeds)
 
 // ツイート分析をするバッチ処理
 import { Twitter } from './twitter'

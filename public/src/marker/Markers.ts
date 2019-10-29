@@ -74,9 +74,7 @@ export default class Markers {
   }
 
   public show(leaflet){
-    this.ready.then(()=>{
-      leaflet.map.addLayer(this.layerGroup)
-    })
+    leaflet.map.addLayer(this.layerGroup)
   }
 
   public hide(leaflet){

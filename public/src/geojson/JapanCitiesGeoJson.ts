@@ -6,7 +6,8 @@ export default class JapanCitiesGeoJson extends GeoJson {
   static icon = null
   static style = {
     weight: 2,
-    opacity: 0.3
+    opacity: 0.5,
+    fillOpacity: 0.2
   }
 
   constructor(){

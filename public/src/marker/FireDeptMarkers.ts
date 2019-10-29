@@ -1,7 +1,10 @@
 import Markers from "./Markers";
 
 export default class FireDeptMarkers extends Markers {
-  static displayName = "消防災害出動"
+  static crisisDisplayName = "消防災害出動"
+  static fireDisplayName = "消防火災出動"
+  static rescueDisplayName = "消防救急出動"
+  static otherDisplayName = "消防その他出動"
   static url = "/firedept"
   static firetruckIcon = L.icon({
     iconUrl: '/img/firetruck_fast.png',
@@ -104,15 +107,29 @@ export default class FireDeptMarkers extends Markers {
     this.layerGroups.push(this.fireDeptDispatchFireLayerGroup)
     this.fireDeptDispatchOtherLayerGroup = L.layerGroup(this.fireDeptDispatchOther)
     this.layerGroups.push(this.fireDeptDispatchFireLayerGroup)
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, "消防災害出動", "消防署")
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, "消防火災出動", "消防署")
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, "消防救急出動", "消防署")
-    leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, "消防その他出動", "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchCrisisLayerGroup, FireDeptMarkers.crisisDisplayName, "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchFireLayerGroup, FireDeptMarkers.fireDisplayName, "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchRescueLayerGroup, FireDeptMarkers.rescueDisplayName, "消防署")
+    leaflet.layerControl.addOverlay(this.fireDeptDispatchOtherLayerGroup, FireDeptMarkers.otherDisplayName, "消防署")
   }
 
   public show(leaflet){
-    this.ready.then(()=>{
-      leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup)
-    })
+    leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup)
+  }
+
+  public showCrisis(leaflet){
+    leaflet.map.addLayer(this.fireDeptDispatchCrisisLayerGroup)
+  }
+
+  public showFire(leaflet){
+    leaflet.map.addLayer(this.fireDeptDispatchFireLayerGroup)
+  }
+
+  public showRescue(leaflet){
+    leaflet.map.addLayer(this.fireDeptDispatchRescueLayerGroup)
+  }
+
+  public showOther(leaflet){
+    leaflet.map.addLayer(this.fireDeptDispatchOtherLayerGroup)
   }
 }
