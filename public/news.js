@@ -93,7 +93,7 @@
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("class NewsInitializer {\r\n}\r\nconst renderNewsPromise = new Promise(async (resolve) => {\r\n});\r\nwindow.addEventListener(\"load\", async function () {\r\n    console.log(\"load\");\r\n    // @ts-ignore\r\n    $('.nav a').on('shown.bs.tab', function (e) {\r\n        console.log(e.target);\r\n    });\r\n}, false);\r\n\n\n//# sourceURL=webpack:///./src/news.ts?");
+eval("class NewsInitializer {\n}\nconst renderNewsPromise = new Promise(async (resolve) => {\n});\nwindow.addEventListener(\"load\", async function () {\n    console.log(\"load\");\n    // @ts-ignore\n    $('.nav a').on('shown.bs.tab', function (e) {\n        console.log(e.target);\n    });\n}, false);\n\n\n//# sourceURL=webpack:///./src/news.ts?");
 
 /***/ })
 

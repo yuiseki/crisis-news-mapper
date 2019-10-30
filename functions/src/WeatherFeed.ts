@@ -1,5 +1,6 @@
-
-const feedparser = require('feedparser-promised');
+const admin = require('firebase-admin')
+//const feedparser = require('feedparser-promised');
+const request = require('request-promise-native')
 
 export class WeatherFeed {
   ready:Promise<any>
@@ -22,8 +23,9 @@ export class WeatherFeed {
 
   constructor(){
     this.ready = new Promise(async (resolve, reject)=>{
-      // 北海道と沖縄だけ例外
+      // 北海道=1と沖縄=47だけ例外
       let i = 2
+      const days = {}
       while(i !== 46){
         i++
         let num = String(i)
@@ -34,26 +36,40 @@ export class WeatherFeed {
           num = num+'a'
         }
         if(num.length===2){
-          let v = 1
-          while(v < 5){
-            v++
-            const area = num+'00'+String(v)+'0'
-            const url = this.rootAreaUrl+area+'.xml'
-            console.log(url)
-            try{
-              this.rootFeed = await feedparser.parse(url)
-              for(const item of this.rootFeed){
-                if(!item.title.startsWith('[ PR ]')){
-                  console.log(item.title)
-                  console.log(item.description)
-                  console.log(item.pubDate)
-                }
+          const area = num+'00'+'10'
+          const jsonurl = this.rootJsonUrl+area
+          try{
+            const jsonString = await request.get(jsonurl)
+            const jsondata = JSON.parse(jsonString)
+            for(const item of jsondata.forecasts){
+              if (!days.hasOwnProperty(item.date)){
+                days[item.date] = {}
               }
-            }catch(e){
-              break
+              if (!days[item.date].hasOwnProperty(jsondata.location.prefecture)){
+                days[item.date][jsondata.location.prefecture] = {}
+              }
+              let min = null
+              if(item.temperature.min){
+                min = item.temperature.min.celsius
+              }
+              let max = null
+              if(item.temperature.max){
+                max = item.temperature.max.celsius
+              }
+              days[item.date][jsondata.location.prefecture] = {
+                telop: item.telop,
+                icon: item.image.url,
+                max: max,
+                min: min
+              }
             }
+          }catch(e){
+            break
           }
         }
+      }
+      for(const day of Object.keys(days)){
+        await admin.firestore().collection('weathers').doc(day).set(days[day])
       }
       resolve()
     })
