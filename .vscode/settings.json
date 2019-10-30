@@ -29,6 +29,7 @@
         "overlayadd",
         "predeploy",
         "promisify",
+        "pubsub",
         "selfdefense",
         "strptime",
         "togeojson",

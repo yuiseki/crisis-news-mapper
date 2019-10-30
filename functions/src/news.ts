@@ -229,6 +229,7 @@ export class News {
       place_mountain: detector.mountain,
       place_station:  detector.station,
       place_airport:  detector.airport,
+      place_police:   detector.police,
       lat:            detector.location.lat,
       long:           detector.location.long,
       geohash:        detector.geohash,
@@ -257,6 +258,9 @@ export class News {
     }
     if(newData.place_airport===undefined){
       newData.place_airport = null
+    }
+    if(newData.place_police===undefined){
+      newData.place_police = null
     }
     return newData
   }
@@ -326,6 +330,9 @@ export class News {
     console.log('-----> News.updateAsync: '+newsData.url)
     if(newsData.title===null || newsData.og_title===null || newsData.og_desc===null){
       const html = await News.fetchAsync(newsData.url)
+      if(html===null){
+        return
+      }
       const web = await News.parseAsync(html)
       newsData.title = web.title
       newsData.og_title = web.og_title
@@ -340,6 +347,9 @@ export class News {
     newsData.place_country = detector.country
     newsData.place_pref = detector.pref
     newsData.place_city = detector.city
+    newsData.place_station = detector.station
+    newsData.place_airport = detector.airport
+    newsData.place_police = detector.police
     newsData.lat = detector.location.lat
     newsData.long = detector.location.long
     newsData.geohash = detector.geohash
@@ -364,6 +374,21 @@ export class News {
         console.log(error)
         console.log("----------")
       })
+  }
+
+
+  /**
+   * まだDetectorでカテゴリ・位置を検出していない
+   * ニュース記事すべてを処理するための非同期メソッド
+   */
+  public static startUpdateAll = async(context) => {
+    const snapshot = await admin.firestore().collection("news")
+      .where('category', '==', null)
+      .orderBy('tweeted_at', 'desc')
+      .limit(1)
+      .get()
+    await News.updateAsync(snapshot.docs[0])
+    await News.updateAll(snapshot.docs[0])
   }
 
   /**
@@ -397,29 +422,27 @@ export class News {
     })
   }
 
+
   /**
-   * 処理済みのNewsはcategoryがnullではない
-   * categoryがnullのNewsを１件取り出す
+   * カテゴリが不明だったニュース記事すべてを
+   * もう一回Detectorで検出するための非同期メソッド
    */
-  public static startUpdateAll = async(context) => {
+  public static startReindexCategory = async(context) => {
     const snapshot = await admin.firestore().collection("news")
-      .where('category', '==', null)
+      .where('category', '==', 'unknown')
       .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()
     await News.updateAsync(snapshot.docs[0])
-    await News.updateAll(snapshot.docs[0])
+    await News.reindexCategory(snapshot.docs[0])
   }
 
-
-
-  public static reindexUnknown = async(startAfterDocRef) => {
+  public static reindexCategory = async(startAfterDocRef) => {
     return new Promise(async (resolve, reject)=>{
       if(startAfterDocRef===null || startAfterDocRef===undefined){
-        // tslint:disable-next-line: no-parameter-reassignment
         return
       }
-      console.log("-----> News.updateAll: "+startAfterDocRef.id)
+      console.log("-----> News.reindexUnknown: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
         .where('category', '==', 'unknown')
         .orderBy('tweeted_at', 'desc')
@@ -430,17 +453,44 @@ export class News {
         reject('No matching documents!')
       }else{
         await News.updateAsync(snapshot.docs[0])
-        await News.reindexUnknown(snapshot.docs[0])
+        await News.reindexCategory(snapshot.docs[0])
       }
     })
   }
 
-  public static startReindexUnknown = async(context) => {
+  /**
+   * 位置が不明だったニュース記事すべてを
+   * もうDetectorで一回検出するための非同期メソッド
+   */
+  public static startReindexLocation = async(context) => {
     const snapshot = await admin.firestore().collection("news")
-      .where('category', '==', 'unknown')
+      .where('place_country', '==', null)
       .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()
-    await News.reindexUnknown(snapshot.docs[0])
+    await News.updateAsync(snapshot.docs[0])
+    await News.reindexLocation(snapshot.docs[0])
   }
+
+  public static reindexLocation = async(startAfterDocRef) => {
+    return new Promise(async (resolve, reject)=>{
+      if(startAfterDocRef===null || startAfterDocRef===undefined){
+        return
+      }
+      console.log("-----> News.reindexLocation: "+startAfterDocRef.id)
+      const snapshot = await admin.firestore().collection("news")
+        .where('place_country', '==', null)
+        .orderBy('tweeted_at', 'desc')
+        .startAfter(startAfterDocRef)
+        .limit(1)
+        .get()
+      if (snapshot.empty) {
+        reject('No matching documents!')
+      }else{
+        await News.updateAsync(snapshot.docs[0])
+        await News.reindexLocation(snapshot.docs[0])
+      }
+    })
+  }
+
 }

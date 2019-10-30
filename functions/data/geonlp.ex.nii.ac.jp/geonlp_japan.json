@@ -76,5 +76,16 @@
           "long_idx": 11
         },
       "data": {}
+    },
+  "police":
+    {
+      "index":
+        {
+          "filename": "kitamoto_police_20130918_u.csv",
+          "name_idx": 2,
+          "lat_idx":  3,
+          "long_idx": 4
+        },
+      "data": {}
     }
 }

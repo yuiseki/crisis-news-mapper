@@ -258,6 +258,7 @@ export class Twitter {
       place_mountain: detector.mountain,
       place_station:  detector.station,
       place_airport:  detector.airport,
+      place_police:   detector.police,
       lat:            detector.location.lat,
       long:           detector.location.long,
       geohash:        detector.geohash,
