@@ -254,6 +254,10 @@ export class Detector {
    */
   public detectStation(){
     this.station = Detector.detect(this.text, Object.keys(locationList.station.data))
+    if(this.station!==null){
+      this.country = "日本"
+      this.setLocation(locationList.station.data[this.station])
+    }
   }
 
   /**
@@ -261,5 +265,9 @@ export class Detector {
    */
   public detectAirport(){
     this.airport = Detector.detect(this.text, Object.keys(locationList.airport.data))
+    if(this.airport!==null){
+      this.country = "日本"
+      this.setLocation(locationList.airport.data[this.airport])
+    }
   }
 }

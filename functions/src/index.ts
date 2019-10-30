@@ -204,10 +204,6 @@ exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 10 
 import { MassMediaFeed } from './MassMediaFeed'
 exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
 
-// 天気予報・気象警報を収集するバッチ処理
-import { WeatherFeed } from './WeatherFeed'
-exports.crawlWeatherFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 1 hours').onRun(WeatherFeed.crawlFeeds)
-
 // ツイート分析をするバッチ処理
 import { Twitter } from './twitter'
 exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Twitter.startUpdateAll)
@@ -215,3 +211,7 @@ exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 1
 // ニュース分析をするバッチ処理
 import { News } from './news'
 exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.startUpdateAll)
+
+// 天気予報・気象警報を収集するバッチ処理
+//import { WeatherFeed } from './WeatherFeed'
+//exports.crawlWeatherFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 1 hours').onRun(WeatherFeed.crawlFeeds)
