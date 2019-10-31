@@ -211,6 +211,8 @@ exports.updateAllTweets = functions.runWith(runtimeOpt).pubsub.schedule('every 1
 // ニュース分析をするバッチ処理
 import { News } from './news'
 exports.updateAllNews = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(News.startUpdateAll)
+//exports.reindexCategory = functions.runWith(runtimeOpt).pubsub.schedule('every 12 hours').onRun(News.startReindexCategory)
+//exports.reindexLocation = functions.runWith(runtimeOpt).pubsub.schedule('every 12 hours').onRun(News.startReindexLocation)
 
 // 天気予報・気象警報を収集するバッチ処理
 //import { WeatherFeed } from './WeatherFeed'

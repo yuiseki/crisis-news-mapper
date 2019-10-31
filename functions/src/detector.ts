@@ -22,6 +22,7 @@ export class Detector {
   mountain:string = null
   station:string = null
   airport:string = null
+  police:string = null
   location:any
   geohash:string
   
@@ -45,15 +46,21 @@ export class Detector {
           // 行からname部分を取り出す
           let name:string = row[location.index.name_idx]
           if (
-              // nameが1文字ではない
+              // nameが1文字のやつはマッチしすぎるので除外する
               name.length !== 1
-              // nameに(が含まれない
+              // nameに(が含まれるやつは正規表現が壊れるので除外する
               && name.indexOf("(") === -1
             ){
-            if (locationKey==="station"){
+            // 駅の辞書にはなぜか"～駅"が欠けていることがある
+            if (locationKey==="station" && !name.endsWith("駅")){
               name = name + "駅"
             }
+            // 警察の辞書には交番や派出所まで含まれているが警察署だけで充分
+            if (locationKey==="police" && !name.endsWith("警察署")){
+              continue
+            }
             locationList[locationKey].data[name] = {}
+            // 市区町村に関しては上位の都道府県をデータとして持つ
             if (locationKey==="city"){
               locationList[locationKey].data[name].hyperpref = row[location.index.hyperpref].split('/')[0]
             }
@@ -169,6 +176,7 @@ export class Detector {
     this.detectMountain()
     this.detectStation()
     this.detectAirport()
+    this.detectPolice()
   }
 
   /**
@@ -268,6 +276,17 @@ export class Detector {
     if(this.airport!==null){
       this.country = "日本"
       this.setLocation(locationList.airport.data[this.airport])
+    }
+  }
+
+  /**
+   * 警察署を検出する
+   */
+  public detectPolice(){
+    this.police = Detector.detect(this.text, Object.keys(locationList.police.data))
+    if(this.police!==null){
+      this.country = "日本"
+      this.setLocation(locationList.police.data[this.police])
     }
   }
 }
