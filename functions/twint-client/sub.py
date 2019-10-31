@@ -18,6 +18,9 @@ bucket = storage.bucket("twitter-photos")
 
 
 def fetchAndUpload(tweet, photo_url):
+  '''
+  Twitterの画像をfirebase storageに保存するメソッド
+  '''
   parsed_url = urlparse(photo_url)
   filename = os.path.basename(parsed_url.path)
   print(filename)
@@ -51,6 +54,10 @@ def fetchAndUpload(tweet, photo_url):
 
 
 def saveRetweetedPhotosOf(screen_name):
+  '''
+  firebase firestoreのtweetsコレクションからscreen_nameがRTしたツイートを探して
+  そのツイートが画像を持っていたらfirebase storage保存する
+  '''
   query = db.collection('tweets').where(
     'rt_screen_name', '==', screen_name).order_by(
     'tweeted_at', direction=firestore.Query.DESCENDING).limit(1000)
@@ -64,6 +71,9 @@ def saveRetweetedPhotosOf(screen_name):
 
 
 def importArchivedTweets(filename):
+  '''
+  Twitterの全ツイート履歴を取り込むためのメソッド
+  '''
   json_file = open(filename, encoding='utf-8')
   tweets = json.load(json_file)
   for tweet in tweets:
@@ -89,6 +99,9 @@ def importArchivedTweets(filename):
 disorderCounter = {}
 users = []
 def detectDisoder(classification):
+  '''
+  classificationで指定したtweetsに精神障害者がどれくらいいるのか調べるメソッド
+  '''
   json_file = open('./detector_disorder_words.json', encoding='utf-8')
   disorders = json.load(json_file)
   query = db.collection('tweets').where('classification', '==', classification)
@@ -116,6 +129,8 @@ def detectDisoder(classification):
   print(str(len(disorderCounter)/len(users))+'%')
   print(disorderCounter)
 
+def analyzeRetweet(tweet_url):
+  
 
 targetMethod = None
 targetArg = None
@@ -131,3 +146,5 @@ if __name__ == "__main__":
       importArchivedTweets(targetArg)
     if targetMethod == "save_rt" and targetArg is not None:
       saveRetweetedPhotosOf(targetArg)
+    if targetMethod == "analyze_rt" and targetArg is not None:
+      analyzeRetweet(targetArg)

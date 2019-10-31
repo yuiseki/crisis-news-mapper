@@ -24,6 +24,7 @@ filelist = [
 keywordfile = 'detector_category_words.json'
 
 
+
 def setOrUpdateTweet(classification, user, tweet):
     """
     tweetをfirestoreに保存するメソッド
@@ -34,6 +35,7 @@ def setOrUpdateTweet(classification, user, tweet):
     location = None
     following = None
     followers = None
+    display_name = None
     if user is not None:
         icon_url = user.avatar
         bio = user.bio
@@ -50,8 +52,9 @@ def setOrUpdateTweet(classification, user, tweet):
         'user_followers': followers,
         'is_protected':   False,
         'is_retweet':     tweet.retweet,
-        'rt_screen_name': tweet.user_rt,
         'rt_id_str':      tweet.retweet_id,
+        'rt_user_id_str': tweet.user_rt_id,
+        'rt_screen_name': tweet.user_rt,
         'screen_name':    tweet.username,
         'display_name':   tweet.name,
         'tweet_url':      tweet.link,
@@ -158,7 +161,7 @@ def twintSearchKeyword(classification, query, limit, onlyLink):
             continue
         if len(tweet.urls) == 0:
             continue
-        # アイコン取得
+        # ユーザー情報取得
         twint.output.users_list = []
         c = twint.Config()
         c.Store_object = True
@@ -235,11 +238,72 @@ def twintSearchCategory(category, limit, onlyLink):
             twintSearchKeyword(category, keyword, limit, onlyLink)
 
 
+def setOrUpdateRetweets(params):
+    docs = db.collection('retweets').document(params['rt_id_str']).set(params)
+
+
+def twintSearchRetweet(tweet_text):
+    twint.output.tweets_list = []
+    c = twint.Config()
+    c.Store_object = True
+    c.Hide_output = True
+    # 公式RTのみ
+    c.Native_retweets = True
+    c.Limit = 4000
+    c.Search = tweet_text
+    twint.run.Search(c)
+    tweets = twint.output.tweets_list
+    for tweet in tweets:
+        # ユーザー情報取得
+        twint.output.users_list = []
+        c = twint.Config()
+        c.Store_object = True
+        c.Hide_output = True
+        c.Username = tweet.user_rt
+        twint.run.Lookup(c)
+        user = None
+        icon_url = None
+        bio = None
+        following = None
+        followers = None
+        display_name = None
+        if len(twint.output.users_list) > 0:
+            user = twint.output.users_list[0]
+            icon_url = user.avatar
+            bio = user.bio
+            following = user.following
+            followers = user.followers
+            display_name = user.name
+        params = {
+            'tweet_id_str':    tweet.id_str,
+            'user_id_str':     tweet.user_id_str,
+            'screen_name':     tweet.username,
+            'display_name':    tweet.name,
+            'tweeted_at':      datetime.datetime.fromtimestamp(tweet.datetime/1000.0),
+            'rt_id_str':       tweet.retweet_id,
+            'rt_user_id_str':  tweet.user_rt_id,
+            'rt_icon_url':     icon_url,
+            'rt_user_bio':     bio,
+            'rt_following':    following,
+            'rt_followers':    followers,
+            'rt_screen_name':  tweet.user_rt,
+            'rt_display_name': display_name,
+            'retweeted_at':    datetime.datetime.fromtimestamp(((int(tweet.retweet_id) >> 22) + 1288834974657)/1000.0).strftime("%Y-%m-%d %H:%M:%S")
+        }
+        setOrUpdateRetweets(params)
+
+
+
+
 def printUsage():
     print("""
 python main.py domain
     twintDomainPubSub(None, None)
     search all domain query listed in mass_media_japan.json
+
+python main.py retweet tweet_text
+    twintSearchRetweet(tweet_text)
+    retrive retweet users specified tweet text
 
 python main.py account
     twintAccountPubSub(None, None)
@@ -285,6 +349,8 @@ if __name__ == "__main__":
     if targetMethod is not None:
         if targetMethod == "domain":
             twintDomainPubSub(None, None)
+        if targetMethod == "retweet":
+            twintSearchRetweet(optionalArg)
         if targetMethod == "account":
             if optionalArg is None:
                 twintAccountPubSub(None, None)
