@@ -53,10 +53,25 @@ def fetchAndUpload(tweet, photo_url):
     )
 
 
+def savePhotosOf(screen_name):
+  '''
+  firebase firestoreのtweetsコレクションからscreen_nameのツイートを探して
+  そのツイートが画像を持っていたらfirebase storageに保存する
+  '''
+  query = db.collection('tweets').where(
+    'screen_name', '==', screen_name).where(
+    'photos_count', '>', 0).limit(10000)
+  for doc in query.stream():
+    tweet = doc.to_dict()
+    tweet_url = tweet['tweet_url']
+    for photo_url in tweet['photos']:
+      fetchAndUpload(tweet, photo_url)
+
+
 def saveRetweetedPhotosOf(screen_name):
   '''
   firebase firestoreのtweetsコレクションからscreen_nameがRTしたツイートを探して
-  そのツイートが画像を持っていたらfirebase storage保存する
+  そのツイートが画像を持っていたらfirebase storageに保存する
   '''
   query = db.collection('tweets').where(
     'rt_screen_name', '==', screen_name).order_by(
@@ -130,7 +145,7 @@ def detectDisoder(classification):
   print(disorderCounter)
 
 def analyzeRetweet(tweet_url):
-  
+  print("analyzeRetweet")
 
 targetMethod = None
 targetArg = None
@@ -144,7 +159,9 @@ if __name__ == "__main__":
       detectDisoder(targetArg)
     if targetMethod == "archive" and targetArg is not None:
       importArchivedTweets(targetArg)
-    if targetMethod == "save_rt" and targetArg is not None:
+    if targetMethod == "save_photo" and targetArg is not None:
+      savePhotosOf(targetArg)
+    if targetMethod == "save_rt_photo" and targetArg is not None:
       saveRetweetedPhotosOf(targetArg)
     if targetMethod == "analyze_rt" and targetArg is not None:
       analyzeRetweet(targetArg)
