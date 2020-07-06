@@ -54,6 +54,10 @@ export class Twitter {
     //await this.crawlGovernmentTwitter(context)
   }
 
+  /**
+   * 災害に関連するキーワードでTwitterを検索して保存する
+   * @param context 
+   */
   public crawlCrisisWordTwitter = async (context) => {
     console.log("----> crawlCrisisWordTwitter start")
     const now = new Date()
@@ -66,6 +70,10 @@ export class Twitter {
     console.log("----> crawlCrisisWordTwitter finish")
   }
 
+  /**
+   * 主要マスメディアのドメイン名でTwitterを検索して保存する
+   * @param context 
+   */
   public crawlMassMediaTwitter = async (context) => {
     console.log("----> crawlMassMediaTwitter start")
     const now = new Date()
@@ -78,6 +86,10 @@ export class Twitter {
     console.log("----> crawlMassMediaTwitter finish")
   }
 
+  /**
+   * 主要行政機関のTwitterアカウントのタイムラインを保存する
+   * @param context 
+   */
   public crawlGovernmentTwitter = async (context) => {
     console.log("----> crawlGovernmentTwitter start")
     const now = new Date()
@@ -90,6 +102,10 @@ export class Twitter {
     console.log("----> crawlGovernmentTwitter finish")
   }
 
+  /**
+   * 自衛隊のTwitterアカウントのタイムラインを保存する
+   * @param context 
+   */
   public crawlSelfDefenseTwitter = async (context) => {
     console.log("----> crawlSelfDefenseTwitter start")
     const now = new Date()
@@ -279,9 +295,13 @@ export class Twitter {
     }
   }
 
-  public static updateAsync = async (docRef) => {
+  /**
+   * Tweetからカテゴリと位置を検出する
+   * @param docRef 
+   */
+  public static detectAsync = async (docRef) => {
     const tweetData = docRef.data()
-    console.log('-----> Twitter.updateAsync: '+tweetData.tweet_id_str)
+    console.log('-----> detect: '+tweetData.tweet_id_str)
     const text = tweetData.text
     const detector = new Detector(text)
     await detector.ready
@@ -337,22 +357,22 @@ export class Twitter {
         reject('No matching documents!')
       }else{
         await Promise.all([
-          Twitter.updateAsync(snapshot.docs[0]),
-          Twitter.updateAsync(snapshot.docs[1]),
-          Twitter.updateAsync(snapshot.docs[2]),
-          Twitter.updateAsync(snapshot.docs[3]),
-          Twitter.updateAsync(snapshot.docs[4]),
-          Twitter.updateAsync(snapshot.docs[5]),
-          Twitter.updateAsync(snapshot.docs[6]),
-          Twitter.updateAsync(snapshot.docs[7]),
-          Twitter.updateAsync(snapshot.docs[8]),
-          Twitter.updateAsync(snapshot.docs[9]),
-          Twitter.updateAsync(snapshot.docs[10]),
-          Twitter.updateAsync(snapshot.docs[11]),
-          Twitter.updateAsync(snapshot.docs[12]),
-          Twitter.updateAsync(snapshot.docs[13]),
-          Twitter.updateAsync(snapshot.docs[14]),
-          Twitter.updateAsync(snapshot.docs[15])
+          Twitter.detectAsync(snapshot.docs[0]),
+          Twitter.detectAsync(snapshot.docs[1]),
+          Twitter.detectAsync(snapshot.docs[2]),
+          Twitter.detectAsync(snapshot.docs[3]),
+          Twitter.detectAsync(snapshot.docs[4]),
+          Twitter.detectAsync(snapshot.docs[5]),
+          Twitter.detectAsync(snapshot.docs[6]),
+          Twitter.detectAsync(snapshot.docs[7]),
+          Twitter.detectAsync(snapshot.docs[8]),
+          Twitter.detectAsync(snapshot.docs[9]),
+          Twitter.detectAsync(snapshot.docs[10]),
+          Twitter.detectAsync(snapshot.docs[11]),
+          Twitter.detectAsync(snapshot.docs[12]),
+          Twitter.detectAsync(snapshot.docs[13]),
+          Twitter.detectAsync(snapshot.docs[14]),
+          Twitter.detectAsync(snapshot.docs[15])
         ])
         await Twitter.updateNext(snapshot.docs[15])
       }
@@ -364,7 +384,7 @@ export class Twitter {
       .orderBy('tweeted_at', 'desc')
       .limit(1)
       .get()
-    await Twitter.updateAsync(snapshot.docs[0])
+    await Twitter.detectAsync(snapshot.docs[0])
     await Twitter.updateNext(snapshot.docs[0])
   }
 

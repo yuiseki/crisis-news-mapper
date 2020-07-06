@@ -174,6 +174,7 @@ def twintSearchKeyword(classification, query, limit, onlyLink):
         setOrUpdateTweet(classification, user, tweet)
 
 
+# cloud function: twintAccountPubSub
 def twintAccountPubSub(event, context):
     """
     cloud function: twintAccountPubSub
@@ -190,7 +191,7 @@ def twintAccountPubSub(event, context):
                 continue
             twintSearchTimeline(classification, screen_name, 20)
 
-
+# cloud function: twintDomainPubSub
 def twintDomainPubSub(event, context):
     """
     cloud function: twintDomainPubSub
@@ -215,6 +216,7 @@ skip_category = [
     "sports",
     "nationwide"
 ]
+# cloud function: twintKeywordPubSub
 def twintKeywordPubSub(event, context):
     """
     cloud function: twintKeywordPubSub

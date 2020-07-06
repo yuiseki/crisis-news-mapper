@@ -265,6 +265,10 @@ export class News {
     return newData
   }
 
+  /**
+   * tweetによって言及された最終日時を更新する
+   * @param tweet 
+   */
   public updateByLastTweet = async(tweet) => {
     // 最終言及日時を更新
     let tweeted_at
@@ -460,7 +464,7 @@ export class News {
 
   /**
    * 位置が不明だったニュース記事すべてを
-   * もうDetectorで一回検出するための非同期メソッド
+   * もう一度Detectorで検出しなおすための非同期メソッド
    */
   public static startReindexLocation = async(context) => {
     const snapshot = await admin.firestore().collection("news")
