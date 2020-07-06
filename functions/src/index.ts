@@ -49,7 +49,7 @@ exports.news = functions.https.onRequest(async (req, res) => {
     .collection("news")
     .where("place_country", "==", country)
     .where("category", "==", category)
-    .orderBy("tweeted_at", "desc")
+    .orderBy("created_at", "desc")
     .endAt(endat)
     .limit(1000)
     .get()
