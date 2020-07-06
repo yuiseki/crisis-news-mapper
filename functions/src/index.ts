@@ -197,12 +197,12 @@ const runtimeOpt = {
 }
 
 // 消防出動情報を収集するバッチ処理
-//import { Dispatch } from './dispatch'
-//exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(Dispatch.crawlFireDept)
+import { Dispatch } from './dispatch'
+exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(Dispatch.crawlFireDept)
 
 // マスコミRSSからニュース記事を収集するバッチ処理
 import { MassMediaFeed } from './MassMediaFeed'
-exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
+exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
 
 // ツイート分析をするバッチ処理
 import { Twitter } from './twitter'

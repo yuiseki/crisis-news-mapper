@@ -8,8 +8,8 @@ import PaleTileLayer from './tile/PaleTileLayer';
 import ReliefTileLayer from './tile/ReliefTileLayer';
 import RainTileLayer from './tile/RainTileLayer';
 // geojson
-import FloodArcGisJson from './geojson/FloodArcGisJson';
-import VolunteerGeoJson from './geojson/VolunteerGeoJson';
+//import FloodArcGisJson from './geojson/FloodArcGisJson';
+//import VolunteerGeoJson from './geojson/VolunteerGeoJson';
 // marker
 import CrisisNewsMarkers from './marker/CrisisNewsMarkers';
 import AccidentNewsMarkers from './marker/AccidentNewsMarkers';
@@ -247,6 +247,8 @@ class LeafletInitializer {
     const reliefTileLayer = new ReliefTileLayer()
     reliefTileLayer.addOverlay(this, "基本")
     if(selectedLayers.indexOf(ReliefTileLayer.displayName)>-1){
+      // @ts-ignore
+      firebase.analytics().logEvent('show_relief_layer');
       reliefTileLayer.show(this)
     }
 
@@ -254,10 +256,13 @@ class LeafletInitializer {
     const rainTileLayer = new RainTileLayer()
     rainTileLayer.addOverlay(this, "基本")
     if(selectedLayers.indexOf(RainTileLayer.displayName)>-1){
+      // @ts-ignore
+      firebase.analytics().logEvent('show_rain_layer');
       rainTileLayer.show(this)
     }
 
     // 水害発生箇所
+    /*
     const floodArcGisJson = new FloodArcGisJson()
     floodArcGisJson.ready.then(()=>{
       floodArcGisJson.addOverlay(this, "情報")
@@ -265,8 +270,10 @@ class LeafletInitializer {
         floodArcGisJson.show(this)
       }
     })
+    */
 
     // 災害ボランティアセンター
+    /*
     const volunteerGeoJson = new VolunteerGeoJson()
     volunteerGeoJson.ready.then(()=>{
       volunteerGeoJson.addOverlay(this, "情報")
@@ -274,6 +281,7 @@ class LeafletInitializer {
         volunteerGeoJson.show(this)
       }
     })
+    */
 
     // 自衛隊災害派遣
     const selfDefenseMarkers = new SelfDefenseMarkers("?daysago="+this.daysago)
@@ -307,6 +315,8 @@ class LeafletInitializer {
     crisisNewsMarkers.ready.then(()=>{
       crisisNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(CrisisNewsMarkers.displayName)>-1){
+        // @ts-ignore
+        firebase.analytics().logEvent('show_crisis_news');
         crisisNewsMarkers.show(this)
       }
     })
@@ -315,6 +325,8 @@ class LeafletInitializer {
     accidentNewsMarkers.ready.then(()=>{
       accidentNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(AccidentNewsMarkers.displayName)>-1){
+        // @ts-ignore
+        firebase.analytics().logEvent('show_accident_news');
         accidentNewsMarkers.show(this)
       }
     })
@@ -323,6 +335,8 @@ class LeafletInitializer {
     incidentNewsMarkers.ready.then(()=>{
       incidentNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(IncidentNewsMarkers.displayName)>-1){
+        // @ts-ignore
+        firebase.analytics().logEvent('show_incident_news');
         incidentNewsMarkers.show(this)
       }
     })
@@ -331,6 +345,8 @@ class LeafletInitializer {
     childrenNewsMarkers.ready.then(()=>{
       childrenNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(ChildrenNewsMarkers.displayName)>-1){
+        // @ts-ignore
+        firebase.analytics().logEvent('show_children_news');
         childrenNewsMarkers.show(this)
       }
     })
@@ -339,6 +355,8 @@ class LeafletInitializer {
     drugNewsMarkers.ready.then(()=>{
       drugNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(DrugNewsMarkers.displayName)>-1){
+        // @ts-ignore
+        firebase.analytics().logEvent('show_drug_news');
         drugNewsMarkers.show(this)
       }
     })
