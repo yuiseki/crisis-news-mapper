@@ -20,7 +20,7 @@ export default class GithubControl extends L.Control {
     
     container.onclick = function(){
       // @ts-ignore
-      firebase.analytics().logEvent('show_github_control');
+      //firebase.analytics().logEvent('show_github_control');
       const url = 'https://github.com/yuiseki/crisis-news-mapper';
       const newWindow = window.open(url, '_blank');
       newWindow.focus();

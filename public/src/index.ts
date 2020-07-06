@@ -240,7 +240,7 @@ class LeafletInitializer {
     // 選択していたレイヤーを復元
     let selectedLayers = JSON.parse(localStorage.getItem('leaflet-selectedLayers'))
     if(selectedLayers===null){
-      selectedLayers = ["災害関連ニュース", "災害ボランティアセンター", "水害発生箇所", "自衛隊災害派遣", "消防災害出動", "消防火災出動", "消防救急出動"]
+      selectedLayers = ["災害ニュース", "災害ボランティアセンター", "水害発生箇所", "自衛隊災害派遣", "消防災害出動", "消防火災出動", "消防救急出動"]
     }
 
     // 標高図
@@ -248,7 +248,7 @@ class LeafletInitializer {
     reliefTileLayer.addOverlay(this, "基本")
     if(selectedLayers.indexOf(ReliefTileLayer.displayName)>-1){
       // @ts-ignore
-      firebase.analytics().logEvent('show_relief_layer');
+      //firebase.analytics().logEvent('show_relief_layer');
       reliefTileLayer.show(this)
     }
 
@@ -257,7 +257,7 @@ class LeafletInitializer {
     rainTileLayer.addOverlay(this, "基本")
     if(selectedLayers.indexOf(RainTileLayer.displayName)>-1){
       // @ts-ignore
-      firebase.analytics().logEvent('show_rain_layer');
+      //firebase.analytics().logEvent('show_rain_layer');
       rainTileLayer.show(this)
     }
 
@@ -316,7 +316,7 @@ class LeafletInitializer {
       crisisNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(CrisisNewsMarkers.displayName)>-1){
         // @ts-ignore
-        firebase.analytics().logEvent('show_crisis_news');
+        //firebase.analytics().logEvent('show_crisis_news');
         crisisNewsMarkers.show(this)
       }
     })
@@ -326,7 +326,7 @@ class LeafletInitializer {
       accidentNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(AccidentNewsMarkers.displayName)>-1){
         // @ts-ignore
-        firebase.analytics().logEvent('show_accident_news');
+        //firebase.analytics().logEvent('show_accident_news');
         accidentNewsMarkers.show(this)
       }
     })
@@ -336,7 +336,7 @@ class LeafletInitializer {
       incidentNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(IncidentNewsMarkers.displayName)>-1){
         // @ts-ignore
-        firebase.analytics().logEvent('show_incident_news');
+        //firebase.analytics().logEvent('show_incident_news');
         incidentNewsMarkers.show(this)
       }
     })
@@ -346,7 +346,7 @@ class LeafletInitializer {
       childrenNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(ChildrenNewsMarkers.displayName)>-1){
         // @ts-ignore
-        firebase.analytics().logEvent('show_children_news');
+        //firebase.analytics().logEvent('show_children_news');
         childrenNewsMarkers.show(this)
       }
     })
@@ -356,7 +356,7 @@ class LeafletInitializer {
       drugNewsMarkers.addOverlay(this)
       if(selectedLayers.indexOf(DrugNewsMarkers.displayName)>-1){
         // @ts-ignore
-        firebase.analytics().logEvent('show_drug_news');
+        //firebase.analytics().logEvent('show_drug_news');
         drugNewsMarkers.show(this)
       }
     })
@@ -381,7 +381,7 @@ const renderLeafLetPromise = new Promise(async resolve => {
   resolve()
 })
 
-window.addEventListener("load", async function(){
-  console.log("load");
+document.addEventListener("ready", async function(){
+  console.log("ready");
   await renderLeafLetPromise
 }, false)
