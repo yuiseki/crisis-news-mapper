@@ -29,6 +29,10 @@
         "function": "firedept"
       },
       {
+        "source": "/riverlevel",
+        "function": "riverlevel"
+      },
+      {
         "source": "/selfdefense",
         "function": "selfdefense"
       },

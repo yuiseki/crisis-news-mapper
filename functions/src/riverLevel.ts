@@ -36,7 +36,7 @@ export class RiverLevel {
     const riverLevels = []
     for (const riverLevel of json.obss){
       riverLevel.created_at = new Date(Date.parse(riverLevel.obsTime))
-      riverLevel.id = riverLevel.code+"_"+riverLevel.created_at
+      riverLevel.id = riverLevel.code+"_"+riverLevel.created_at.getTime()
       riverLevel.updated_at = admin.firestore.FieldValue.serverTimestamp()
       riverLevel.place_country = "日本"
       for (const pref of prefList.prefs){
@@ -48,6 +48,11 @@ export class RiverLevel {
         if (riverLevel.twnCode === city.code){
           riverLevel.place_city = city.name
         }
+      }
+      if(riverLevel.level > riverLevel.fladLevel){
+        riverLevel.is_flad = true
+      }else{
+        riverLevel.is_flad = false
       }
       riverLevel.long = riverLevel.lon
       riverLevel.geohash = ngeohash.encode(riverLevel.lat, riverLevel.long)

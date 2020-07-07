@@ -76,7 +76,6 @@ exports.news = functions.https.onRequest(async (req, res) => {
 exports.firedept = functions.https.onRequest(async (req, res) => {
   let daysago
   if (req.query.daysago===undefined){
-    // 災害
     daysago = 3
   }else{
     daysago = req.query.daysago
@@ -86,6 +85,40 @@ exports.firedept = functions.https.onRequest(async (req, res) => {
   const query = await admin.firestore()
     .collection("dispatch")
     .where("place_country", "==", "日本")
+    .orderBy("created_at", "desc")
+    .endAt(endat)
+    .limit(500)
+    .get()
+  if(query.empty){
+    res.status(200).send(JSON.stringify([]))
+  }else{
+    const results = query.docs.map(doc => {
+      const data = doc.data()
+      return data
+    })
+    res.status(200).send(JSON.stringify(results))
+  }
+})
+
+/**
+ * https://crisis.yuiseki.net/riverlevel
+ * のようなパスを処理する関数
+ * @param {Express.Request} req
+ * @param {Express.Response} res 氾濫河川一覧、最大500件
+ * @param {number} req.query.daysago 何日前まで取得するか
+ */
+exports.riverlevel = functions.https.onRequest(async (req, res) => {
+  let daysago
+  if (req.query.daysago===undefined){
+    daysago = 3
+  }else{
+    daysago = req.query.daysago
+  }
+  const today = new Date();
+  const endat = new Date(today.getTime() - (daysago * 24 * 60 * 60 * 1000));
+  const query = await admin.firestore()
+    .collection("river-level")
+    .where("is_flad", "==", true)
     .orderBy("created_at", "desc")
     .endAt(endat)
     .limit(500)
@@ -198,14 +231,14 @@ const runtimeOpt = {
 
 // 消防出動情報を収集するバッチ処理
 import { Dispatch } from './dispatch'
-exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(Dispatch.crawlFireDept)
+exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 60 minutes').onRun(Dispatch.crawlFireDept)
 
 import { RiverLevel } from './riverLevel'
-exports.crawlRiverLevel = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(RiverLevel.crawlRiverRevel)
+exports.crawlRiverLevel = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(RiverLevel.crawlRiverRevel)
 
 // マスコミRSSからニュース記事を収集するバッチ処理
 import { MassMediaFeed } from './MassMediaFeed'
-exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
+exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 10 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
 
 // ツイート分析をするバッチ処理
 import { Twitter } from './twitter'

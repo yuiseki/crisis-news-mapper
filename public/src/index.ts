@@ -19,6 +19,7 @@ import DrugNewsMarkers from './marker/DrugNewsMarkers';
 
 import SelfDefenseMarkers from './marker/SelfDefenseMarkers';
 import FireDeptMarkers from './marker/FireDeptMarkers';
+import RiverLevelMarkers from './marker/RiverLevelMarkers';
 import JapanPrefsGeoJson from './geojson/JapanPrefsGeoJson';
 import JapanCitiesGeoJson from './geojson/JapanCitiesGeoJson';
 
@@ -307,6 +308,14 @@ class LeafletInitializer {
       }
       if(selectedLayers.indexOf(FireDeptMarkers.otherDisplayName)>-1){
         fireDeptMarkers.showOther(this)
+      }
+    })
+
+    const riverLevelMarkers = new RiverLevelMarkers("?daysago="+this.daysago)
+    riverLevelMarkers.ready.then(()=>{
+      riverLevelMarkers.addOverlay(this)
+      if(selectedLayers.indexOf(RiverLevelMarkers.displayName)>-1){
+        riverLevelMarkers.show(this)
       }
     })
 

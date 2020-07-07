@@ -15,5 +15,6 @@
   "main": "lib/index.js",
   "private": true,
   "dependencies": {
+    "firebase-admin": "^8.13.0"
   }
 }
