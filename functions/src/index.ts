@@ -200,6 +200,9 @@ const runtimeOpt = {
 import { Dispatch } from './dispatch'
 exports.crawlDispatch = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(Dispatch.crawlFireDept)
 
+import { RiverLevel } from './riverLevel'
+exports.crawlRiverLevel = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(RiverLevel.crawlRiverRevel)
+
 // マスコミRSSからニュース記事を収集するバッチ処理
 import { MassMediaFeed } from './MassMediaFeed'
 exports.crawlMediaFeeds = functions.runWith(runtimeOpt).pubsub.schedule('every 30 minutes').onRun(MassMediaFeed.crawlMediaFeeds)
