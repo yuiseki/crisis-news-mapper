@@ -31,7 +31,7 @@ export default class SponsorControl extends L.Control {
     `
     container.onclick = function(){
       // @ts-ignore
-      //firebase.analytics().logEvent('show_sponsor_control');
+      firebase.analytics().logEvent('show_sponsor_control');
       map.openModal({
         content: modalContent,
         closeTitle: '✕',

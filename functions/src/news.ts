@@ -293,8 +293,6 @@ export class News {
    * ニュース記事をfirestoreのnewsコレクションに追加/更新する非同期メソッド
    */
   public setOrUpdateNews = async(tweet) => {
-    console.log("-----> setOrUpdateNews: "+this.url)
-    console.log("-----> setOrUpdateNews: "+this.enurl)
     const param = await this.getNewsDocParamAsync()
     if (this.exists){
       await admin.firestore().collection('news').doc(this.enurl)
@@ -331,7 +329,6 @@ export class News {
 
   public static updateAsync = async(docRef) => {
     const newsData = docRef.data()
-    console.log('-----> News.updateAsync: '+newsData.url)
     if(newsData.title===null || newsData.og_title===null || newsData.og_desc===null){
       const html = await News.fetchAsync(newsData.url)
       if(html===null){
@@ -405,7 +402,6 @@ export class News {
         // tslint:disable-next-line: no-parameter-reassignment
         return
       }
-      console.log("-----> News.updateAll: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
         .where('category', '==', null)
         .orderBy('tweeted_at', 'desc')
@@ -481,7 +477,6 @@ export class News {
       if(startAfterDocRef===null || startAfterDocRef===undefined){
         return
       }
-      console.log("-----> News.reindexLocation: "+startAfterDocRef.id)
       const snapshot = await admin.firestore().collection("news")
         .where('place_country', '==', null)
         .orderBy('tweeted_at', 'desc')
