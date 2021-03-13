@@ -34,7 +34,7 @@
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "twitter": "^1.7.1",
-    "xmldom": "^0.1.27"
+    "xmldom": "^0.5.0"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
